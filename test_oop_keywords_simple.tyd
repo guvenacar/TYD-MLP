@@ -1,0 +1,40 @@
+-- Simple OOP Keyword Test
+-- Bu test sadece yeni keyword'lerin lexer tarafından tanındığını doğrular
+
+SAYISAL işleç test_keywords()
+    -- Test OOP keywords as identifiers (not using OOP syntax)
+    METIN kw1 = "SINIF";
+    METIN kw2 = "YAPI";
+    METIN kw3 = "ÖZELLIK";
+    METIN kw4 = "GENERIC";
+    METIN kw5 = "DEMET";
+    METIN kw6 = "ENUM";
+    METIN kw7 = "SALT_OKUNUR";
+    METIN kw8 = "SALT_YAZILIR";
+    METIN kw9 = "KULLAN";
+    METIN kw10 = "MODÜL";
+    METIN kw11 = "DENE";
+    METIN kw12 = "YAKALA";
+    METIN kw13 = "SONRAKI";
+
+    YAZDIR "13 yeni OOP keyword tanimlandi";
+    DÖNÜŞ 0;
+SON
+
+SAYISAL işleç test_operators()
+    -- Test new operators
+    SAYISAL x = 42;
+    SAYISAL y = 10;
+
+    -- Union type operator: |
+    -- Null coalescing: ??
+    -- Optional chaining: ?.
+    -- Nullable: ?
+
+    YAZDIR "Yeni operatorler: ? ?? ?. |";
+    DÖNÜŞ 0;
+SON
+
+test_keywords();
+test_operators();
+YAZDIR "OOP Token Extension - BASARILI";

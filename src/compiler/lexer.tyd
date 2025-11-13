@@ -148,6 +148,7 @@ SON
 
 -- Check if keyword
 SAYISAL işleç anahtar_kelime_mi(METIN kelime)
+    -- Basic types and control flow (18 keywords)
     EĞER METIN_KARSILASTIR(kelime, "SAYISAL") == 0 İSE DÖNÜŞ 1; SON
     EĞER METIN_KARSILASTIR(kelime, "METIN") == 0 İSE DÖNÜŞ 1; SON
     EĞER METIN_KARSILASTIR(kelime, "EĞER") == 0 İSE DÖNÜŞ 1; SON
@@ -166,6 +167,22 @@ SAYISAL işleç anahtar_kelime_mi(METIN kelime)
     EĞER METIN_KARSILASTIR(kelime, "BOL") == 0 İSE DÖNÜŞ 1; SON
     EĞER METIN_KARSILASTIR(kelime, "BÜYÜK") == 0 İSE DÖNÜŞ 1; SON
     EĞER METIN_KARSILASTIR(kelime, "KÜÇÜK") == 0 İSE DÖNÜŞ 1; SON
+
+    -- OOP Keywords (11 keywords)
+    EĞER METIN_KARSILASTIR(kelime, "SINIF") == 0 İSE DÖNÜŞ 1; SON
+    EĞER METIN_KARSILASTIR(kelime, "YAPI") == 0 İSE DÖNÜŞ 1; SON
+    EĞER METIN_KARSILASTIR(kelime, "ÖZELLIK") == 0 İSE DÖNÜŞ 1; SON
+    EĞER METIN_KARSILASTIR(kelime, "GENERIC") == 0 İSE DÖNÜŞ 1; SON
+    EĞER METIN_KARSILASTIR(kelime, "DEMET") == 0 İSE DÖNÜŞ 1; SON
+    EĞER METIN_KARSILASTIR(kelime, "ENUM") == 0 İSE DÖNÜŞ 1; SON
+    EĞER METIN_KARSILASTIR(kelime, "SALT_OKUNUR") == 0 İSE DÖNÜŞ 1; SON
+    EĞER METIN_KARSILASTIR(kelime, "SALT_YAZILIR") == 0 İSE DÖNÜŞ 1; SON
+    EĞER METIN_KARSILASTIR(kelime, "KULLAN") == 0 İSE DÖNÜŞ 1; SON
+    EĞER METIN_KARSILASTIR(kelime, "MODÜL") == 0 İSE DÖNÜŞ 1; SON
+    EĞER METIN_KARSILASTIR(kelime, "DENE") == 0 İSE DÖNÜŞ 1; SON
+    EĞER METIN_KARSILASTIR(kelime, "YAKALA") == 0 İSE DÖNÜŞ 1; SON
+    EĞER METIN_KARSILASTIR(kelime, "SONRAKI") == 0 İSE DÖNÜŞ 1; SON
+
     DÖNÜŞ 0;
 SON
 
@@ -196,6 +213,24 @@ METIN işleç sonraki_token()
             DÖNÜŞ kelime;
         SON
         DÖNÜŞ kelime;
+    SON
+
+    -- Check for multi-character operators
+    -- ?? (null coalescing)
+    EĞER k == 63 İSE  -- '?' = 63
+        ilerle();
+        EĞER konum < uzunluk İSE
+            SAYISAL k2 = mevcut_karakter();
+            EĞER k2 == 63 İSE  -- Second '?'
+                ilerle();
+                DÖNÜŞ "??";
+            SON
+            EĞER k2 == 46 İSE  -- '.' = 46 (optional chaining)
+                ilerle();
+                DÖNÜŞ "?.";
+            SON
+        SON
+        DÖNÜŞ "?";
     SON
 
     -- Single character operators/symbols

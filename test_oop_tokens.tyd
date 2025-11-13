@@ -1,0 +1,63 @@
+-- ===============================================
+-- OOP Token Extension Test
+-- ===============================================
+-- Tests new keywords and operators added in Phase 2.5
+
+-- Test OOP Keywords
+SINIF Kisi
+    ÖZELLIK METIN isim = "";
+    ÖZELLIK SAYISAL yas = 0;
+    SALT_OKUNUR SAYISAL id = 12345;
+SON
+
+YAPI Nokta
+    SAYISAL x = 0;
+    SAYISAL y = 0;
+SON
+
+ENUM Renk
+    KIRMIZI = 1;
+    YESIL = 2;
+    MAVI = 3;
+SON
+
+DEMET Koordinat
+    SAYISAL x = 0;
+    SAYISAL y = 0;
+    SAYISAL z = 0;
+SON
+
+GENERIC SINIF Liste
+    ÖZELLIK boyut = 0;
+SON
+
+-- Test Module System
+KULLAN "matematik";
+KULLAN "dosya_sistemi";
+
+MODÜL Hesaplama
+    SAYISAL işleç topla(SAYISAL a, SAYISAL b)
+        DÖNÜŞ a + b;
+    SON
+SON
+
+-- Test Exception Handling
+SAYISAL işleç riskli_islem(SAYISAL x)
+    DENE
+        SAYISAL sonuc = x / 0;
+        DÖNÜŞ sonuc;
+    YAKALA
+        YAZDIR "Hata olustu";
+        SONRAKI;
+    SON
+    DÖNÜŞ 0;
+SON
+
+-- Test New Operators
+SAYISAL? nullable_sayi = 42;
+METIN| SAYISAL union_tip = "test";
+SAYISAL varsayilan = nullable_sayi ?? 100;
+METIN? isim = "Ahmet";
+METIN buyuk_harf = isim?. "toUpperCase";
+
+YAZDIR "OOP Token Test - Basarili";
