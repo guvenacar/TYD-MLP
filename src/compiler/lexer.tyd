@@ -1,0 +1,182 @@
+-- ===============================================
+-- MLP Lexer (TYD Syntax) - Bootstrap Version
+-- ===============================================
+-- Minimal lexer implementation for bootstrap
+-- Converts source code into tokens
+
+-- Global variables (simple types only)
+METIN kaynak_kod;
+SAYISAL konum;
+SAYISAL satir;
+SAYISAL sutun;
+SAYISAL uzunluk;
+
+-- Lexer initialization
+METIN işleç lexer_baslat(METIN kod)
+    kaynak_kod = kod;
+    konum = 0;
+    satir = 1;
+    sutun = 1;
+    uzunluk = 100;  -- Placeholder: need strlen function
+    DÖNÜŞ "";
+SON
+
+-- Get current character
+METIN işleç mevcut_karakter()
+    EĞER konum >= uzunluk İSE
+        DÖNÜŞ "";
+    SON
+    DÖNÜŞ "";  -- Placeholder: need char_at function
+SON
+
+-- Advance position
+METIN işleç ilerle()
+    METIN k = mevcut_karakter();
+    EĞER k EŞIT "\n" İSE
+        satir = satir ARTI 1;
+        sutun = 1;
+    DEĞİLSE
+        sutun = sutun ARTI 1;
+    SON
+    konum = konum ARTI 1;
+    DÖNÜŞ "";
+SON
+
+-- Skip whitespace
+METIN işleç bosluk_atla()
+    DÖNGÜ İSE
+        METIN k = mevcut_karakter();
+        EĞER k EŞIT " " İSE
+            ilerle();
+        DEĞİLSE
+            DÖNGÜ_BITIR;
+        SON
+    SON
+    DÖNÜŞ "";
+SON
+
+-- Check if character is digit
+SAYISAL işleç rakam_mi(METIN k)
+    EĞER k EŞIT "0" İSE DÖNÜŞ 1; SON
+    EĞER k EŞIT "1" İSE DÖNÜŞ 1; SON
+    EĞER k EŞIT "2" İSE DÖNÜŞ 1; SON
+    EĞER k EŞIT "3" İSE DÖNÜŞ 1; SON
+    EĞER k EŞIT "4" İSE DÖNÜŞ 1; SON
+    EĞER k EŞIT "5" İSE DÖNÜŞ 1; SON
+    EĞER k EŞIT "6" İSE DÖNÜŞ 1; SON
+    EĞER k EŞIT "7" İSE DÖNÜŞ 1; SON
+    EĞER k EŞIT "8" İSE DÖNÜŞ 1; SON
+    EĞER k EŞIT "9" İSE DÖNÜŞ 1; SON
+    DÖNÜŞ 0;
+SON
+
+-- Check if character is letter
+SAYISAL işleç harf_mi(METIN k)
+    EĞER k EŞIT "a" İSE DÖNÜŞ 1; SON
+    EĞER k EŞIT "b" İSE DÖNÜŞ 1; SON
+    EĞER k EŞIT "c" İSE DÖNÜŞ 1; SON
+    EĞER k EŞIT "x" İSE DÖNÜŞ 1; SON
+    EĞER k EŞIT "y" İSE DÖNÜŞ 1; SON
+    EĞER k EŞIT "z" İSE DÖNÜŞ 1; SON
+    EĞER k EŞIT "_" İSE DÖNÜŞ 1; SON
+    DÖNÜŞ 0;
+SON
+
+-- Read number
+METIN işleç sayi_oku()
+    SAYISAL baslangic = konum;
+    DÖNGÜ rakam_mi(mevcut_karakter()) EŞIT 1 İSE
+        ilerle();
+    SON
+    DÖNÜŞ "42";  -- Placeholder: need substring function
+SON
+
+-- Read string literal
+METIN işleç metin_oku()
+    METIN tirnak = mevcut_karakter();
+    ilerle();
+    SAYISAL baslangic = konum;
+    DÖNGÜ İSE
+        METIN k = mevcut_karakter();
+        EĞER k EŞIT tirnak İSE
+            DÖNGÜ_BITIR;
+        SON
+        ilerle();
+    SON
+    ilerle();
+    DÖNÜŞ "string";  -- Placeholder: need substring function
+SON
+
+-- Read identifier
+METIN işleç tanimlayici_oku()
+    SAYISAL baslangic = konum;
+    DÖNGÜ harf_mi(mevcut_karakter()) EŞIT 1 İSE
+        ilerle();
+    SON
+    DÖNÜŞ "identifier";  -- Placeholder: need substring function
+SON
+
+-- Check if keyword
+SAYISAL işleç anahtar_kelime_mi(METIN kelime)
+    EĞER kelime EŞIT "DEĞIŞKEN" İSE DÖNÜŞ 1; SON
+    EĞER kelime EŞIT "değişken" İSE DÖNÜŞ 1; SON
+    EĞER kelime EŞIT "EĞER" İSE DÖNÜŞ 1; SON
+    EĞER kelime EŞIT "eğer" İSE DÖNÜŞ 1; SON
+    EĞER kelime EŞIT "YAZDIR" İSE DÖNÜŞ 1; SON
+    EĞER kelime EŞIT "yazdır" İSE DÖNÜŞ 1; SON
+    EĞER kelime EŞIT "IŞLEÇ" İSE DÖNÜŞ 1; SON
+    EĞER kelime EŞIT "ışleç" İSE DÖNÜŞ 1; SON
+    EĞER kelime EŞIT "DÖNÜŞ" İSE DÖNÜŞ 1; SON
+    EĞER kelime EŞIT "dönüş" İSE DÖNÜŞ 1; SON
+    DÖNÜŞ 0;
+SON
+
+-- Get next token
+METIN işleç sonraki_token()
+    bosluk_atla();
+
+    EĞER konum >= uzunluk İSE
+        DÖNÜŞ "EOF";
+    SON
+
+    METIN k = mevcut_karakter();
+
+    EĞER rakam_mi(k) EŞIT 1 İSE
+        DÖNÜŞ sayi_oku();
+    SON
+
+    EĞER k EŞIT "\"" İSE
+        DÖNÜŞ metin_oku();
+    SON
+
+    EĞER harf_mi(k) EŞIT 1 İSE
+        METIN kelime = tanimlayici_oku();
+        EĞER anahtar_kelime_mi(kelime) EŞIT 1 İSE
+            DÖNÜŞ kelime;
+        SON
+        DÖNÜŞ kelime;
+    SON
+
+    ilerle();
+    DÖNÜŞ k;
+SON
+
+-- Tokenize entire source
+METIN işleç tokenize(METIN kod)
+    lexer_baslat(kod);
+    METIN sonuc = "";
+    DÖNGÜ konum KÜÇÜK uzunluk İSE
+        METIN token = sonraki_token();
+        sonuc = sonuc;  -- Placeholder: need string concat
+    SON
+    DÖNÜŞ sonuc;
+SON
+
+-- Main entry point for testing
+METIN işleç lexer_main()
+    YAZDIR "MLP Lexer (Bootstrap)";
+    YAZDIR "Minimal lexer implementation";
+    DÖNÜŞ "OK";
+SON
+
+YAZDIR "Lexer loaded";
