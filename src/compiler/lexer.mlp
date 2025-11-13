@@ -1,0 +1,302 @@
+-- ===============================================
+-- MLP Lexer (Kelime Çözümleyici)
+-- Bootstrap Aşaması - Minimal Implementation
+-- ===============================================
+--
+-- Bu dosya MLP dilinin lexer'ıdır ve MLP ile yazılmıştır.
+-- Python lexer.py'den daha basit bir versiyondur (JSON yok, hard-coded keywords).
+
+-- Token yapısı
+-- tip: string (token tipi)
+-- deger: string (token değeri)
+-- satir: sayı (satır numarası)
+-- sutun: sayı (sütun numarası)
+
+-- Global değişkenler
+DEĞIŞKEN kaynak_kod: METIN;
+DEĞIŞKEN konum: SAYI;
+DEĞIŞKEN satir: SAYI;
+DEĞIŞKEN sutun: SAYI;
+DEĞIŞKEN uzunluk: SAYI;
+
+-- Anahtar kelimeler (hard-coded for bootstrap)
+DEĞIŞKEN anahtar_kelimeler: DİZİ[METIN] = [
+    "DEĞIŞKEN", "değişken",
+    "SABIT", "sabit",
+    "EĞER", "eğer",
+    "DEĞILSE", "değilse",
+    "DÖNGÜ", "döngü",
+    "DÖNGÜ SON", "döngü son",
+    "IŞLEÇ", "ışleç",
+    "IŞLEÇ SON", "ışleç son",
+    "DÖNÜŞ", "dönüş",
+    "YAZDIR", "yazdır",
+    "YENİ", "yeni",
+    "SIL", "sil",
+    "VE", "ve",
+    "VEYA", "veya",
+    "DEĞİL", "değil",
+    "DOĞRU", "doğru",
+    "YANLIŞ", "yanlış",
+    "BOŞ", "boş"
+];
+
+-- Lexer'ı başlat
+IŞLEÇ lexer_baslat(kod: METIN): BOŞ {
+    kaynak_kod = kod;
+    konum = 0;
+    satir = 1;
+    sutun = 1;
+    uzunluk = UZUNLUK(kod);
+}
+
+-- Mevcut karakteri al
+IŞLEÇ mevcut_karakter(): METIN {
+    EĞER (konum >= uzunluk) {
+        DÖNÜŞ "";
+    }
+    DÖNÜŞ karakter_al(kaynak_kod, konum);
+}
+
+-- Sonraki karakteri al (peek)
+IŞLEÇ sonraki_karakter(): METIN {
+    EĞER (konum + 1 >= uzunluk) {
+        DÖNÜŞ "";
+    }
+    DÖNÜŞ karakter_al(kaynak_kod, konum + 1);
+}
+
+-- İlerle (advance)
+IŞLEÇ ilerle(): BOŞ {
+    EĞER (mevcut_karakter() == "\n") {
+        satir = satir + 1;
+        sutun = 1;
+    } DEĞILSE {
+        sutun = sutun + 1;
+    }
+    konum = konum + 1;
+}
+
+-- Boşlukları atla
+IŞLEÇ bosluk_atla(): BOŞ {
+    DÖNGÜ (DOĞRU) {
+        DEĞIŞKEN k: METIN = mevcut_karakter();
+        EĞER (k == " " VEYA k == "\t" VEYA k == "\n" VEYA k == "\r") {
+            ilerle();
+        } DEĞILSE {
+            DÖNGÜ SON;
+        }
+    }
+}
+
+-- Yorumları atla
+IŞLEÇ yorum_atla(): MANTIKSAL {
+    DEĞIŞKEN k: METIN = mevcut_karakter();
+    DEĞIŞKEN s: METIN = sonraki_karakter();
+
+    -- Tek satır yorum: --
+    EĞER (k == "-" VE s == "-") {
+        DEĞIŞKEN ucuncu: METIN = karakter_al(kaynak_kod, konum + 2);
+
+        -- Çoklu satır yorum kontrolü: ---
+        EĞER (ucuncu == "-") {
+            -- Çoklu satır yorum: --- ile --- arası
+            ilerle(); ilerle(); ilerle();  -- --- atla
+
+            DÖNGÜ (konum < uzunluk - 2) {
+                EĞER (mevcut_karakter() == "-" VE
+                      sonraki_karakter() == "-" VE
+                      karakter_al(kaynak_kod, konum + 2) == "-") {
+                    ilerle(); ilerle(); ilerle();  -- Kapanış --- atla
+                    DÖNGÜ SON;
+                }
+                ilerle();
+            }
+            DÖNÜŞ DOĞRU;
+        }
+
+        -- Tek satır yorum
+        DÖNGÜ (mevcut_karakter() != "\n" VE konum < uzunluk) {
+            ilerle();
+        }
+        DÖNÜŞ DOĞRU;
+    }
+
+    DÖNÜŞ YANLIŞ;
+}
+
+-- Rakam mı kontrol et
+IŞLEÇ rakam_mi(k: METIN): MANTIKSAL {
+    DÖNÜŞ (k >= "0" VE k <= "9");
+}
+
+-- Harf mi kontrol et
+IŞLEÇ harf_mi(k: METIN): MANTIKSAL {
+    DÖNÜŞ ((k >= "a" VE k <= "z") VEYA
+            (k >= "A" VE k <= "Z") VEYA
+            k == "ı" VEYA k == "İ" VEYA k == "ğ" VEYA k == "Ğ" VEYA
+            k == "ü" VEYA k == "Ü" VEYA k == "ş" VEYA k == "Ş" VEYA
+            k == "ö" VEYA k == "Ö" VEYA k == "ç" VEYA k == "Ç" VEYA
+            k == "_");
+}
+
+-- Sayı oku
+IŞLEÇ sayi_oku(): METIN {
+    DEĞIŞKEN baslangic: SAYI = konum;
+    DEĞIŞKEN nokta_var: MANTIKSAL = YANLIŞ;
+
+    DÖNGÜ (rakam_mi(mevcut_karakter()) VEYA (mevcut_karakter() == "." VE DEĞİL nokta_var)) {
+        EĞER (mevcut_karakter() == ".") {
+            nokta_var = DOĞRU;
+        }
+        ilerle();
+    }
+
+    DÖNÜŞ alt_metin(kaynak_kod, baslangic, konum - baslangic);
+}
+
+-- String oku
+IŞLEÇ metin_oku(): METIN {
+    DEĞIŞKEN tirnakTipi: METIN = mevcut_karakter();
+    ilerle();  -- Açılış tırnağını atla
+
+    DEĞIŞKEN baslangic: SAYI = konum;
+
+    DÖNGÜ (mevcut_karakter() != tirnakTipi VE konum < uzunluk) {
+        EĞER (mevcut_karakter() == "\\") {
+            ilerle();  -- Escape karakterini atla
+        }
+        ilerle();
+    }
+
+    DEĞIŞKEN deger: METIN = alt_metin(kaynak_kod, baslangic, konum - baslangic);
+    ilerle();  -- Kapanış tırnağını atla
+
+    DÖNÜŞ deger;
+}
+
+-- Tanımlayıcı veya anahtar kelime oku
+IŞLEÇ tanimlayici_oku(): METIN {
+    DEĞIŞKEN baslangic: SAYI = konum;
+
+    DÖNGÜ (harf_mi(mevcut_karakter()) VEYA rakam_mi(mevcut_karakter())) {
+        ilerle();
+    }
+
+    DÖNÜŞ alt_metin(kaynak_kod, baslangic, konum - baslangic);
+}
+
+-- Anahtar kelime mi kontrol et
+IŞLEÇ anahtar_kelime_mi(kelime: METIN): MANTIKSAL {
+    DÖNGÜ (DEĞIŞKEN i: SAYI = 0; i < UZUNLUK(anahtar_kelimeler); i = i + 1) {
+        EĞER (kelime == anahtar_kelimeler[i]) {
+            DÖNÜŞ DOĞRU;
+        }
+    }
+    DÖNÜŞ YANLIŞ;
+}
+
+-- Token oluştur
+IŞLEÇ token_olustur(tip: METIN, deger: METIN): SÖZLÜK {
+    DEĞIŞKEN token: SÖZLÜK = SÖZLÜK_OLUŞTUR();
+    SÖZLÜK_EKLE(token, "tip", tip);
+    SÖZLÜK_EKLE(token, "deger", deger);
+    SÖZLÜK_EKLE(token, "satir", sayiya_cevir(satir));
+    SÖZLÜK_EKLE(token, "sutun", sayiya_cevir(sutun));
+    DÖNÜŞ token;
+}
+
+-- Sonraki token'ı al
+IŞLEÇ sonraki_token(): SÖZLÜK {
+    DÖNGÜ (DOĞRU) {
+        bosluk_atla();
+
+        -- Dosya sonu
+        EĞER (konum >= uzunluk) {
+            DÖNÜŞ token_olustur("EOF", "");
+        }
+
+        -- Yorumları atla
+        EĞER (yorum_atla()) {
+            DEVAM;
+        }
+
+        DEĞIŞKEN k: METIN = mevcut_karakter();
+
+        -- Sayılar
+        EĞER (rakam_mi(k)) {
+            DEĞIŞKEN sayi: METIN = sayi_oku();
+            DÖNÜŞ token_olustur("SAYI", sayi);
+        }
+
+        -- Stringler
+        EĞER (k == "\"" VEYA k == "'") {
+            DEĞIŞKEN metin: METIN = metin_oku();
+            DÖNÜŞ token_olustur("METIN", metin);
+        }
+
+        -- Tanımlayıcılar ve anahtar kelimeler
+        EĞER (harf_mi(k)) {
+            DEĞIŞKEN kelime: METIN = tanimlayici_oku();
+
+            EĞER (anahtar_kelime_mi(kelime)) {
+                DÖNÜŞ token_olustur(buyuk_harfe_cevir(kelime), kelime);
+            } DEĞILSE {
+                DÖNÜŞ token_olustur("TANIMLAYICI", kelime);
+            }
+        }
+
+        -- Operatörler ve semboller (2 karakterli)
+        DEĞIŞKEN s: METIN = sonraki_karakter();
+        DEĞIŞKEN iki_kar: METIN = k + s;
+
+        EĞER (iki_kar == "==" VEYA iki_kar == "!=" VEYA iki_kar == "<=" VEYA
+            iki_kar == ">=" VEYA iki_kar == "::" VEYA iki_kar == "->") {
+            ilerle(); ilerle();
+            DÖNÜŞ token_olustur(iki_kar, iki_kar);
+        }
+
+        -- Operatörler ve semboller (1 karakterli)
+        DEĞIŞKEN semboller: METIN = "+-*/=<>(){}[],:;.!%&|^~?@#$\\";
+        EĞER (IÇERIR(semboller, k)) {
+            ilerle();
+            DÖNÜŞ token_olustur(k, k);
+        }
+
+        -- Bilinmeyen karakter
+        YAZDIR "HATA: Bilinmeyen karakter: " + k + " (satır: " + sayiya_metin(satir) + ", sütun: " + sayiya_metin(sutun) + ")";
+        ilerle();
+    }
+}
+
+-- Tüm token'ları al
+IŞLEÇ tokenize(kod: METIN): DİZİ[SÖZLÜK] {
+    lexer_baslat(kod);
+
+    DEĞIŞKEN tokenler: DİZİ[SÖZLÜK] = [];
+
+    DÖNGÜ (DOĞRU) {
+        DEĞIŞKEN token: SÖZLÜK = sonraki_token();
+        DİZİ_EKLE(tokenler, token);
+
+        EĞER (SÖZLÜK_AL(token, "tip") == "EOF") {
+            DÖNGÜ SON;
+        }
+    }
+
+    DÖNÜŞ tokenler;
+}
+
+-- Test işleci (geliştirme aşaması için)
+IŞLEÇ lexer_test(): BOŞ {
+    DEĞIŞKEN kod: METIN = "DEĞIŞKEN x: SAYI = 42;\nYAZDIR x;";
+    DEĞIŞKEN tokenler: DİZİ[SÖZLÜK] = tokenize(kod);
+
+    YAZDIR "Toplam token sayısı: " + sayiya_metin(UZUNLUK(tokenler));
+
+    DÖNGÜ (DEĞIŞKEN i: SAYI = 0; i < UZUNLUK(tokenler); i = i + 1) {
+        DEĞIŞKEN t: SÖZLÜK = tokenler[i];
+        YAZDIR "Token[" + sayiya_metin(i) + "]: " +
+                SÖZLÜK_AL(t, "tip") + " = '" + SÖZLÜK_AL(t, "deger") + "'";
+    }
+}
