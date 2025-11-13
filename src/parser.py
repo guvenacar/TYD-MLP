@@ -226,15 +226,19 @@ class Parser:
         """Tek bir komutu ayrıştırır."""
         token = self.mevcut_token
 
-        # 0. MLP SYNTAX: DEĞIŞKEN isim: TİP = değer;
+        # 0. Phase 8: SINIF tanımı mı?
+        if token.tip == TOKEN_TIPLERI['OOP_SINIF']:
+            return self.sinif_tanimlama()
+
+        # 1. MLP SYNTAX: DEĞIŞKEN isim: TİP = değer;
         if token.tip == TOKEN_TIPLERI['TANIMLA_DEGISKEN']:
             return self.mlp_degisken_tanimlama()
 
-        # 1. TİP ile mi başlıyor?
+        # 2. TİP ile mi başlıyor?
         if token.tip in [TOKEN_TIPLERI['TANIMLA_SAYI'], TOKEN_TIPLERI['TANIMLA_METIN'], TOKEN_TIPLERI['TANIMLA_BOOL']]:
             return self.tip_ile_baslayan_komut()
 
-        # 2. İŞLEÇ ile mi başlıyor?
+        # 3. İŞLEÇ ile mi başlıyor?
         if token.tip == TOKEN_TIPLERI['YAPI_ISLEC']:
             return self.islec_tanimlama(None)
 
@@ -557,3 +561,133 @@ class Parser:
         hedef_node = ast_nodes.Degisken(hedef_token)
         # ast_nodes.py'deki SozlukErisim tanımımızla eşleşmeli
         return ast_nodes.SozlukErisim(hedef_node=hedef_node, anahtar_node=anahtar_ifadesi)
+
+    # --- Phase 8: OOP Support ---
+
+    def sinif_tanimlama(self):
+        """
+        SINIF tanımını parse eder:
+
+        SINIF Person
+            ÖZELLIK METIN isim;
+            ÖZELLIK SAYISAL yas;
+
+            KURUCU(METIN i, SAYISAL y)
+                isim = i;
+                yas = y;
+            SON
+
+            IŞLEÇ selamla()
+                YAZDIR isim;
+            SON
+        SON
+        """
+        self.tuket(TOKEN_TIPLERI['OOP_SINIF'])  # 'SINIF'
+
+        # Sınıf adı
+        sinif_adi = self.mevcut_token
+        self.tuket(TOKEN_TIPLERI['IDENTIFIER'])
+
+        # Özellikler, kurucu, metodlar
+        ozellikler = []
+        kurucu = None
+        metodlar = []
+
+        # SINIF gövdesini parse et (SON'a kadar)
+        while self.mevcut_token.tip != TOKEN_TIPLERI['YAPI_SON'] and \
+              self.mevcut_token.tip != TOKEN_TIPLERI['EOF']:
+
+            # ÖZELLIK tanımı mı?
+            if self.mevcut_token.tip == TOKEN_TIPLERI['OOP_OZELLIK']:
+                ozellikler.append(self.ozellik_tanimlama())
+
+            # KURUCU tanımı mı?
+            elif self.mevcut_token.tip == TOKEN_TIPLERI['OOP_KURUCU']:
+                kurucu = self.kurucu_tanimlama()
+
+            # IŞLEÇ (method) tanımı mı?
+            elif self.mevcut_token.tip in [TOKEN_TIPLERI['TANIMLA_SAYI'],
+                                            TOKEN_TIPLERI['TANIMLA_METIN'],
+                                            TOKEN_TIPLERI['TANIMLA_BOOL']]:
+                # Dönüş tipi olan method
+                tip_token = self.mevcut_token
+                self.tuket(self.mevcut_token.tip)
+
+                if self.mevcut_token.tip == TOKEN_TIPLERI['YAPI_ISLEC']:
+                    metodlar.append(self.islec_tanimlama(tip_token))
+                else:
+                    self.hata("SINIF içinde tip token'dan sonra IŞLEÇ bekleniyor")
+
+            else:
+                self.hata(f"SINIF içinde beklenmeyen token: {self.mevcut_token}")
+
+        self.tuket(TOKEN_TIPLERI['YAPI_SON'])  # 'SON'
+
+        return ast_nodes.SinifTanimlama(sinif_adi, ozellikler, kurucu, metodlar)
+
+    def ozellik_tanimlama(self):
+        """ÖZELLIK TIP isim; formatını parse eder"""
+        self.tuket(TOKEN_TIPLERI['OOP_OZELLIK'])  # 'ÖZELLIK'
+
+        # Tip
+        tip_token = self.mevcut_token
+        if self.mevcut_token.tip not in [TOKEN_TIPLERI['TANIMLA_SAYI'],
+                                          TOKEN_TIPLERI['TANIMLA_METIN'],
+                                          TOKEN_TIPLERI['TANIMLA_BOOL']]:
+            self.hata("ÖZELLIK'ten sonra tip bekleniyor (SAYISAL, METIN, vb.)")
+
+        self.tuket(self.mevcut_token.tip)
+
+        # İsim
+        ad_token = self.mevcut_token
+        self.tuket(TOKEN_TIPLERI['IDENTIFIER'])
+
+        self.tuket(TOKEN_TIPLERI['SEMICOLON'])  # ';'
+
+        return ast_nodes.OzellikTanimlama(tip_token, ad_token)
+
+    def kurucu_tanimlama(self):
+        """KURUCU(parametreler) ... SON formatını parse eder"""
+        self.tuket(TOKEN_TIPLERI['OOP_KURUCU'])  # 'KURUCU'
+
+        # Parametreler
+        self.tuket(TOKEN_TIPLERI['LEFT_PAREN'])  # '('
+
+        parametreler = []
+        if self.mevcut_token.tip != TOKEN_TIPLERI['RIGHT_PAREN']:
+            # İlk parametre
+            parametreler.append(self.parametre())
+
+            # Virgülle ayrılmış diğer parametreler
+            while self.mevcut_token.tip == TOKEN_TIPLERI['COMMA']:
+                self.tuket(TOKEN_TIPLERI['COMMA'])
+                parametreler.append(self.parametre())
+
+        self.tuket(TOKEN_TIPLERI['RIGHT_PAREN'])  # ')'
+
+        # Kurucu gövdesi (komutlar SON'a kadar)
+        govde = ast_nodes.Blok()
+        while self.mevcut_token.tip != TOKEN_TIPLERI['YAPI_SON'] and \
+              self.mevcut_token.tip != TOKEN_TIPLERI['EOF']:
+            govde.komutlar.append(self.komut())
+
+        self.tuket(TOKEN_TIPLERI['YAPI_SON'])  # 'SON'
+
+        return ast_nodes.KurucuTanimlama(parametreler, govde)
+
+    def parametre(self):
+        """TIP isim formatını parse eder (fonksiyon parametresi)"""
+        # Tip
+        tip_token = self.mevcut_token
+        if self.mevcut_token.tip not in [TOKEN_TIPLERI['TANIMLA_SAYI'],
+                                          TOKEN_TIPLERI['TANIMLA_METIN'],
+                                          TOKEN_TIPLERI['TANIMLA_BOOL']]:
+            self.hata("Parametre tipinde SAYISAL, METIN veya ZITLIK bekleniyor")
+
+        self.tuket(self.mevcut_token.tip)
+
+        # İsim
+        ad_token = self.mevcut_token
+        self.tuket(TOKEN_TIPLERI['IDENTIFIER'])
+
+        return ast_nodes.Parametre(tip_token, ad_token)

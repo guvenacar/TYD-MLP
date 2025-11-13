@@ -22,7 +22,15 @@
       "OP_CARP": "çarp",
       "OP_BOL": "böl",
       "OP_GT": "büyük",
-      "OP_LT": "küçük"
+      "OP_LT": "küçük",
+
+      "OOP_SINIF": "sınıf",
+      "OOP_KURUCU": "kurucu",
+      "OOP_OZELLIK": "özellik",
+      "OOP_YAPI": "yapı",
+      "OOP_GENERIC": "generic",
+      "OOP_DEMET": "demet",
+      "OOP_ENUM": "enum"
     }
   }
 }

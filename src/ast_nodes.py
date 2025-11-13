@@ -135,3 +135,26 @@ class SozlukErisim(ASTNode):
     def __repr__(self):
         # Artık 'hedef' bir Degisken düğümü olduğu için .ad kullanıyoruz
         return f"SozlukErisim(hedef={self.hedef.ad}, anahtar={self.anahtar})"
+
+# --- OOP Yapıları (Phase 8) ---
+
+class OzellikTanimlama(ASTNode):
+    """Sınıf özelliği tanımı (field) - ÖZELLIK tip ad;"""
+    def __init__(self, tip_token, ad_token, varsayilan_deger=None):
+        self.tip = tip_token           # Tip (SAYISAL, METIN, vb.)
+        self.ad = ad_token.deger       # Özellik adı
+        self.varsayilan_deger = varsayilan_deger  # Opsiyonel varsayılan değer
+
+class KurucuTanimlama(ASTNode):
+    """Constructor tanımı - KURUCU(parametreler) ... SON"""
+    def __init__(self, parametreler_list, govde_node):
+        self.parametreler = parametreler_list  # Parametre listesi
+        self.govde = govde_node                # Komutların olduğu Blok
+
+class SinifTanimlama(ASTNode):
+    """Sınıf tanımı - SINIF ad ... SON"""
+    def __init__(self, ad_token, ozellikler_list, kurucu_node, metodlar_list):
+        self.ad = ad_token.deger       # Sınıf adı
+        self.ozellikler = ozellikler_list  # OzellikTanimlama listesi
+        self.kurucu = kurucu_node      # KurucuTanimlama (opsiyonel)
+        self.metodlar = metodlar_list  # IslecTanimlama listesi (methods)

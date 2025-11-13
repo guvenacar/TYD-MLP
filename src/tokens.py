@@ -73,6 +73,15 @@ TOKEN_TIPLERI = {
 
     # --- HATA BURADAYDI ---
     # 'RIGHT_BRACE' satırının sonuna VİRGÜL (,) eklendi.
-    
-    'EOF': 'EOF', # Dosya Sonu 
+
+    'EOF': 'EOF', # Dosya Sonu
+
+    # OOP Keywords (Phase 8)
+    'OOP_SINIF': 'OOP_SINIF',           # SINIF
+    'OOP_KURUCU': 'OOP_KURUCU',         # KURUCU
+    'OOP_OZELLIK': 'OOP_OZELLIK',       # ÖZELLIK
+    'OOP_YAPI': 'OOP_YAPI',             # YAPI (struct)
+    'OOP_GENERIC': 'OOP_GENERIC',       # GENERIC
+    'OOP_DEMET': 'OOP_DEMET',           # DEMET (tuple)
+    'OOP_ENUM': 'OOP_ENUM',             # ENUM
 }

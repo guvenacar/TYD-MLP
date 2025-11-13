@@ -24,6 +24,11 @@ class Generator:
         # YENİ: C Arayüzü Katmanını başlat
         self.c_arayuzu = CArayuzu(self)
 
+        # Phase 8: OOP Desteği
+        self.sinif_haritasi = {}  # Tanımlanan sınıflar
+        self.c_structs = []  # C struct definitions
+        self.c_functions = []  # C function definitions (constructors, methods)
+
     # --- Kod Üretim Yardımcıları ---
 
     def emit(self, instruction):
@@ -86,11 +91,34 @@ class Generator:
         """Tüm AST'yi gezer ve tam Assembly kodunu döndürür."""
         # --- C Kütüphanesi kurulumu (Artık C_Arayuzu'nden geliyor) ---
         self.code.extend(self.c_arayuzu.generate_extern_bildirimleri())
-        
+
         self.emit_data('format_sayi db "%d", 10, 0')
         self.emit_data('format_metin db "%s", 10, 0')
 
-        self.visit(self.ast_koku) 
+        self.visit(self.ast_koku)
+
+        # Phase 8: OOP - C Struct ve Function definitions'ları ekle
+        if self.c_structs or self.c_functions:
+            self.code.insert(0, "; ========================================")
+            self.code.insert(1, "; Phase 8: OOP - C Code Generation")
+            self.code.insert(2, "; ========================================")
+            self.code.insert(3, ";")
+
+            if self.c_structs:
+                self.code.insert(4, "; --- C Struct Definitions ---")
+                for i, line in enumerate(self.c_structs):
+                    self.code.insert(5 + i, f"; {line}")
+                self.code.insert(5 + len(self.c_structs), ";")
+
+            if self.c_functions:
+                insert_pos = 5 + len(self.c_structs) + 1
+                self.code.insert(insert_pos, "; --- C Function Definitions ---")
+                for i, line in enumerate(self.c_functions):
+                    self.code.insert(insert_pos + 1 + i, f"; {line}")
+                self.code.insert(insert_pos + 1 + len(self.c_functions), ";")
+
+            self.code.insert(len(self.code), "; ========================================")
+            self.code.insert(len(self.code), "") 
         self.code.append("\nsection .data")
         self.code.extend(self.data)
         
@@ -111,12 +139,17 @@ class Generator:
 
     def visit(self, node):
         # Bu 'visit' fonksiyonundaki sıralama kritiktir
-        
+
+        # 0. SinifTanimlama'yı ara (Phase 8: OOP)
+        if isinstance(node, ast_nodes.SinifTanimlama):
+            self.visit_SinifTanimlama(node)
+            return
+
         # 1. IslecTanimlama'yı ara
         if isinstance(node, ast_nodes.IslecTanimlama):
             self.visit_IslecTanimlama(node)
             return
-        
+
         # 2. DiziTanimlama'yı ara
         if isinstance(node, ast_nodes.DiziTanimlama):
             self.visit_DiziTanimlama(node)
@@ -394,5 +427,181 @@ class Generator:
             elif op == TOKEN_TIPLERI['OP_GT']: self.emit("setg al")
             elif op == TOKEN_TIPLERI['OP_LT']: self.emit("setl al")
             self.emit("movzx rax, al")
+
+    # --- Phase 8: OOP Support ---
+
+    def visit_SinifTanimlama(self, node):
+        """
+        SINIF → C Struct + Constructor + Methods
+
+        Örnek TYD:
+        SINIF Person
+            ÖZELLIK METIN isim;
+            ÖZELLIK SAYISAL yas;
+
+            KURUCU(METIN i, SAYISAL y)
+                isim = i;
+                yas = y;
+            SON
+
+            IŞLEÇ selamla()
+                YAZDIR isim;
+            SON
+        SON
+
+        Üretilen C:
+        typedef struct {
+            char* isim;
+            int64_t yas;
+        } Person;
+
+        Person* Person_new(char* i, int64_t y) {
+            Person* self = mlp_alloc(sizeof(Person));
+            self->isim = i;
+            self->yas = y;
+            return self;
+        }
+
+        void Person_selamla(Person* self) {
+            printf("%s\\n", self->isim);
+        }
+        """
+        sinif_adi = node.ad
+        self.emit(f"; --- SINIF Tanımı: {sinif_adi} ---")
+
+        # Sınıfı haritaya ekle
+        self.sinif_haritasi[sinif_adi] = {
+            'ozellikler': node.ozellikler,
+            'kurucu': node.kurucu,
+            'metodlar': node.metodlar
+        }
+
+        # ADIM 1: C Struct Definition Üret
+        self._generate_c_struct(sinif_adi, node.ozellikler)
+
+        # ADIM 2: Constructor Function Üret
+        if node.kurucu:
+            self._generate_constructor(sinif_adi, node.kurucu)
+
+        # ADIM 3: Method Functions Üret
+        for metod in node.metodlar:
+            self._generate_method(sinif_adi, metod)
+
+    def _generate_c_struct(self, sinif_adi, ozellikler):
+        """C struct definition üretir"""
+        struct_lines = []
+        struct_lines.append(f"// SINIF: {sinif_adi}")
+        struct_lines.append(f"typedef struct {{")
+
+        for ozellik in ozellikler:
+            tip_deger = ozellik.tip.deger if hasattr(ozellik.tip, 'deger') else ozellik.tip
+            c_tip = self._tyd_tip_to_c_tip(tip_deger)
+            struct_lines.append(f"    {c_tip} {ozellik.ad};")
+
+        struct_lines.append(f"}} {sinif_adi};")
+        struct_lines.append("")
+
+        self.c_structs.extend(struct_lines)
+        self.emit(f"; C struct '{sinif_adi}' tanımlandı")
+
+    def _generate_constructor(self, sinif_adi, kurucu):
+        """Constructor function üretir: ClassName_new()"""
+        func_lines = []
+        func_name = f"{sinif_adi}_new"
+
+        # Function signature
+        params = []
+        for param in kurucu.parametreler:
+            c_tip = self._tyd_tip_to_c_tip(param.tip.deger if hasattr(param.tip, 'deger') else param.tip)
+            params.append(f"{c_tip} {param.ad.deger if hasattr(param.ad, 'deger') else param.ad}")
+
+        params_str = ", ".join(params)
+        func_lines.append(f"// KURUCU: {sinif_adi}")
+        func_lines.append(f"{sinif_adi}* {func_name}({params_str}) {{")
+        func_lines.append(f"    {sinif_adi}* self = ({sinif_adi}*)mlp_alloc(sizeof({sinif_adi}));")
+
+        # Constructor body - field initialization
+        # Note: Constructor gövdesinde atamalar var, onları self->field formatına çevir
+        func_lines.append(f"    // Field initialization from constructor")
+        for komut in kurucu.govde.komutlar:
+            if isinstance(komut, ast_nodes.AtamaKomutu):
+                field_name = komut.hedef.ad if hasattr(komut.hedef, 'ad') else str(komut.hedef)
+                # Sağ tarafı değerlendirmek için basit stringleştirme (iyileştirilebilir)
+                value = self._stringify_expression(komut.ifade)
+                func_lines.append(f"    self->{field_name} = {value};")
+
+        func_lines.append(f"    return self;")
+        func_lines.append(f"}}")
+        func_lines.append("")
+
+        self.c_functions.extend(func_lines)
+        self.emit(f"; Constructor '{func_name}' tanımlandı")
+
+    def _generate_method(self, sinif_adi, metod):
+        """Method function üretir: ClassName_methodname(ClassName* self, ...)"""
+        func_lines = []
+        metod_adi = metod.ad.deger if hasattr(metod.ad, 'deger') else metod.ad
+        func_name = f"{sinif_adi}_{metod_adi}"
+
+        # Return type
+        if metod.donus_tipi:
+            return_tip = self._tyd_tip_to_c_tip(metod.donus_tipi.deger if hasattr(metod.donus_tipi, 'deger') else metod.donus_tipi)
         else:
-            self.emit(f"; TODO: Desteklenmeyen İkili İşlem: {op}")
+            return_tip = "void"
+
+        # Parameters (self + user params)
+        params = [f"{sinif_adi}* self"]
+        for param in metod.parametreler:
+            c_tip = self._tyd_tip_to_c_tip(param.tip.deger if hasattr(param.tip, 'deger') else param.tip)
+            params.append(f"{c_tip} {param.ad.deger if hasattr(param.ad, 'deger') else param.ad}")
+
+        params_str = ", ".join(params)
+        func_lines.append(f"// METHOD: {sinif_adi}.{metod_adi}")
+        func_lines.append(f"{return_tip} {func_name}({params_str}) {{")
+        func_lines.append(f"    // Method body")
+        func_lines.append(f"    // TODO: Implement method body transformation")
+        func_lines.append(f"}}")
+        func_lines.append("")
+
+        self.c_functions.extend(func_lines)
+        self.emit(f"; Method '{func_name}' tanımlandı")
+
+    def _tyd_tip_to_c_tip(self, tyd_tip):
+        """TYD tipini C tipine çevirir"""
+        # Token objesini normalize et
+        if hasattr(tyd_tip, 'lower'):
+            tyd_tip = tyd_tip.lower()
+
+        tip_map = {
+            'SAYISAL': 'int64_t',
+            'sayısal': 'int64_t',
+            'sayisal': 'int64_t',
+            'METIN': 'char*',
+            'metin': 'char*',
+            'ZITLIK': 'int64_t',
+            'zıtlık': 'int64_t',
+            'zitlik': 'int64_t',
+        }
+        return tip_map.get(tyd_tip, 'void*')  # Default to void* for unknown types
+
+    def _stringify_expression(self, expr):
+        """Expression'ı basit string'e çevirir (C kodu için)"""
+        if isinstance(expr, ast_nodes.Sayi):
+            return str(expr.deger)
+        elif isinstance(expr, ast_nodes.Metin):
+            return f'"{expr.deger}"'
+        elif isinstance(expr, ast_nodes.Degisken):
+            return expr.ad
+        elif isinstance(expr, ast_nodes.IkiliIslem):
+            sol = self._stringify_expression(expr.sol)
+            sag = self._stringify_expression(expr.sag)
+            op_map = {
+                'PLUS': '+', 'OP_ARTI': '+',
+                'MINUS': '-', 'OP_EKSI': '-',
+                'MUL': '*', 'OP_CARP': '*',
+                'DIV': '/', 'OP_BOL': '/',
+            }
+            op = op_map.get(expr.operator.tip, '?')
+            return f"({sol} {op} {sag})"
+        else:
+            return "/* complex expression */"

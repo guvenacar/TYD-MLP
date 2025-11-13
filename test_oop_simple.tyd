@@ -1,0 +1,27 @@
+-- Phase 8: OOP Test
+-- Basit SINIF örneği
+
+SINIF Person
+    ÖZELLIK METIN isim;
+    ÖZELLIK SAYISAL yas;
+
+    KURUCU(METIN i, SAYISAL y)
+        isim = i;
+        yas = y;
+    SON
+
+    SAYISAL işleç bilgi_yazdir()
+        YAZDIR "Person bilgileri:";
+        YAZDIR isim;
+        YAZDIR yas;
+        DÖNÜŞ 0;
+    SON
+SON
+
+SAYISAL işleç main()
+    YAZDIR "=== OOP Test Başlıyor ===";
+    YAZDIR "SINIF tanımı tamamlandı";
+    DÖNÜŞ 0;
+SON
+
+main();
