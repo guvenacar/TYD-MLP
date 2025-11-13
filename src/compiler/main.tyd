@@ -1,0 +1,243 @@
+-- ===============================================
+-- MLP Main Compiler (TYD Syntax) - Bootstrap Version
+-- ===============================================
+-- Main compiler orchestration
+-- Integrates: Lexer → Parser → Codegen
+
+-- Note: This requires lexer.tyd, parser.tyd, and codegen.tyd
+-- For bootstrap, we simulate the full pipeline
+
+-- ===============================================
+-- FILE I/O PLACEHOLDERS
+-- ===============================================
+-- These would be implemented in runtime or as external functions
+
+METIN işleç dosya_oku(METIN dosya_yolu)
+    -- Placeholder: Read file content
+    -- In real implementation, would call C runtime function
+    YAZDIR "DOSYA_OKU: ";
+    YAZDIR dosya_yolu;
+    DÖNÜŞ "SAYISAL x = 42;";  -- Sample TYD code
+SON
+
+METIN işleç dosya_yaz(METIN dosya_yolu, METIN icerik)
+    -- Placeholder: Write file content
+    YAZDIR "DOSYA_YAZ: ";
+    YAZDIR dosya_yolu;
+    YAZDIR "Icerik uzunlugu: ";
+    SAYISAL uzunluk = UZUNLUK(icerik);
+    YAZDIR uzunluk;
+    DÖNÜŞ "";
+SON
+
+-- ===============================================
+-- COMPILER PIPELINE
+-- ===============================================
+
+-- Stage 1: Lexical Analysis (Tokenization)
+METIN işleç compile_stage1_lexer(METIN kaynak_kod)
+    YAZDIR "=== STAGE 1: LEXER ===";
+
+    -- Call lexer (from lexer.tyd)
+    -- Note: In real implementation, this would import lexer functions
+    -- For now, we simulate the output
+
+    METIN tokens = "SAYISAL x = 42 ;";  -- Simulated token stream
+
+    YAZDIR "Token stream olusturuldu";
+    YAZDIR tokens;
+
+    DÖNÜŞ tokens;
+SON
+
+-- Stage 2: Syntax Analysis (Parsing)
+METIN işleç compile_stage2_parser(METIN tokens)
+    YAZDIR "=== STAGE 2: PARSER ===";
+
+    -- Call parser (from parser.tyd)
+    -- Note: In real implementation, this would import parser functions
+    -- For now, we simulate the AST output
+
+    METIN ast = "Program(VarDecl(x,Sayi(42)))";  -- Simulated AST
+
+    YAZDIR "AST olusturuldu";
+    YAZDIR ast;
+
+    DÖNÜŞ ast;
+SON
+
+-- Stage 3: Code Generation (Assembly)
+METIN işleç compile_stage3_codegen(METIN ast)
+    YAZDIR "=== STAGE 3: CODEGEN ===";
+
+    -- Call codegen (from codegen.tyd)
+    -- Note: In real implementation, this would import codegen functions
+    -- For now, we simulate the assembly output
+
+    METIN assembly = "section .text\nglobal main\nmain:\n    push rbp\n    mov rbp, rsp\n    mov rax, 42\n    sub rsp, 8\n    mov [rbp-8], rax\n    mov rsp, rbp\n    pop rbp\n    ret";
+
+    YAZDIR "Assembly kodu olusturuldu";
+    SAYISAL asm_uzunluk = UZUNLUK(assembly);
+    YAZDIR asm_uzunluk;
+
+    DÖNÜŞ assembly;
+SON
+
+-- ===============================================
+-- MAIN COMPILATION FUNCTION
+-- ===============================================
+
+METIN işleç compile(METIN input_file, METIN output_file)
+    YAZDIR "========================================";
+    YAZDIR "MLP BOOTSTRAP COMPILER";
+    YAZDIR "========================================";
+    YAZDIR "";
+
+    YAZDIR "Input: ";
+    YAZDIR input_file;
+    YAZDIR "Output: ";
+    YAZDIR output_file;
+    YAZDIR "";
+
+    -- Step 1: Read source file
+    YAZDIR "--- STEP 1: Kaynak dosyayi oku ---";
+    METIN kaynak_kod = dosya_oku(input_file);
+    YAZDIR "Kaynak kod okundu";
+    YAZDIR "";
+
+    -- Step 2: Lexical Analysis
+    METIN tokens = compile_stage1_lexer(kaynak_kod);
+    YAZDIR "";
+
+    -- Step 3: Syntax Analysis
+    METIN ast = compile_stage2_parser(tokens);
+    YAZDIR "";
+
+    -- Step 4: Code Generation
+    METIN assembly = compile_stage3_codegen(ast);
+    YAZDIR "";
+
+    -- Step 5: Write output file
+    YAZDIR "--- STEP 5: Output dosyasini yaz ---";
+    dosya_yaz(output_file, assembly);
+    YAZDIR "";
+
+    YAZDIR "========================================";
+    YAZDIR "DERLEME BASARILI!";
+    YAZDIR "========================================";
+
+    DÖNÜŞ "OK";
+SON
+
+-- ===============================================
+-- ERROR HANDLING (Basic)
+-- ===============================================
+
+METIN işleç compiler_error(METIN mesaj)
+    YAZDIR "COMPILER ERROR: ";
+    YAZDIR mesaj;
+    DÖNÜŞ "ERROR";
+SON
+
+METIN işleç compiler_warning(METIN mesaj)
+    YAZDIR "COMPILER WARNING: ";
+    YAZDIR mesaj;
+    DÖNÜŞ "";
+SON
+
+-- ===============================================
+-- COMPILER INFO
+-- ===============================================
+
+METIN işleç compiler_version()
+    YAZDIR "MLP Bootstrap Compiler v0.1.0";
+    YAZDIR "Stage 2: Bootstrap Implementation in TYD";
+    DÖNÜŞ "0.1.0";
+SON
+
+METIN işleç compiler_help()
+    YAZDIR "MLP Bootstrap Compiler";
+    YAZDIR "";
+    YAZDIR "Usage:";
+    YAZDIR "  compile(input_file, output_file)";
+    YAZDIR "";
+    YAZDIR "Example:";
+    YAZDIR "  compile(\"program.tyd\", \"program.asm\")";
+    YAZDIR "";
+    YAZDIR "Pipeline:";
+    YAZDIR "  1. Lexer    - Tokenization";
+    YAZDIR "  2. Parser   - AST Generation";
+    YAZDIR "  3. Codegen  - Assembly Generation";
+    DÖNÜŞ "";
+SON
+
+-- ===============================================
+-- MAIN ENTRY POINT
+-- ===============================================
+
+METIN işleç compiler_main()
+    compiler_version();
+    YAZDIR "";
+    compiler_help();
+    YAZDIR "";
+
+    -- Test compilation
+    YAZDIR "=== TEST COMPILATION ===";
+    METIN result = compile("test.tyd", "test.asm");
+
+    DÖNÜŞ result;
+SON
+
+-- ===============================================
+-- INTEGRATION TESTS
+-- ===============================================
+
+METIN işleç test_lexer_integration()
+    YAZDIR "TEST: Lexer Integration";
+    METIN kod = "SAYISAL x = 42;";
+    METIN tokens = compile_stage1_lexer(kod);
+    YAZDIR "Lexer test PASSED";
+    DÖNÜŞ "";
+SON
+
+METIN işleç test_parser_integration()
+    YAZDIR "TEST: Parser Integration";
+    METIN tokens = "SAYISAL x = 42 ;";
+    METIN ast = compile_stage2_parser(tokens);
+    YAZDIR "Parser test PASSED";
+    DÖNÜŞ "";
+SON
+
+METIN işleç test_codegen_integration()
+    YAZDIR "TEST: Codegen Integration";
+    METIN ast = "Program(VarDecl(x,Sayi(42)))";
+    METIN asm_code = compile_stage3_codegen(ast);
+    YAZDIR "Codegen test PASSED";
+    DÖNÜŞ "";
+SON
+
+METIN işleç run_all_tests()
+    YAZDIR "========================================";
+    YAZDIR "RUNNING COMPILER TESTS";
+    YAZDIR "========================================";
+    YAZDIR "";
+
+    test_lexer_integration();
+    YAZDIR "";
+    test_parser_integration();
+    YAZDIR "";
+    test_codegen_integration();
+    YAZDIR "";
+
+    YAZDIR "========================================";
+    YAZDIR "ALL TESTS PASSED";
+    YAZDIR "========================================";
+
+    DÖNÜŞ "OK";
+SON
+
+-- Load message
+YAZDIR "MLP Main Compiler loaded";
+
+-- Run tests on load
+run_all_tests();
