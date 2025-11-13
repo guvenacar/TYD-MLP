@@ -1,0 +1,461 @@
+-- ===============================================
+-- MLP Parser (Sözdizimi Çözümleyici)
+-- Bootstrap Aşaması - Minimal Implementation
+-- ===============================================
+--
+-- Bu dosya MLP dilinin parser'ıdır ve MLP ile yazılmıştır.
+-- Recursive Descent Parser kullanarak AST (Abstract Syntax Tree) oluşturur.
+
+-- Global değişkenler
+DEĞIŞKEN tokenler: DİZİ[SÖZLÜK];
+DEĞIŞKEN konum: SAYI;
+DEĞIŞKEN token_sayisi: SAYI;
+
+-- Parser'ı başlat
+IŞLEÇ parser_baslat(token_listesi: DİZİ[SÖZLÜK]): BOŞ {
+    tokenler = token_listesi;
+    konum = 0;
+    token_sayisi = UZUNLUK(tokenler);
+}
+
+-- Mevcut token'ı al
+IŞLEÇ mevcut_token(): SÖZLÜK {
+    EĞER (konum >= token_sayisi) {
+        DÖNÜŞ tokenler[token_sayisi - 1];  -- EOF
+    }
+    DÖNÜŞ tokenler[konum];
+}
+
+-- Token tipini al
+IŞLEÇ token_tip(): METIN {
+    DÖNÜŞ SÖZLÜK_AL(mevcut_token(), "tip");
+}
+
+-- Token değerini al
+IŞLEÇ token_deger(): METIN {
+    DÖNÜŞ SÖZLÜK_AL(mevcut_token(), "deger");
+}
+
+-- İlerle (advance)
+IŞLEÇ ilerle(): BOŞ {
+    EĞER (konum < token_sayisi - 1) {
+        konum = konum + 1;
+    }
+}
+
+-- Beklenen token var mı kontrol et
+IŞLEÇ bekle(beklenen_tip: METIN): MANTIKSAL {
+    EĞER (token_tip() == beklenen_tip) {
+        ilerle();
+        DÖNÜŞ DOĞRU;
+    }
+    DÖNÜŞ YANLIŞ;
+}
+
+-- Zorunlu token kontrol et (yoksa hata)
+IŞLEÇ zorunlu_bekle(beklenen_tip: METIN): BOŞ {
+    EĞER (token_tip() != beklenen_tip) {
+        YAZDIR "HATA: Beklenen '" + beklenen_tip + "' ama bulundu '" + token_tip() + "'";
+        DÖNÜŞ;
+    }
+    ilerle();
+}
+
+-- ===============================================
+-- AST Node Oluşturucular
+-- ===============================================
+
+-- Sayı literal node
+IŞLEÇ ast_sayi(deger: METIN): SÖZLÜK {
+    DEĞIŞKEN node: SÖZLÜK = SÖZLÜK_OLUŞTUR();
+    SÖZLÜK_EKLE(node, "tip", "Sayi");
+    SÖZLÜK_EKLE(node, "deger", deger);
+    DÖNÜŞ node;
+}
+
+-- Metin literal node
+IŞLEÇ ast_metin(deger: METIN): SÖZLÜK {
+    DEĞIŞKEN node: SÖZLÜK = SÖZLÜK_OLUŞTUR();
+    SÖZLÜK_EKLE(node, "tip", "Metin");
+    SÖZLÜK_EKLE(node, "deger", deger);
+    DÖNÜŞ node;
+}
+
+-- Değişken node
+IŞLEÇ ast_degisken(isim: METIN): SÖZLÜK {
+    DEĞIŞKEN node: SÖZLÜK = SÖZLÜK_OLUŞTUR();
+    SÖZLÜK_EKLE(node, "tip", "Degisken");
+    SÖZLÜK_EKLE(node, "isim", isim);
+    DÖNÜŞ node;
+}
+
+-- İkili işlem node (binary operation)
+IŞLEÇ ast_ikili_islem(operator: METIN, sol: SÖZLÜK, sag: SÖZLÜK): SÖZLÜK {
+    DEĞIŞKEN node: SÖZLÜK = SÖZLÜK_OLUŞTUR();
+    SÖZLÜK_EKLE(node, "tip", "IkiliIslem");
+    SÖZLÜK_EKLE(node, "operator", operator);
+    SÖZLÜK_EKLE(node, "sol", sol);
+    SÖZLÜK_EKLE(node, "sag", sag);
+    DÖNÜŞ node;
+}
+
+-- Değişken tanımlama node
+IŞLEÇ ast_degisken_tanimlama(isim: METIN, tur: METIN, deger: SÖZLÜK): SÖZLÜK {
+    DEĞIŞKEN node: SÖZLÜK = SÖZLÜK_OLUŞTUR();
+    SÖZLÜK_EKLE(node, "tip", "DegiskenTanimlama");
+    SÖZLÜK_EKLE(node, "isim", isim);
+    SÖZLÜK_EKLE(node, "tur", tur);
+    SÖZLÜK_EKLE(node, "deger", deger);
+    DÖNÜŞ node;
+}
+
+-- Atama komutu node
+IŞLEÇ ast_atama(isim: METIN, deger: SÖZLÜK): SÖZLÜK {
+    DEĞIŞKEN node: SÖZLÜK = SÖZLÜK_OLUŞTUR();
+    SÖZLÜK_EKLE(node, "tip", "AtamaKomutu");
+    SÖZLÜK_EKLE(node, "isim", isim);
+    SÖZLÜK_EKLE(node, "deger", deger);
+    DÖNÜŞ node;
+}
+
+-- İşleç çağırma node (function call)
+IŞLEÇ ast_islec_cagirma(isim: METIN, argumanlar: DİZİ[SÖZLÜK]): SÖZLÜK {
+    DEĞIŞKEN node: SÖZLÜK = SÖZLÜK_OLUŞTUR();
+    SÖZLÜK_EKLE(node, "tip", "IslecCagirma");
+    SÖZLÜK_EKLE(node, "isim", isim);
+    SÖZLÜK_EKLE(node, "argumanlar", argumanlar);
+    DÖNÜŞ node;
+}
+
+-- Eğer bloğu node
+IŞLEÇ ast_eger_blogu(kosul: SÖZLÜK, govde: DİZİ[SÖZLÜK], degilse_govde: DİZİ[SÖZLÜK]): SÖZLÜK {
+    DEĞIŞKEN node: SÖZLÜK = SÖZLÜK_OLUŞTUR();
+    SÖZLÜK_EKLE(node, "tip", "EgerBlogu");
+    SÖZLÜK_EKLE(node, "kosul", kosul);
+    SÖZLÜK_EKLE(node, "govde", govde);
+    SÖZLÜK_EKLE(node, "degilse_govde", degilse_govde);
+    DÖNÜŞ node;
+}
+
+-- Döngü bloğu node
+IŞLEÇ ast_dongu_blogu(kosul: SÖZLÜK, govde: DİZİ[SÖZLÜK]): SÖZLÜK {
+    DEĞIŞKEN node: SÖZLÜK = SÖZLÜK_OLUŞTUR();
+    SÖZLÜK_EKLE(node, "tip", "DonguBlogu");
+    SÖZLÜK_EKLE(node, "kosul", kosul);
+    SÖZLÜK_EKLE(node, "govde", govde);
+    DÖNÜŞ node;
+}
+
+-- İşleç tanımlama node (function definition)
+IŞLEÇ ast_islec_tanimlama(isim: METIN, parametreler: DİZİ[SÖZLÜK], donus_turu: METIN, govde: DİZİ[SÖZLÜK]): SÖZLÜK {
+    DEĞIŞKEN node: SÖZLÜK = SÖZLÜK_OLUŞTUR();
+    SÖZLÜK_EKLE(node, "tip", "IslecTanimlama");
+    SÖZLÜK_EKLE(node, "isim", isim);
+    SÖZLÜK_EKLE(node, "parametreler", parametreler);
+    SÖZLÜK_EKLE(node, "donus_turu", donus_turu);
+    SÖZLÜK_EKLE(node, "govde", govde);
+    DÖNÜŞ node;
+}
+
+-- Parametre node
+IŞLEÇ ast_parametre(isim: METIN, tur: METIN): SÖZLÜK {
+    DEĞIŞKEN node: SÖZLÜK = SÖZLÜK_OLUŞTUR();
+    SÖZLÜK_EKLE(node, "tip", "Parametre");
+    SÖZLÜK_EKLE(node, "isim", isim);
+    SÖZLÜK_EKLE(node, "tur", tur);
+    DÖNÜŞ node;
+}
+
+-- Dönüş komutu node
+IŞLEÇ ast_donus(deger: SÖZLÜK): SÖZLÜK {
+    DEĞIŞKEN node: SÖZLÜK = SÖZLÜK_OLUŞTUR();
+    SÖZLÜK_EKLE(node, "tip", "DonusKomutu");
+    SÖZLÜK_EKLE(node, "deger", deger);
+    DÖNÜŞ node;
+}
+
+-- ===============================================
+-- Recursive Descent Parser
+-- ===============================================
+
+-- FAKTOR: En yüksek öncelikli ifadeler (sayılar, değişkenler, parantez içi)
+IŞLEÇ faktor(): SÖZLÜK {
+    DEĞIŞKEN tip: METIN = token_tip();
+
+    -- Sayı literal
+    EĞER (tip == "SAYI") {
+        DEĞIŞKEN deger: METIN = token_deger();
+        ilerle();
+        DÖNÜŞ ast_sayi(deger);
+    }
+
+    -- Metin literal
+    EĞER (tip == "METIN") {
+        DEĞIŞKEN deger: METIN = token_deger();
+        ilerle();
+        DÖNÜŞ ast_metin(deger);
+    }
+
+    -- Parantez içi ifade: (ifade)
+    EĞER (tip == "(") {
+        ilerle();  -- ( atla
+        DEĞIŞKEN ifade_node: SÖZLÜK = ifade();
+        zorunlu_bekle(")");
+        DÖNÜŞ ifade_node;
+    }
+
+    -- Değişken veya işleç çağırma
+    EĞER (tip == "TANIMLAYICI") {
+        DEĞIŞKEN isim: METIN = token_deger();
+        ilerle();
+
+        -- İşleç çağırma: isim(arg1, arg2, ...)
+        EĞER (token_tip() == "(") {
+            ilerle();  -- ( atla
+
+            DEĞIŞKEN argumanlar: DİZİ[SÖZLÜK] = [];
+
+            EĞER (token_tip() != ")") {
+                DÖNGÜ (DOĞRU) {
+                    DİZİ_EKLE(argumanlar, ifade());
+
+                    EĞER (token_tip() == ",") {
+                        ilerle();  -- , atla
+                    } DEĞILSE {
+                        DÖNGÜ SON;
+                    }
+                }
+            }
+
+            zorunlu_bekle(")");
+            DÖNÜŞ ast_islec_cagirma(isim, argumanlar);
+        }
+
+        -- Sadece değişken
+        DÖNÜŞ ast_degisken(isim);
+    }
+
+    -- Varsayılan (hata durumu)
+    YAZDIR "HATA: Beklenmeyen token: " + tip;
+    DÖNÜŞ ast_sayi("0");  -- Dummy node
+}
+
+-- TERIM: Çarpma, bölme, mod
+IŞLEÇ terim(): SÖZLÜK {
+    DEĞIŞKEN sol: SÖZLÜK = faktor();
+
+    DÖNGÜ (token_tip() == "*" VEYA token_tip() == "/" VEYA token_tip() == "%") {
+        DEĞIŞKEN op: METIN = token_tip();
+        ilerle();
+        DEĞIŞKEN sag: SÖZLÜK = faktor();
+        sol = ast_ikili_islem(op, sol, sag);
+    }
+
+    DÖNÜŞ sol;
+}
+
+-- İFADE: Toplama, çıkarma ve karşılaştırma
+IŞLEÇ ifade(): SÖZLÜK {
+    DEĞIŞKEN sol: SÖZLÜK = terim();
+
+    DÖNGÜ (token_tip() == "+" VEYA token_tip() == "-" VEYA
+           token_tip() == "==" VEYA token_tip() == "!=" VEYA
+           token_tip() == "<" VEYA token_tip() == ">" VEYA
+           token_tip() == "<=" VEYA token_tip() == ">=" VEYA
+           token_tip() == "VE" VEYA token_tip() == "VEYA") {
+        DEĞIŞKEN op: METIN = token_tip();
+        ilerle();
+        DEĞIŞKEN sag: SÖZLÜK = terim();
+        sol = ast_ikili_islem(op, sol, sag);
+    }
+
+    DÖNÜŞ sol;
+}
+
+-- KOMUT: Tek bir komut parse et
+IŞLEÇ komut(): SÖZLÜK {
+    DEĞIŞKEN tip: METIN = token_tip();
+
+    -- Değişken tanımlama: DEĞIŞKEN isim: TÜR = değer;
+    EĞER (tip == "DEĞIŞKEN") {
+        ilerle();  -- DEĞIŞKEN atla
+        DEĞIŞKEN isim: METIN = token_deger();
+        zorunlu_bekle("TANIMLAYICI");
+        zorunlu_bekle(":");
+        DEĞIŞKEN tur: METIN = token_deger();
+        ilerle();  -- Tür atla
+
+        DEĞIŞKEN deger_node: SÖZLÜK = BOŞ;
+        EĞER (token_tip() == "=") {
+            ilerle();  -- = atla
+            deger_node = ifade();
+        }
+
+        zorunlu_bekle(";");
+        DÖNÜŞ ast_degisken_tanimlama(isim, tur, deger_node);
+    }
+
+    -- Eğer bloğu: EĞER (koşul) { ... }
+    EĞER (tip == "EĞER") {
+        ilerle();  -- EĞER atla
+        zorunlu_bekle("(");
+        DEĞIŞKEN kosul: SÖZLÜK = ifade();
+        zorunlu_bekle(")");
+        zorunlu_bekle("{");
+
+        DEĞIŞKEN govde: DİZİ[SÖZLÜK] = [];
+        DÖNGÜ (token_tip() != "}") {
+            DİZİ_EKLE(govde, komut());
+        }
+        zorunlu_bekle("}");
+
+        DEĞIŞKEN degilse_govde: DİZİ[SÖZLÜK] = [];
+        EĞER (token_tip() == "DEĞILSE") {
+            ilerle();  -- DEĞILSE atla
+            zorunlu_bekle("{");
+            DÖNGÜ (token_tip() != "}") {
+                DİZİ_EKLE(degilse_govde, komut());
+            }
+            zorunlu_bekle("}");
+        }
+
+        DÖNÜŞ ast_eger_blogu(kosul, govde, degilse_govde);
+    }
+
+    -- Döngü bloğu: DÖNGÜ (koşul) { ... }
+    EĞER (tip == "DÖNGÜ") {
+        ilerle();  -- DÖNGÜ atla
+        zorunlu_bekle("(");
+        DEĞIŞKEN kosul: SÖZLÜK = ifade();
+        zorunlu_bekle(")");
+        zorunlu_bekle("{");
+
+        DEĞIŞKEN govde: DİZİ[SÖZLÜK] = [];
+        DÖNGÜ (token_tip() != "}") {
+            DİZİ_EKLE(govde, komut());
+        }
+        zorunlu_bekle("}");
+
+        DÖNÜŞ ast_dongu_blogu(kosul, govde);
+    }
+
+    -- Dönüş komutu: DÖNÜŞ ifade;
+    EĞER (tip == "DÖNÜŞ") {
+        ilerle();  -- DÖNÜŞ atla
+        DEĞIŞKEN deger: SÖZLÜK = ifade();
+        zorunlu_bekle(";");
+        DÖNÜŞ ast_donus(deger);
+    }
+
+    -- Atama veya işleç çağırma
+    EĞER (tip == "TANIMLAYICI") {
+        DEĞIŞKEN isim: METIN = token_deger();
+        ilerle();
+
+        -- Atama: isim = değer;
+        EĞER (token_tip() == "=") {
+            ilerle();  -- = atla
+            DEĞIŞKEN deger: SÖZLÜK = ifade();
+            zorunlu_bekle(";");
+            DÖNÜŞ ast_atama(isim, deger);
+        }
+
+        -- İşleç çağırma: isim(arg1, arg2);
+        EĞER (token_tip() == "(") {
+            konum = konum - 1;  -- Geri al (faktor yeniden parse etsin)
+            DEĞIŞKEN cagri: SÖZLÜK = faktor();
+            zorunlu_bekle(";");
+            DÖNÜŞ cagri;
+        }
+    }
+
+    -- Varsayılan (hata)
+    YAZDIR "HATA: Beklenmeyen komut: " + tip;
+    DÖNÜŞ ast_sayi("0");  -- Dummy
+}
+
+-- İŞLEÇ TANIMLAMA: IŞLEÇ isim(param1: TÜR, ...): DÖNÜŞ_TÜRÜ { ... }
+IŞLEÇ islec_tanimlama(): SÖZLÜK {
+    zorunlu_bekle("IŞLEÇ");
+    DEĞIŞKEN isim: METIN = token_deger();
+    zorunlu_bekle("TANIMLAYICI");
+    zorunlu_bekle("(");
+
+    DEĞIŞKEN parametreler: DİZİ[SÖZLÜK] = [];
+
+    EĞER (token_tip() != ")") {
+        DÖNGÜ (DOĞRU) {
+            DEĞIŞKEN param_isim: METIN = token_deger();
+            zorunlu_bekle("TANIMLAYICI");
+            zorunlu_bekle(":");
+            DEĞIŞKEN param_tur: METIN = token_deger();
+            ilerle();  -- Tür atla
+
+            DİZİ_EKLE(parametreler, ast_parametre(param_isim, param_tur));
+
+            EĞER (token_tip() == ",") {
+                ilerle();  -- , atla
+            } DEĞILSE {
+                DÖNGÜ SON;
+            }
+        }
+    }
+
+    zorunlu_bekle(")");
+    zorunlu_bekle(":");
+    DEĞIŞKEN donus_turu: METIN = token_deger();
+    ilerle();  -- Dönüş türü atla
+
+    zorunlu_bekle("{");
+    DEĞIŞKEN govde: DİZİ[SÖZLÜK] = [];
+    DÖNGÜ (token_tip() != "}") {
+        DİZİ_EKLE(govde, komut());
+    }
+    zorunlu_bekle("}");
+
+    DÖNÜŞ ast_islec_tanimlama(isim, parametreler, donus_turu, govde);
+}
+
+-- PROGRAM: Tüm top-level tanımları parse et
+IŞLEÇ parse(): DİZİ[SÖZLÜK] {
+    DEĞIŞKEN program: DİZİ[SÖZLÜK] = [];
+
+    DÖNGÜ (token_tip() != "EOF") {
+        EĞER (token_tip() == "IŞLEÇ") {
+            DİZİ_EKLE(program, islec_tanimlama());
+        } DEĞILSE {
+            DİZİ_EKLE(program, komut());
+        }
+    }
+
+    DÖNÜŞ program;
+}
+
+-- Parser test işleci
+IŞLEÇ parser_test(): BOŞ {
+    -- Test token listesi oluştur
+    DEĞIŞKEN test_tokens: DİZİ[SÖZLÜK] = [];
+
+    -- Token ekle yardımcısı
+    IŞLEÇ token_ekle(tip: METIN, deger: METIN): BOŞ {
+        DEĞIŞKEN t: SÖZLÜK = SÖZLÜK_OLUŞTUR();
+        SÖZLÜK_EKLE(t, "tip", tip);
+        SÖZLÜK_EKLE(t, "deger", deger);
+        DİZİ_EKLE(test_tokens, t);
+    }
+
+    -- DEĞIŞKEN x: SAYI = 42;
+    token_ekle("DEĞIŞKEN", "DEĞIŞKEN");
+    token_ekle("TANIMLAYICI", "x");
+    token_ekle(":", ":");
+    token_ekle("TANIMLAYICI", "SAYI");
+    token_ekle("=", "=");
+    token_ekle("SAYI", "42");
+    token_ekle(";", ";");
+    token_ekle("EOF", "");
+
+    parser_baslat(test_tokens);
+    DEĞIŞKEN ast: DİZİ[SÖZLÜK] = parse();
+
+    YAZDIR "AST node sayısı: " + sayiya_metin(UZUNLUK(ast));
+}
