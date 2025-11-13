@@ -140,4 +140,22 @@ void mlp_free(void* ptr);
  */
 void* mlp_realloc(void* ptr, int64_t new_size);
 
+// GROUP 4: File I/O Functions
+// ----------------------------
+
+/**
+ * Read entire file content
+ * @param filename: Path to file
+ * @return: File content as string (caller must free)
+ */
+char* mlp_file_read(const char* filename);
+
+/**
+ * Write content to file
+ * @param filename: Path to file
+ * @param content: Content to write
+ * @return: 0 on success, -1 on error
+ */
+int64_t mlp_file_write(const char* filename, const char* content);
+
 #endif // RUNTIME_H

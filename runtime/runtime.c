@@ -379,3 +379,76 @@ void* mlp_realloc(void* ptr, int64_t new_size) {
 
     return new_ptr;
 }
+
+// ============================================
+// STAGE 2 PHASE 6: FILE I/O FUNCTIONS
+// ============================================
+
+/**
+ * mlp_file_read - Read entire file content
+ */
+char* mlp_file_read(const char* filename) {
+    if (filename == NULL) {
+        fprintf(stderr, "mlp_file_read: Filename is NULL\n");
+        return NULL;
+    }
+
+    FILE* file = fopen(filename, "r");
+    if (file == NULL) {
+        fprintf(stderr, "mlp_file_read: Failed to open file: %s\n", filename);
+        return NULL;
+    }
+
+    // Get file size
+    fseek(file, 0, SEEK_END);
+    long file_size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    // Allocate buffer
+    char* content = (char*)malloc(file_size + 1);
+    if (content == NULL) {
+        fprintf(stderr, "mlp_file_read: Failed to allocate memory\n");
+        fclose(file);
+        return NULL;
+    }
+
+    // Read file
+    size_t bytes_read = fread(content, 1, file_size, file);
+    content[bytes_read] = '\0';
+
+    fclose(file);
+    return content;
+}
+
+/**
+ * mlp_file_write - Write content to file
+ */
+int64_t mlp_file_write(const char* filename, const char* content) {
+    if (filename == NULL) {
+        fprintf(stderr, "mlp_file_write: Filename is NULL\n");
+        return -1;
+    }
+
+    if (content == NULL) {
+        fprintf(stderr, "mlp_file_write: Content is NULL\n");
+        return -1;
+    }
+
+    FILE* file = fopen(filename, "w");
+    if (file == NULL) {
+        fprintf(stderr, "mlp_file_write: Failed to open file: %s\n", filename);
+        return -1;
+    }
+
+    size_t content_len = strlen(content);
+    size_t bytes_written = fwrite(content, 1, content_len, file);
+
+    fclose(file);
+
+    if (bytes_written != content_len) {
+        fprintf(stderr, "mlp_file_write: Write incomplete\n");
+        return -1;
+    }
+
+    return 0;
+}

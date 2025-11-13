@@ -43,7 +43,11 @@ class CArayuzu:
             # Memory Management:
             "BELLEK_AYIR": "mlp_alloc",
             "BELLEK_SERBEST": "mlp_free",
-            "BELLEK_BOYUTLANDIR": "mlp_realloc"
+            "BELLEK_BOYUTLANDIR": "mlp_realloc",
+
+            # File I/O (Phase 6):
+            "DOSYA_OKU": "mlp_file_read",
+            "DOSYA_YAZ": "mlp_file_write"
         }
 
     def emit(self, instruction):

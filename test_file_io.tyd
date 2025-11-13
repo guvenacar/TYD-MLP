@@ -1,0 +1,33 @@
+-- Test File I/O Functions
+-- Phase 6: End-to-End Testing
+
+SAYISAL işleç test_file_write()
+    YAZDIR "=== TEST: File Write ===";
+
+    METIN content = "Hello from TYD!";
+    SAYISAL result = DOSYA_YAZ("test_output.txt", content);
+
+    EĞER result == 0 İSE
+        YAZDIR "File write SUCCESSFUL";
+    DEĞİLSE
+        YAZDIR "File write FAILED";
+    SON
+
+    DÖNÜŞ result;
+SON
+
+SAYISAL işleç test_file_read()
+    YAZDIR "=== TEST: File Read ===";
+
+    METIN content = DOSYA_OKU("test_output.txt");
+    YAZDIR "File content:";
+    YAZDIR content;
+
+    DÖNÜŞ 0;
+SON
+
+-- Run tests
+test_file_write();
+test_file_read();
+
+YAZDIR "=== File I/O Tests Complete ===";
