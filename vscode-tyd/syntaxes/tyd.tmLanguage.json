@@ -1,0 +1,125 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "TYD",
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#numbers"
+    },
+    {
+      "include": "#operators"
+    },
+    {
+      "include": "#functions"
+    },
+    {
+      "include": "#variables"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.block.tyd",
+          "begin": "---",
+          "end": "---",
+          "captures": {
+            "0": {
+              "name": "punctuation.definition.comment.tyd"
+            }
+          }
+        },
+        {
+          "name": "comment.line.double-dash.tyd",
+          "begin": "--",
+          "end": "$",
+          "captures": {
+            "0": {
+              "name": "punctuation.definition.comment.tyd"
+            }
+          }
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.tyd",
+          "match": "(?i)\\b(EĞER|İSE|DEĞILSE|DÖNGÜ|DÖNGÜ_BITIR|DÖNÜŞ|SON)\\b"
+        },
+        {
+          "name": "storage.type.tyd",
+          "match": "(?i)\\b(SAYISAL|METIN|ZITLIK|NESNE)\\b"
+        },
+        {
+          "name": "keyword.other.tyd",
+          "match": "(?i)\\b(IŞLEÇ|YAZDIR)\\b"
+        },
+        {
+          "name": "constant.language.tyd",
+          "match": "(?i)\\b(DOĞRU|YANLIŞ|HİÇLİK)\\b"
+        }
+      ]
+    },
+    "strings": {
+      "name": "string.quoted.double.tyd",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.tyd",
+          "match": "\\\\."
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.float.tyd",
+          "match": "\\b[0-9]+\\.[0-9]+\\b"
+        },
+        {
+          "name": "constant.numeric.integer.tyd",
+          "match": "\\b[0-9]+\\b"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.comparison.tyd",
+          "match": "(==|>=|<=|>|<)"
+        },
+        {
+          "name": "keyword.operator.arithmetic.tyd",
+          "match": "(\\+|\\-|\\*\\*|\\*|\\/)"
+        },
+        {
+          "name": "keyword.operator.assignment.tyd",
+          "match": "="
+        }
+      ]
+    },
+    "functions": {
+      "patterns": [
+        {
+          "name": "entity.name.function.tyd",
+          "match": "\\b([a-zA-ZğüşıöçĞÜŞİÖÇ_][a-zA-ZğüşıöçĞÜŞİÖÇ0-9_]*)(?=\\s*\\()"
+        }
+      ]
+    },
+    "variables": {
+      "name": "variable.other.tyd",
+      "match": "\\b[a-zA-ZğüşıöçĞÜŞİÖÇ_][a-zA-ZğüşıöçĞÜŞİÖÇ0-9_]*\\b"
+    }
+  },
+  "scopeName": "source.tyd"
+}
