@@ -122,5 +122,72 @@
       "${1:a} < ${2:b}"
     ],
     "description": "Küçüklük karşılaştırması"
+  },
+  "SINIF - Basit": {
+    "prefix": "class",
+    "body": [
+      "SINIF ${1:ClassName}",
+      "    ÖZELLIK ${2:METIN} ${3:field};",
+      "    ",
+      "    KURUCU(${2:METIN} ${4:param})",
+      "        ${3:field} = ${4:param};",
+      "    SON",
+      "    ",
+      "    SAYISAL işleç ${5:method}()",
+      "        ${6:// method body}",
+      "        DÖNÜŞ 0;",
+      "    SON",
+      "SON"
+    ],
+    "description": "Sınıf tanımla (OOP)"
+  },
+  "SINIF - Person Örneği": {
+    "prefix": "classperson",
+    "body": [
+      "SINIF Person",
+      "    ÖZELLIK METIN isim;",
+      "    ÖZELLIK SAYISAL yas;",
+      "    ",
+      "    KURUCU(METIN i, SAYISAL y)",
+      "        isim = i;",
+      "        yas = y;",
+      "    SON",
+      "    ",
+      "    SAYISAL işleç bilgi_yazdir()",
+      "        YAZDIR \"İsim: \";",
+      "        YAZDIR isim;",
+      "        YAZDIR \"Yaş: \";",
+      "        YAZDIR yas;",
+      "        DÖNÜŞ 0;",
+      "    SON",
+      "SON"
+    ],
+    "description": "Person sınıfı örneği"
+  },
+  "ÖZELLIK": {
+    "prefix": "prop",
+    "body": [
+      "ÖZELLIK ${1:METIN} ${2:field};"
+    ],
+    "description": "Sınıf özelliği tanımla"
+  },
+  "KURUCU": {
+    "prefix": "ctor",
+    "body": [
+      "KURUCU(${1:parametreler})",
+      "    ${2:// field initialization}",
+      "SON"
+    ],
+    "description": "Constructor (yapıcı metod)"
+  },
+  "Method": {
+    "prefix": "method",
+    "body": [
+      "${1:SAYISAL} işleç ${2:methodName}(${3:parametreler})",
+      "    ${4:// method body}",
+      "    DÖNÜŞ ${5:0};",
+      "SON"
+    ],
+    "description": "Sınıf metodu tanımla"
   }
 }

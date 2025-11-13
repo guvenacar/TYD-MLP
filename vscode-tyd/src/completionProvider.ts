@@ -19,7 +19,22 @@ export class TydCompletionProvider implements vscode.CompletionItemProvider {
             { label: 'ZITLIK', detail: 'Boolean tipi', docs: 'DOĞRU veya YANLIŞ değeri alan boolean değişken tanımlar' },
             { label: 'zıtlık', detail: 'Boolean tipi', docs: 'DOĞRU veya YANLIŞ değeri alan boolean değişken tanımlar' },
             { label: 'NESNE', detail: 'Nesne/Dictionary tipi', docs: 'Nesne veya sözlük yapısı tanımlar' },
-            { label: 'nesne', detail: 'Nesne/Dictionary tipi', docs: 'Nesne veya sözlük yapısı tanımlar' }
+            { label: 'nesne', detail: 'Nesne/Dictionary tipi', docs: 'Nesne veya sözlük yapısı tanımlar' },
+            // OOP Keywords (Phase 8)
+            { label: 'SINIF', detail: 'Sınıf tanımı (class)', docs: 'Nesne yönelimli programlama için sınıf tanımlar\n\n**Örnek:**\n```tyd\nSINIF Person\n    ÖZELLIK METIN isim;\n    ÖZELLIK SAYISAL yas;\nSON\n```' },
+            { label: 'sınıf', detail: 'Sınıf tanımı (class)', docs: 'Nesne yönelimli programlama için sınıf tanımlar' },
+            { label: 'KURUCU', detail: 'Constructor (yapıcı metod)', docs: 'Sınıf için yapıcı metod tanımlar\n\n**Örnek:**\n```tyd\nKURUCU(METIN i, SAYISAL y)\n    isim = i;\n    yas = y;\nSON\n```' },
+            { label: 'kurucu', detail: 'Constructor (yapıcı metod)', docs: 'Sınıf için yapıcı metod tanımlar' },
+            { label: 'ÖZELLIK', detail: 'Sınıf özelliği (field)', docs: 'Sınıf için alan/özellik tanımlar\n\n**Örnek:**\n```tyd\nÖZELLİK METIN isim;\nÖZELLİK SAYISAL yas;\n```' },
+            { label: 'özellik', detail: 'Sınıf özelliği (field)', docs: 'Sınıf için alan/özellik tanımlar' },
+            { label: 'YAPI', detail: 'Yapı tanımı (struct)', docs: 'C-style yapı (struct) tanımlar' },
+            { label: 'yapı', detail: 'Yapı tanımı (struct)', docs: 'C-style yapı (struct) tanımlar' },
+            { label: 'ENUM', detail: 'Enumeration tipi', docs: 'Numaralandırma tipi tanımlar' },
+            { label: 'enum', detail: 'Enumeration tipi', docs: 'Numaralandırma tipi tanımlar' },
+            { label: 'DEMET', detail: 'Tuple tipi', docs: 'Demet (tuple) tipi tanımlar' },
+            { label: 'demet', detail: 'Tuple tipi', docs: 'Demet (tuple) tipi tanımlar' },
+            { label: 'GENERIC', detail: 'Generic tip parametresi', docs: 'Generic (jenerik) tip parametresi tanımlar' },
+            { label: 'generic', detail: 'Generic tip parametresi', docs: 'Generic (jenerik) tip parametresi tanımlar' }
         ];
 
         typeKeywords.forEach(kw => {

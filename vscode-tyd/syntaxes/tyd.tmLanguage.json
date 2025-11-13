@@ -64,6 +64,14 @@
           "match": "(?i)\\b(IŞLEÇ|YAZDIR)\\b"
         },
         {
+          "name": "storage.type.class.tyd",
+          "match": "(?i)\\b(SINIF|YAPI|ENUM|DEMET|GENERIC)\\b"
+        },
+        {
+          "name": "keyword.other.oop.tyd",
+          "match": "(?i)\\b(KURUCU|ÖZELLIK)\\b"
+        },
+        {
           "name": "constant.language.tyd",
           "match": "(?i)\\b(DOĞRU|YANLIŞ|HİÇLİK)\\b"
         }
