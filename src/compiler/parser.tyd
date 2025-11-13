@@ -1,0 +1,249 @@
+-- ===============================================
+-- MLP Parser (TYD Syntax) - Bootstrap Version
+-- ===============================================
+-- Minimal recursive descent parser
+-- Converts token stream into AST (as strings)
+
+-- Global state
+SAYISAL token_dizisi = 0;  -- Pointer to token array
+SAYISAL token_sayisi = 0;
+SAYISAL mevcut_index = 0;
+METIN mevcut_token = "";
+
+-- Parser initialization
+METIN işleç parser_baslat(SAYISAL tokens, SAYISAL count)
+    token_dizisi = tokens;
+    token_sayisi = count;
+    mevcut_index = 0;
+    EĞER count > 0 İSE
+        mevcut_token = DIZI_AL(tokens, 0);
+    SON
+    DÖNÜŞ "";
+SON
+
+-- Get current token
+METIN işleç al_token()
+    DÖNÜŞ mevcut_token;
+SON
+
+-- Advance to next token
+METIN işleç ilerle_token()
+    mevcut_index = mevcut_index + 1;
+    EĞER mevcut_index < token_sayisi İSE
+        mevcut_token = DIZI_AL(token_dizisi, mevcut_index);
+    DEĞİLSE
+        mevcut_token = "EOF";
+    SON
+    DÖNÜŞ "";
+SON
+
+-- Check if current token matches
+SAYISAL işleç token_esit(METIN beklenen)
+    DÖNÜŞ METIN_KARSILASTIR(mevcut_token, beklenen);
+SON
+
+-- Consume token if it matches
+METIN işleç tuket(METIN beklenen)
+    EĞER token_esit(beklenen) == 0 İSE
+        ilerle_token();
+        DÖNÜŞ "";
+    SON
+    YAZDIR "Parser Hatasi: Beklenen token bulunamadi";
+    DÖNÜŞ "ERROR";
+SON
+
+-- Check if token is a number
+SAYISAL işleç sayi_mi(METIN token)
+    SAYISAL ilk = KARAKTER_AL(token, 0);
+    EĞER ilk >= 48 İSE  -- '0'
+        EĞER ilk <= 57 İSE  -- '9'
+            DÖNÜŞ 1;
+        SON
+    SON
+    DÖNÜŞ 0;
+SON
+
+-- Check if token is a keyword
+SAYISAL işleç keyword_mi(METIN token)
+    EĞER token_esit("SAYISAL") == 0 İSE DÖNÜŞ 1; SON
+    EĞER token_esit("METIN") == 0 İSE DÖNÜŞ 1; SON
+    EĞER token_esit("EĞER") == 0 İSE DÖNÜŞ 1; SON
+    EĞER token_esit("DÖNGÜ") == 0 İSE DÖNÜŞ 1; SON
+    EĞER token_esit("IŞLEÇ") == 0 İSE DÖNÜŞ 1; SON
+    DÖNÜŞ 0;
+SON
+
+-- ===============================================
+-- EXPRESSION PARSING (Precedence Climbing)
+-- ===============================================
+
+-- Parse primary expression (highest precedence)
+METIN işleç parse_faktor()
+    METIN token = al_token();
+
+    -- Number literal
+    EĞER sayi_mi(token) == 1 İSE
+        ilerle_token();
+        METIN sonuc = METIN_BIRLESTIR("Sayi(", token);
+        sonuc = METIN_BIRLESTIR(sonuc, ")");
+        DÖNÜŞ sonuc;
+    SON
+
+    -- String literal (starts with ")
+    SAYISAL ilk_kar = KARAKTER_AL(token, 0);
+    EĞER ilk_kar == 34 İSE  -- '"'
+        ilerle_token();
+        METIN sonuc = METIN_BIRLESTIR("Metin(", token);
+        sonuc = METIN_BIRLESTIR(sonuc, ")");
+        DÖNÜŞ sonuc;
+    SON
+
+    -- Identifier or function call
+    EĞER keyword_mi(token) == 0 İSE
+        ilerle_token();
+        -- Check for function call
+        EĞER token_esit("(") == 0 İSE
+            tuket("(");
+            METIN sonuc = METIN_BIRLESTIR("Call(", token);
+            sonuc = METIN_BIRLESTIR(sonuc, ")");
+            tuket(")");
+            DÖNÜŞ sonuc;
+        SON
+        -- Simple variable
+        METIN sonuc = METIN_BIRLESTIR("Var(", token);
+        sonuc = METIN_BIRLESTIR(sonuc, ")");
+        DÖNÜŞ sonuc;
+    SON
+
+    DÖNÜŞ "ERROR";
+SON
+
+-- Parse multiplication/division (medium precedence)
+METIN işleç parse_terim()
+    METIN sol = parse_faktor();
+
+    DÖNGÜ İSE
+        METIN op = al_token();
+        EĞER token_esit("*") == 0 İSE
+            ilerle_token();
+            METIN sag = parse_faktor();
+            METIN sonuc = METIN_BIRLESTIR("Mul(", sol);
+            sonuc = METIN_BIRLESTIR(sonuc, ",");
+            sonuc = METIN_BIRLESTIR(sonuc, sag);
+            sonuc = METIN_BIRLESTIR(sonuc, ")");
+            sol = sonuc;
+        DEĞİLSE EĞER token_esit("/") == 0 İSE
+            ilerle_token();
+            METIN sag = parse_faktor();
+            METIN sonuc = METIN_BIRLESTIR("Div(", sol);
+            sonuc = METIN_BIRLESTIR(sonuc, ",");
+            sonuc = METIN_BIRLESTIR(sonuc, sag);
+            sonuc = METIN_BIRLESTIR(sonuc, ")");
+            sol = sonuc;
+        DEĞİLSE
+            DÖNGÜ_BITIR;
+        SON
+    SON
+
+    DÖNÜŞ sol;
+SON
+
+-- Parse addition/subtraction (lowest precedence)
+METIN işleç parse_ifade()
+    METIN sol = parse_terim();
+
+    DÖNGÜ İSE
+        METIN op = al_token();
+        EĞER token_esit("+") == 0 İSE
+            ilerle_token();
+            METIN sag = parse_terim();
+            METIN sonuc = METIN_BIRLESTIR("Add(", sol);
+            sonuc = METIN_BIRLESTIR(sonuc, ",");
+            sonuc = METIN_BIRLESTIR(sonuc, sag);
+            sonuc = METIN_BIRLESTIR(sonuc, ")");
+            sol = sonuc;
+        DEĞİLSE EĞER token_esit("-") == 0 İSE
+            ilerle_token();
+            METIN sag = parse_terim();
+            METIN sonuc = METIN_BIRLESTIR("Sub(", sol);
+            sonuc = METIN_BIRLESTIR(sonuc, ",");
+            sonuc = METIN_BIRLESTIR(sonuc, sag);
+            sonuc = METIN_BIRLESTIR(sonuc, ")");
+            sol = sonuc;
+        DEĞİLSE
+            DÖNGÜ_BITIR;
+        SON
+    SON
+
+    DÖNÜŞ sol;
+SON
+
+-- ===============================================
+-- STATEMENT PARSING
+-- ===============================================
+
+-- Parse variable declaration: SAYISAL x = 42;
+METIN işleç parse_degisken()
+    METIN tip = al_token();  -- SAYISAL or METIN
+    ilerle_token();
+    METIN isim = al_token();
+    ilerle_token();
+    tuket("=");
+    METIN deger = parse_ifade();
+    tuket(";");
+
+    METIN sonuc = METIN_BIRLESTIR("VarDecl(", isim);
+    sonuc = METIN_BIRLESTIR(sonuc, ",");
+    sonuc = METIN_BIRLESTIR(sonuc, deger);
+    sonuc = METIN_BIRLESTIR(sonuc, ")");
+    DÖNÜŞ sonuc;
+SON
+
+-- Parse statement
+METIN işleç parse_komut()
+    METIN token = al_token();
+
+    -- Variable declaration
+    EĞER token_esit("SAYISAL") == 0 İSE
+        DÖNÜŞ parse_degisken();
+    SON
+    EĞER token_esit("METIN") == 0 İSE
+        DÖNÜŞ parse_degisken();
+    SON
+
+    -- Expression statement (function call, etc.)
+    METIN ifade = parse_ifade();
+    tuket(";");
+    METIN sonuc = METIN_BIRLESTIR("ExprStmt(", ifade);
+    sonuc = METIN_BIRLESTIR(sonuc, ")");
+    DÖNÜŞ sonuc;
+SON
+
+-- Parse program (top-level)
+METIN işleç parse_program()
+    METIN sonuc = "Program(";
+
+    DÖNGÜ token_esit("EOF") != 0 İSE
+        METIN komut = parse_komut();
+        sonuc = METIN_BIRLESTIR(sonuc, komut);
+        sonuc = METIN_BIRLESTIR(sonuc, ",");
+    SON
+
+    sonuc = METIN_BIRLESTIR(sonuc, ")");
+    DÖNÜŞ sonuc;
+SON
+
+-- Main parser entry point
+METIN işleç parse(SAYISAL tokens, SAYISAL count)
+    parser_baslat(tokens, count);
+    DÖNÜŞ parse_program();
+SON
+
+-- Test entry point
+METIN işleç parser_main()
+    YAZDIR "MLP Parser (Bootstrap)";
+    YAZDIR "Minimal recursive descent parser";
+    DÖNÜŞ "OK";
+SON
+
+YAZDIR "Parser loaded";
