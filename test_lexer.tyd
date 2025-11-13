@@ -1,0 +1,27 @@
+-- Test Lexer Implementation
+-- Simple lexer test
+
+METIN kod = "SAYISAL x = 42;";
+METIN sonuc = "";
+
+-- Test UZUNLUK function
+SAYISAL uzunluk = UZUNLUK(kod);
+YAZDIR uzunluk;
+
+-- Test ALT_METIN function
+METIN parcala = ALT_METIN(kod, 0, 7);
+YAZDIR parcala;
+
+-- Test KARAKTER_AL function
+SAYISAL ilk_karakter = KARAKTER_AL(kod, 0);
+YAZDIR ilk_karakter;
+
+-- Test METIN_BIRLESTIR function
+METIN m1 = "Hello";
+METIN m2 = " World";
+METIN birlesik = METIN_BIRLESTIR(m1, m2);
+YAZDIR birlesik;
+
+-- Test METIN_KARSILASTIR function
+SAYISAL karsilastirma = METIN_KARSILASTIR("test", "test");
+YAZDIR karsilastirma;
