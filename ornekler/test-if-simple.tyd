@@ -1,0 +1,7 @@
+SAYISAL x = 15;
+
+EĞER x > 10 İSE
+    YAZDIR "Büyük";
+SON
+
+YAZDIR "Bitti";

@@ -1,0 +1,34 @@
+-- ===============================================
+-- TYD-MLP Örnek 3: Koşul Yapıları (IF/ELSE)
+-- ===============================================
+
+SAYISAL sayi = 15;
+YAZDIR "Sayı:";
+YAZDIR sayi;
+
+EĞER sayi > 10 İSE
+    YAZDIR "Sayı 10'dan büyük";
+EĞER SON
+
+EĞER sayi > 20 İSE
+    YAZDIR "Sayı 20'den büyük";
+DEĞILSE
+    YAZDIR "Sayı 20'den küçük veya eşit";
+EĞER SON
+
+SAYISAL a = 5;
+SAYISAL b = 5;
+
+EĞER a == b İSE
+    YAZDIR "a ve b eşit";
+DEĞILSE
+    YAZDIR "a ve b farklı";
+EĞER SON
+
+EĞER a >= b İSE
+    YAZDIR "a büyük veya eşit b";
+EĞER SON
+
+EĞER a <= b İSE
+    YAZDIR "a küçük veya eşit b";
+EĞER SON

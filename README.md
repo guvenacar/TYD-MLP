@@ -214,7 +214,7 @@ End If
 - [ ] Nesne yönelimli programlama (NESNE)
 - [ ] Hata yakalama (DENE/YAKALA)
 - [ ] Modül sistemi (KULLAN/İÇE_AKTAR)
-- [ ] VSCode/VSCodium extension
+- [x] **VSCode Extension** - ✅ TAMAMLANDI! ([vscode-tyd/](./vscode-tyd/))
 - [ ] Language Server Protocol (LSP)
 
 ### 🔮 Gelecek Planlar
@@ -231,6 +231,33 @@ End If
 - **[PIPELINE.md](./PIPELINE.md)** - Adım adım implementasyon rehberi
 - **[SOZ_DIZIMI_REFERANS.md](./SOZ_DIZIMI_REFERANS.md)** - TYD söz dizimi kılavuzu
 - **[API.md](./docs/API.md)** - C Runtime API referansı
+- **[VSCODE_EXTENSION.md](./VSCODE_EXTENSION.md)** - VSCode eklentisi rehberi
+
+---
+
+## 🎨 VSCode Eklentisi
+
+TYD için tam özellikli VSCode eklentisi hazır! 🎉
+
+**Özellikler:**
+- ✨ Syntax Highlighting
+- 💡 IntelliSense (Kod Tamamlama)
+- 📚 Hover Tooltips
+- 🔍 Diagnostics (Hata Kontrolü)
+- ⚡ Code Snippets
+- 🔧 Otomatik Girintileme
+
+**Hızlı Kurulum:**
+```bash
+cd vscode-tyd
+npm install
+npm run compile
+
+# F5 ile test et veya kalıcı kur:
+ln -s $(pwd) ~/.vscode/extensions/tyd-language-0.1.0
+```
+
+Detaylar: [vscode-tyd/QUICK_START.md](./vscode-tyd/QUICK_START.md)
 
 ---
 
@@ -256,6 +283,16 @@ TYD-MLP/
 ├── kurallar/             # Dil kuralları (JSON)
 │   ├── diller.json       # Anahtar kelime tanımları
 │   └── syntax_styles.json # Syntax stil kuralları (TODO)
+│
+├── vscode-tyd/           # ✨ VSCode Eklentisi
+│   ├── src/              # TypeScript kaynak kodu
+│   │   ├── extension.ts          # Ana eklenti
+│   │   ├── completionProvider.ts # IntelliSense
+│   │   ├── hoverProvider.ts      # Tooltips
+│   │   └── diagnostics.ts        # Hata kontrolü
+│   ├── syntaxes/         # Syntax highlighting
+│   ├── snippets/         # Code snippets
+│   └── package.json      # Eklenti manifest
 │
 ├── ornekler/             # Örnek programlar
 │   ├── merhaba.tyd
@@ -412,7 +449,7 @@ Desteklenen Syntax: 4 (Native, Python, Java, VB.NET)
 - [ ] Syntax preprocessor
 
 ### v0.2.0 (Q1 2025)
-- [ ] VSCode extension
+- [x] **VSCode extension** ✅ TAMAMLANDI
 - [ ] 10+ syntax style desteği
 - [ ] Gelişmiş hata mesajları
 - [ ] Source mapping

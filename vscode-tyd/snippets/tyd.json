@@ -1,0 +1,126 @@
+{
+  "Değişken Tanımlama - SAYISAL": {
+    "prefix": "say",
+    "body": [
+      "SAYISAL ${1:degisken} = ${2:0};"
+    ],
+    "description": "Sayısal değişken tanımla"
+  },
+  "Değişken Tanımlama - METIN": {
+    "prefix": "metin",
+    "body": [
+      "METIN ${1:degisken} = \"${2:metin}\";"
+    ],
+    "description": "Metin değişkeni tanımla"
+  },
+  "Değişken Tanımlama - ZITLIK": {
+    "prefix": "zit",
+    "body": [
+      "ZITLIK ${1:degisken} = ${2|DOĞRU,YANLIŞ|};"
+    ],
+    "description": "Boolean değişken tanımla"
+  },
+  "YAZDIR": {
+    "prefix": "yaz",
+    "body": [
+      "YAZDIR ${1:deger};"
+    ],
+    "description": "Değer yazdır"
+  },
+  "EĞER Bloğu": {
+    "prefix": "eger",
+    "body": [
+      "EĞER ${1:kosul} İSE",
+      "    ${2:// kod}",
+      "EĞER SON"
+    ],
+    "description": "IF koşul bloğu"
+  },
+  "EĞER-DEĞILSE Bloğu": {
+    "prefix": "egerdeg",
+    "body": [
+      "EĞER ${1:kosul} İSE",
+      "    ${2:// doğru ise}",
+      "DEĞILSE",
+      "    ${3:// yanlış ise}",
+      "EĞER SON"
+    ],
+    "description": "IF-ELSE bloğu"
+  },
+  "DÖNGÜ": {
+    "prefix": "dongu",
+    "body": [
+      "DÖNGÜ",
+      "    ${1:// kod}",
+      "    ",
+      "    EĞER ${2:kosul} İSE",
+      "        DÖNGÜ_BITIR;",
+      "    EĞER SON",
+      "DÖNGÜ SON"
+    ],
+    "description": "Sonsuz döngü ile koşullu çıkış"
+  },
+  "Fonksiyon (İŞLEÇ)": {
+    "prefix": "func",
+    "body": [
+      "SAYISAL IŞLEÇ ${1:fonksiyon_adi}(${2:parametreler})",
+      "    ${3:// kod}",
+      "    DÖNÜŞ ${4:deger};",
+      "IŞLEÇ SON"
+    ],
+    "description": "Fonksiyon tanımla"
+  },
+  "Fonksiyon - Parametresiz": {
+    "prefix": "funcvoid",
+    "body": [
+      "IŞLEÇ ${1:fonksiyon_adi}()",
+      "    ${2:// kod}",
+      "IŞLEÇ SON"
+    ],
+    "description": "Parametresiz fonksiyon"
+  },
+  "Yorum - Tek Satır": {
+    "prefix": "com",
+    "body": [
+      "-- ${1:yorum}"
+    ],
+    "description": "Tek satırlık yorum"
+  },
+  "Yorum - Çok Satır": {
+    "prefix": "comblock",
+    "body": [
+      "---",
+      "${1:yorum}",
+      "---"
+    ],
+    "description": "Çok satırlı yorum bloğu"
+  },
+  "Merhaba Dünya": {
+    "prefix": "hello",
+    "body": [
+      "YAZDIR \"Merhaba Dünya!\";"
+    ],
+    "description": "Basit merhaba dünya programı"
+  },
+  "Karşılaştırma - Eşit": {
+    "prefix": "esit",
+    "body": [
+      "${1:a} == ${2:b}"
+    ],
+    "description": "Eşitlik karşılaştırması"
+  },
+  "Karşılaştırma - Büyük": {
+    "prefix": "buyuk",
+    "body": [
+      "${1:a} > ${2:b}"
+    ],
+    "description": "Büyüklük karşılaştırması"
+  },
+  "Karşılaştırma - Küçük": {
+    "prefix": "kucuk",
+    "body": [
+      "${1:a} < ${2:b}"
+    ],
+    "description": "Küçüklük karşılaştırması"
+  }
+}

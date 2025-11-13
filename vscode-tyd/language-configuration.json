@@ -1,0 +1,34 @@
+{
+  "comments": {
+    "lineComment": "--",
+    "blockComment": ["---", "---"]
+  },
+  "brackets": [
+    ["{", "}"],
+    ["[", "]"],
+    ["(", ")"]
+  ],
+  "autoClosingPairs": [
+    { "open": "{", "close": "}" },
+    { "open": "[", "close": "]" },
+    { "open": "(", "close": ")" },
+    { "open": "\"", "close": "\"", "notIn": ["string"] }
+  ],
+  "surroundingPairs": [
+    ["{", "}"],
+    ["[", "]"],
+    ["(", ")"],
+    ["\"", "\""]
+  ],
+  "folding": {
+    "markers": {
+      "start": "^\\s*(EĞER|DÖNGÜ|IŞLEÇ)",
+      "end": "^\\s*SON"
+    }
+  },
+  "indentationRules": {
+    "increaseIndentPattern": "^\\s*(EĞER|DÖNGÜ|IŞLEÇ|DEĞILSE).*$",
+    "decreaseIndentPattern": "^\\s*(SON|DEĞILSE)\\s*$"
+  },
+  "wordPattern": "[a-zA-ZğüşıöçĞÜŞİÖÇ_][a-zA-ZğüşıöçĞÜŞİÖÇ0-9_]*"
+}

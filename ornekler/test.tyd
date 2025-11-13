@@ -1,0 +1,10 @@
+-- 4. Metin Testi --
+YAZDIR "Metin testi başlıyor...";
+METIN s = "Bu bir metin değişkenidir!";
+YAZDIR s;
+METIN s2 = "Bu da ikincisi.";
+YAZDIR s2;
+YAZDIR "Metin testi bitti.";
+
+-- 3. Temizlik --
+SOZLUK_YOK_ET();

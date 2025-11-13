@@ -1,0 +1,8 @@
+-- ===============================================
+-- TYD-MLP Örnek 1: Merhaba Dünya
+-- ===============================================
+-- Bu en basit TYD programıdır.
+-- Ekrana "Merhaba Dünya!" yazdırır.
+
+YAZDIR "Merhaba Dünya!";
+YAZDIR "TYD-MLP'ye hoş geldiniz!";

@@ -1,0 +1,38 @@
+-- ===============================================
+-- TYD-MLP Örnek 5: Fonksiyonlar (İşleçler)
+-- ===============================================
+
+SAYISAL IŞLEÇ topla(SAYISAL a, SAYISAL b)
+    SAYISAL t = a + b;
+    DÖNÜŞ t;
+IŞLEÇ SON
+
+SAYISAL IŞLEÇ carp(SAYISAL x, SAYISAL y)
+    SAYISAL c = x * y;
+    DÖNÜŞ c;
+IŞLEÇ SON
+
+SAYISAL IŞLEÇ faktoriyel(SAYISAL n)
+    EĞER n <= 1 İSE
+        DÖNÜŞ 1;
+    EĞER SON
+    
+    SAYISAL onceki = faktoriyel(n - 1);
+    SAYISAL sonuc = n * onceki;
+    DÖNÜŞ sonuc;
+IŞLEÇ SON
+
+SAYISAL x = 5;
+SAYISAL y = 10;
+
+SAYISAL toplam = topla(x, y);
+YAZDIR "5 + 10 =";
+YAZDIR toplam;
+
+SAYISAL carpim = carp(x, y);
+YAZDIR "5 * 10 =";
+YAZDIR carpim;
+
+SAYISAL fakt = faktoriyel(5);
+YAZDIR "5! =";
+YAZDIR fakt;

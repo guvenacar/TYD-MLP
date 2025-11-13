@@ -1,0 +1,66 @@
+{
+  "name": "tyd-language",
+  "displayName": "TYD Language Support",
+  "description": "TYD (Türkçe Yazılım Dili) için IntelliSense, syntax highlighting ve daha fazlası",
+  "version": "0.1.0",
+  "publisher": "tyd-mlp",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "activationEvents": [
+    "onLanguage:tyd"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "tyd",
+        "aliases": [
+          "TYD",
+          "tyd"
+        ],
+        "extensions": [
+          ".tyd"
+        ],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./icons/tyd-icon.png",
+          "dark": "./icons/tyd-icon.png"
+        }
+      }
+    ],
+    "grammars": [
+      {
+        "language": "tyd",
+        "scopeName": "source.tyd",
+        "path": "./syntaxes/tyd.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "tyd",
+        "path": "./snippets/tyd.json"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile",
+    "lint": "eslint src --ext ts",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^18.x",
+    "@types/vscode": "^1.75.0",
+    "@typescript-eslint/eslint-plugin": "^5.x",
+    "@typescript-eslint/parser": "^5.x",
+    "eslint": "^8.x",
+    "typescript": "^4.9.x"
+  },
+  "dependencies": {}
+}
