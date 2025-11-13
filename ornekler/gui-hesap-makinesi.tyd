@@ -1,0 +1,109 @@
+-- ===============================================
+-- TYD-MLP GUI Örneği: Basit Hesap Makinesi
+-- ===============================================
+-- Bu örnek GTK+ ile basit bir hesap makinesi yapar
+-- Ring 3 (TYD-MLP) -> Ring 0 (C Runtime GTK+)
+
+-- GUI modülünü başlat
+GUI_INIT;
+
+-- Ana pencere oluştur
+NESNE pencere = PENCERE_OLUŞTUR "TYD Hesap Makinesi" 300 250;
+
+-- Etiketler
+NESNE baslik = ETİKET_OLUŞTUR "Basit Hesap Makinesi";
+NESNE sonuc_etiket = ETİKET_OLUŞTUR "Sonuç: 0";
+
+-- Giriş alanları
+NESNE sayi1_giris = GİRİŞ_OLUŞTUR "İlk sayı";
+NESNE sayi2_giris = GİRİŞ_OLUŞTUR "İkinci sayı";
+
+-- Butonlar (callback fonksiyonları ile)
+NESNE topla_btn = BUTON_OLUŞTUR "Topla (+)" topla_callback;
+NESNE cikar_btn = BUTON_OLUŞTUR "Çıkar (-)" cikar_callback;
+NESNE carp_btn = BUTON_OLUŞTUR "Çarp (×)" carp_callback;
+NESNE bol_btn = BUTON_OLUŞTUR "Böl (÷)" bol_callback;
+
+-- Callback fonksiyonları
+IŞLEÇ topla_callback()
+    -- Girişlerden sayıları al
+    METIN str1 = GİRİŞ_AL sayi1_giris;
+    METIN str2 = GİRİŞ_AL sayi2_giris;
+
+    -- Stringleri sayıya çevir
+    SAYISAL a = METINDEN_SAYIYA str1;
+    SAYISAL b = METINDEN_SAYIYA str2;
+
+    -- İşlem yap
+    SAYISAL sonuc = a + b;
+
+    -- Sonucu göster
+    METIN sonuc_str = "Sonuç: " + SAYIDAN_METNE sonuc;
+    ETİKET_GÜNCELLE sonuc_etiket sonuc_str;
+
+    YAZDIR "Toplama: ";
+    YAZDIR a;
+    YAZDIR " + ";
+    YAZDIR b;
+    YAZDIR " = ";
+    YAZDIR sonuc;
+IŞLEÇ SON
+
+IŞLEÇ cikar_callback()
+    METIN str1 = GİRİŞ_AL sayi1_giris;
+    METIN str2 = GİRİŞ_AL sayi2_giris;
+
+    SAYISAL a = METINDEN_SAYIYA str1;
+    SAYISAL b = METINDEN_SAYIYA str2;
+    SAYISAL sonuc = a - b;
+
+    METIN sonuc_str = "Sonuç: " + SAYIDAN_METNE sonuc;
+    ETİKET_GÜNCELLE sonuc_etiket sonuc_str;
+
+    YAZDIR "Çıkarma: ";
+    YAZDIR sonuc;
+IŞLEÇ SON
+
+IŞLEÇ carp_callback()
+    METIN str1 = GİRİŞ_AL sayi1_giris;
+    METIN str2 = GİRİŞ_AL sayi2_giris;
+
+    SAYISAL a = METINDEN_SAYIYA str1;
+    SAYISAL b = METINDEN_SAYIYA str2;
+    SAYISAL sonuc = a * b;
+
+    METIN sonuc_str = "Sonuç: " + SAYIDAN_METNE sonuc;
+    ETİKET_GÜNCELLE sonuc_etiket sonuc_str;
+
+    YAZDIR "Çarpma: ";
+    YAZDIR sonuc;
+IŞLEÇ SON
+
+IŞLEÇ bol_callback()
+    METIN str1 = GİRİŞ_AL sayi1_giris;
+    METIN str2 = GİRİŞ_AL sayi2_giris;
+
+    SAYISAL a = METINDEN_SAYIYA str1;
+    SAYISAL b = METINDEN_SAYIYA str2;
+
+    -- Sıfıra bölme kontrolü
+    EĞER b == 0 İSE
+        MESAJ_KUTUSU "Hata" "Sıfıra bölme hatası!" 2;
+        DÖNÜŞ;
+    EĞER SON
+
+    SAYISAL sonuc = a / b;
+
+    METIN sonuc_str = "Sonuç: " + SAYIDAN_METNE sonuc;
+    ETİKET_GÜNCELLE sonuc_etiket sonuc_str;
+
+    YAZDIR "Bölme: ";
+    YAZDIR sonuc;
+IŞLEÇ SON
+
+-- Pencereyi göster ve GUI'yi başlat
+PENCERE_GÖSTER pencere;
+GUI_BAŞLAT;
+
+-- Program burada bloklar, pencere kapanana kadar bekler
+YAZDIR "GUI kapatıldı, program sonlandı";
