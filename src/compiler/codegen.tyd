@@ -1,0 +1,274 @@
+-- ===============================================
+-- MLP Code Generator (TYD Syntax) - Bootstrap Version
+-- ===============================================
+-- Minimal x86_64 assembly code generator
+-- Converts AST (as strings) to assembly
+
+-- Global state
+METIN data_section = "";
+METIN text_section = "";
+METIN current_code = "";
+SAYISAL label_counter = 0;
+SAYISAL string_counter = 0;
+SAYISAL stack_offset = 0;
+
+-- Variable storage (simple dictionary simulation)
+SAYISAL var_map = 0;  -- Array of variable names/offsets
+SAYISAL var_count = 0;
+
+-- Code generator initialization
+METIN işleç codegen_baslat()
+    data_section = "";
+    text_section = "";
+    current_code = "";
+    label_counter = 0;
+    string_counter = 0;
+    stack_offset = 0;
+    var_map = DIZI_OLUSTUR();
+    var_count = 0;
+    DÖNÜŞ "";
+SON
+
+-- Emit assembly instruction
+METIN işleç emit(METIN instruction)
+    current_code = METIN_BIRLESTIR(current_code, "    ");
+    current_code = METIN_BIRLESTIR(current_code, instruction);
+    current_code = METIN_BIRLESTIR(current_code, "\n");
+    DÖNÜŞ "";
+SON
+
+-- Emit data section line
+METIN işleç emit_data(METIN line)
+    data_section = METIN_BIRLESTIR(data_section, "    ");
+    data_section = METIN_BIRLESTIR(data_section, line);
+    data_section = METIN_BIRLESTIR(data_section, "\n");
+    DÖNÜŞ "";
+SON
+
+-- Generate new label
+METIN işleç new_label()
+    label_counter = label_counter + 1;
+    METIN label = "_L";
+    -- Convert number to string (simple approach)
+    DÖNÜŞ label;
+SON
+
+-- Store string literal in data section
+METIN işleç add_string_literal(METIN value)
+    string_counter = string_counter + 1;
+    METIN label = "str_";
+    -- Create label like str_1, str_2, etc.
+
+    -- Simplified: just store the label, actual string will be in runtime
+    METIN data_line = METIN_BIRLESTIR(label, " db 0");  -- Placeholder
+    emit_data(data_line);
+
+    DÖNÜŞ label;
+SON
+
+-- ===============================================
+-- AST STRING PARSING HELPERS
+-- ===============================================
+
+-- Check if AST node starts with a pattern
+SAYISAL işleç starts_with(METIN text, METIN pattern)
+    SAYISAL text_len = UZUNLUK(text);
+    SAYISAL pattern_len = UZUNLUK(pattern);
+
+    EĞER pattern_len > text_len İSE
+        DÖNÜŞ 0;
+    SON
+
+    METIN prefix = ALT_METIN(text, 0, pattern_len);
+    DÖNÜŞ METIN_KARSILASTIR(prefix, pattern);
+SON
+
+-- Extract content between parentheses
+METIN işleç extract_parens(METIN text)
+    -- Find first ( and last )
+    SAYISAL len = UZUNLUK(text);
+    SAYISAL start = 0;
+    SAYISAL end = len - 1;
+
+    -- Find opening paren
+    DÖNGÜ start < len İSE
+        SAYISAL c = KARAKTER_AL(text, start);
+        EĞER c == 40 İSE  -- '('
+            start = start + 1;
+            DÖNGÜ_BITIR;
+        SON
+        start = start + 1;
+    SON
+
+    -- Content between ( and )
+    SAYISAL content_len = end - start;
+    DÖNÜŞ ALT_METIN(text, start, content_len);
+SON
+
+-- ===============================================
+-- EXPRESSION CODE GENERATION
+-- ===============================================
+
+-- Generate code for number literal: Sayi(42)
+METIN işleç gen_number(METIN ast)
+    METIN value = extract_parens(ast);
+    emit("mov rax, ");
+    emit(value);
+    emit("  ; Number literal");
+    DÖNÜŞ "";
+SON
+
+-- Generate code for string literal: Metin("hello")
+METIN işleç gen_string(METIN ast)
+    METIN value = extract_parens(ast);
+    METIN label = add_string_literal(value);
+    emit("mov rax, ");
+    emit(label);
+    emit("  ; String literal");
+    DÖNÜŞ "";
+SON
+
+-- Generate code for variable: Var(x)
+METIN işleç gen_variable(METIN ast)
+    METIN varname = extract_parens(ast);
+    -- Look up variable in var_map
+    -- For now, simple stack offset
+    emit("mov rax, [rbp-8]  ; Load variable ");
+    emit(varname);
+    DÖNÜŞ "";
+SON
+
+-- Generate code for addition: Add(left,right)
+METIN işleç gen_add(METIN ast)
+    -- This is simplified - in reality need to parse left/right
+    emit("; Add operation");
+    emit("push rax  ; Save left");
+    -- Generate right operand
+    emit("pop rbx   ; Restore left");
+    emit("add rax, rbx");
+    DÖNÜŞ "";
+SON
+
+-- Generate code for expression (dispatch)
+METIN işleç gen_expression(METIN ast)
+    EĞER starts_with(ast, "Sayi(") == 0 İSE
+        gen_number(ast);
+    DEĞİLSE EĞER starts_with(ast, "Metin(") == 0 İSE
+        gen_string(ast);
+    DEĞİLSE EĞER starts_with(ast, "Var(") == 0 İSE
+        gen_variable(ast);
+    DEĞİLSE EĞER starts_with(ast, "Add(") == 0 İSE
+        gen_add(ast);
+    DEĞİLSE
+        emit("; Unknown expression");
+    SON
+    DÖNÜŞ "";
+SON
+
+-- ===============================================
+-- STATEMENT CODE GENERATION
+-- ===============================================
+
+-- Generate code for variable declaration: VarDecl(x,Sayi(42))
+METIN işleç gen_vardecl(METIN ast)
+    emit("; Variable declaration");
+    METIN content = extract_parens(ast);
+
+    -- Parse variable name and value
+    -- Simplified: assume format VarDecl(name,value)
+
+    -- Generate value expression
+    emit("; Compute initial value");
+    -- gen_expression(value_ast);
+
+    -- Allocate stack space
+    stack_offset = stack_offset - 8;
+    emit("sub rsp, 8  ; Allocate variable");
+    emit("mov [rbp");
+    -- emit offset
+    emit("], rax  ; Store value");
+
+    DÖNÜŞ "";
+SON
+
+-- Generate code for statement (dispatch)
+METIN işleç gen_statement(METIN ast)
+    EĞER starts_with(ast, "VarDecl(") == 0 İSE
+        gen_vardecl(ast);
+    DEĞİLSE EĞER starts_with(ast, "ExprStmt(") == 0 İSE
+        emit("; Expression statement");
+        METIN expr = extract_parens(ast);
+        gen_expression(expr);
+    DEĞİLSE
+        emit("; Unknown statement");
+    SON
+    DÖNÜŞ "";
+SON
+
+-- ===============================================
+-- PROGRAM GENERATION
+-- ===============================================
+
+-- Generate code for program: Program(stmt1,stmt2,...)
+METIN işleç gen_program(METIN ast)
+    emit("; Program start");
+
+    -- Parse statements (simplified)
+    -- In reality, would split by commas and process each
+
+    METIN content = extract_parens(ast);
+    -- For now, just generate one statement
+    gen_statement(content);
+
+    DÖNÜŞ "";
+SON
+
+-- ===============================================
+-- MAIN CODE GENERATION
+-- ===============================================
+
+-- Generate complete assembly program
+METIN işleç generate(METIN ast)
+    codegen_baslat();
+
+    -- Add standard data section items (simplified)
+    emit_data("format_sayi db 0");
+    emit_data("format_metin db 0");
+
+    -- Generate main function prologue
+    emit("global main");
+    emit("main:");
+    emit("push rbp");
+    emit("mov rbp, rsp");
+
+    -- Generate program code
+    gen_program(ast);
+
+    -- Generate main function epilogue
+    emit("mov rsp, rbp");
+    emit("pop rbp");
+    emit("ret");
+
+    -- Assemble final output
+    METIN output = "section .data\n";
+    output = METIN_BIRLESTIR(output, data_section);
+    output = METIN_BIRLESTIR(output, "\nsection .text\n");
+    output = METIN_BIRLESTIR(output, current_code);
+
+    DÖNÜŞ output;
+SON
+
+-- Test entry point
+METIN işleç codegen_main()
+    YAZDIR "MLP Code Generator (Bootstrap)";
+    YAZDIR "Minimal x86_64 assembly generator";
+
+    -- Test with simple AST
+    METIN test_ast = "Program(VarDecl(x,Sayi(42)))";
+    METIN asm_code = generate(test_ast);
+    YAZDIR asm_code;
+
+    DÖNÜŞ "OK";
+SON
+
+YAZDIR "Code Generator loaded";
