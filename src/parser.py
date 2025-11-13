@@ -225,11 +225,15 @@ class Parser:
     def komut(self):
         """Tek bir komutu ayrıştırır."""
         token = self.mevcut_token
-        
+
+        # 0. MLP SYNTAX: DEĞIŞKEN isim: TİP = değer;
+        if token.tip == TOKEN_TIPLERI['TANIMLA_DEGISKEN']:
+            return self.mlp_degisken_tanimlama()
+
         # 1. TİP ile mi başlıyor?
         if token.tip in [TOKEN_TIPLERI['TANIMLA_SAYI'], TOKEN_TIPLERI['TANIMLA_METIN'], TOKEN_TIPLERI['TANIMLA_BOOL']]:
             return self.tip_ile_baslayan_komut()
-        
+
         # 2. İŞLEÇ ile mi başlıyor?
         if token.tip == TOKEN_TIPLERI['YAPI_ISLEC']:
             return self.islec_tanimlama(None)
@@ -375,6 +379,41 @@ class Parser:
         self.tuket(TOKEN_TIPLERI['SEMICOLON'])     # ';'
         return ast_nodes.DonguBitirKomutu()
 
+
+    def mlp_degisken_tanimlama(self):
+        """
+        MLP Syntax: DEĞIŞKEN isim: TİP = değer;
+        Örnek: DEĞIŞKEN x: SAYI = 42;
+               DEĞIŞKEN kaynak_kod: METIN;
+        """
+        self.tuket(TOKEN_TIPLERI['TANIMLA_DEGISKEN'])  # 'DEĞIŞKEN' atla
+
+        # İsim al
+        ad_token = self.mevcut_token
+        self.tuket(TOKEN_TIPLERI['IDENTIFIER'])
+
+        # ':' bekle
+        self.tuket(TOKEN_TIPLERI['COLON'])
+
+        # Tip al (identifier VEYA tip keyword olabilir: METIN, SAYI, SÖZLÜK, DİZİ, vs.)
+        tip_token = self.mevcut_token
+        if tip_token.tip in [TOKEN_TIPLERI['TANIMLA_SAYI'], TOKEN_TIPLERI['TANIMLA_METIN'],
+                             TOKEN_TIPLERI['TANIMLA_BOOL'], TOKEN_TIPLERI['IDENTIFIER']]:
+            self.tuket(tip_token.tip)
+        else:
+            self.hata(f"Tip anotasyonu bekleniyor, bulundu: {tip_token}")
+
+        # Opsiyonel başlangıç değeri
+        ifade_node = None
+        if self.mevcut_token.tip == TOKEN_TIPLERI['ASSIGN']:
+            self.tuket(TOKEN_TIPLERI['ASSIGN'])
+            ifade_node = self.ifade()
+
+        # ';' ile bitir
+        self.tuket(TOKEN_TIPLERI['SEMICOLON'])
+
+        # DegiskenTanimlama node döndür
+        return ast_nodes.DegiskenTanimlama(tip_token, ad_token, ifade_node)
 
     def tip_ile_baslayan_komut(self):
         """

@@ -1,6 +1,7 @@
 {
   "dil_profili": {
-    "tr-TR": { 
+    "tr-TR": {
+      "TANIMLA_DEGISKEN": "değişken",
       "TANIMLA_SAYI": "sayısal",
       "TANIMLA_METIN": "metin",
       "TANIMLA_BOOL": "zıtlık",

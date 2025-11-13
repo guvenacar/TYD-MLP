@@ -258,6 +258,10 @@ class Lexer:
                 self.ilerle()
                 return Token(TOKEN_TIPLERI['SEMICOLON'], ';')
 
+            if self.mevcut_karakter == ':':
+                self.ilerle()
+                return Token(TOKEN_TIPLERI['COLON'], ':')
+
             if self.mevcut_karakter == ',':
                 self.ilerle()
                 return Token(TOKEN_TIPLERI['COMMA'], ',')

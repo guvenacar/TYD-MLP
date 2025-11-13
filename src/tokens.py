@@ -16,6 +16,7 @@ class Token:
 # Dilimizin tanıyacağı TÜM SOYUT (ABSTRACT) token tipleri
 TOKEN_TIPLERI = {
     # Tip Tanımları (Kelimeler - JSON'dan)
+    'TANIMLA_DEGISKEN': 'TANIMLA_DEGISKEN',  # MLP Syntax: DEĞIŞKEN
     'TANIMLA_SAYI': 'TANIMLA_SAYI',
     'TANIMLA_METIN': 'TANIMLA_METIN',
     'TANIMLA_BOOL': 'TANIMLA_BOOL',
@@ -55,6 +56,7 @@ TOKEN_TIPLERI = {
     # Rezerve Sembol Tokenları (Sabit Kodlu - Lexer'da)
     'ASSIGN': 'ASSIGN',         # =
     'SEMICOLON': 'SEMICOLON',   # ;
+    'COLON': 'COLON',           # :
     'COMMA': 'COMMA',           # ,
     'PLUS': 'PLUS', 'MINUS': 'MINUS', 'MUL': 'MUL', 'DIV': 'DIV',
     'POWER': 'POWER',           # **
