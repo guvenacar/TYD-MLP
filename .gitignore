@@ -39,6 +39,7 @@ ENV/
 program
 runtime.o
 test_sozluk
+runtime/test_runtime
 
 # Temporary files
 tmp/
