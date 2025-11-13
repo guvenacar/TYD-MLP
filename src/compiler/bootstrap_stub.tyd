@@ -1,0 +1,32 @@
+-- ===============================================
+-- MLP Bootstrap Stub - Minimal Proof of Concept
+-- ===============================================
+-- This is a minimal stub to prove the bootstrap pipeline works
+-- It's not a real compiler - just prints messages
+
+YAZDIR "===========================================";
+YAZDIR "MLP Compiler Stub v0.1 (Bootstrap)";
+YAZDIR "===========================================";
+YAZDIR "";
+
+-- Main compiler entry point
+SAYISAL işleç mlpc_main()
+    YAZDIR "Bootstrap Phase 1: Self-hosting stub";
+    YAZDIR "This minimal compiler was compiled by Python TYD-MLP";
+    YAZDIR "and proves the bootstrap pipeline works!";
+    YAZDIR "";
+    YAZDIR "Pipeline verified:";
+    YAZDIR "  1. Python TYD-MLP -> Assembly";
+    YAZDIR "  2. NASM -> Object file";
+    YAZDIR "  3. GCC -> Executable";
+    YAZDIR "";
+    YAZDIR "Next: Implement real compiler in Stage 2";
+    DÖNÜŞ 0;
+SON
+
+-- Test entry point
+SAYISAL sonuc = mlpc_main();
+
+YAZDIR "";
+YAZDIR "Bootstrap stub execution complete!";
+YAZDIR "Exit code: 0";
