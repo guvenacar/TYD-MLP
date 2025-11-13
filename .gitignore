@@ -47,6 +47,12 @@ tmp/
 *.bak
 *.backup
 
+# OS specific
+Thumbs.db
+
+# Test outputs
+test_output/
+
 # VSCode Extension
 vscode-tyd/node_modules/
 vscode-tyd/out/
