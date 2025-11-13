@@ -1,0 +1,267 @@
+-- ===============================================
+-- MLP Compiler - Main Entry Point
+-- Bootstrap Aşaması
+-- ===============================================
+--
+-- Bu dosya MLP derleyicisinin ana girişidir ve MLP ile yazılmıştır.
+-- Lexer → Parser → CodeGen pipeline'ını koordine eder.
+--
+-- Kullanım:
+--   mlpc kaynak.mlp output.asm
+
+-- ===============================================
+-- Dosya I/O İşleçleri (C FFI ile)
+-- ===============================================
+
+-- Dosyadan kaynak kodu oku
+-- Not: Bootstrap aşamasında basit string okuma varsayıyoruz
+IŞLEÇ dosya_oku(dosya_yolu: METIN): METIN {
+    -- C'nin fopen/fread/fclose fonksiyonlarını kullan
+    -- Basitleştirme için şimdilik doğrudan DOSYA_OKU built-in kullanıyoruz
+    DÖNÜŞ DOSYA_OKU(dosya_yolu);
+}
+
+-- Dosyaya assembly kodu yaz
+IŞLEÇ dosya_yaz(dosya_yolu: METIN, icerik: METIN): MANTIKSAL {
+    -- C'nin fopen/fwrite/fclose fonksiyonlarını kullan
+    -- Basitleştirme için şimdilik doğrudan DOSYA_YAZ built-in kullanıyoruz
+    DÖNÜŞ DOSYA_YAZ(dosya_yolu, icerik);
+}
+
+-- ===============================================
+-- Ana Derleme Fonksiyonu
+-- ===============================================
+
+IŞLEÇ derle(kaynak_dosya: METIN, cikti_dosya: METIN): MANTIKSAL {
+    YAZDIR "========================================";
+    YAZDIR "MLP Compiler v0.1.0 (Bootstrap)";
+    YAZDIR "========================================";
+    YAZDIR "";
+
+    -- 1. KAYNAK KODU OKU
+    YAZDIR "[1/5] Kaynak kod okunuyor: " + kaynak_dosya;
+    DEĞIŞKEN kaynak_kod: METIN = dosya_oku(kaynak_dosya);
+
+    EĞER (kaynak_kod == "" VEYA kaynak_kod == BOŞ) {
+        YAZDIR "HATA: Kaynak dosya okunamadı veya boş: " + kaynak_dosya;
+        DÖNÜŞ YANLIŞ;
+    }
+
+    YAZDIR "  ✓ Kaynak kod okundu (" + sayiya_metin(UZUNLUK(kaynak_kod)) + " karakter)";
+    YAZDIR "";
+
+    -- 2. LEXER - Tokenization
+    YAZDIR "[2/5] Lexical analysis (tokenization)...";
+    lexer_baslat(kaynak_kod);
+
+    DEĞIŞKEN tokenler: DİZİ[SÖZLÜK] = tokenize(kaynak_kod);
+
+    EĞER (UZUNLUK(tokenler) == 0) {
+        YAZDIR "HATA: Tokenization başarısız oldu";
+        DÖNÜŞ YANLIŞ;
+    }
+
+    YAZDIR "  ✓ Tokenization tamamlandı (" + sayiya_metin(UZUNLUK(tokenler)) + " token)";
+
+    -- Token listesini göster (debug)
+    YAZDIR "  Tokenler:";
+    DÖNGÜ (DEĞIŞKEN i: SAYI = 0; i < UZUNLUK(tokenler) VE i < 10; i = i + 1) {
+        DEĞIŞKEN t: SÖZLÜK = tokenler[i];
+        YAZDIR "    [" + sayiya_metin(i) + "] " +
+                SÖZLÜK_AL(t, "tip") + " = '" + SÖZLÜK_AL(t, "deger") + "'";
+    }
+    EĞER (UZUNLUK(tokenler) > 10) {
+        YAZDIR "    ... (" + sayiya_metin(UZUNLUK(tokenler) - 10) + " daha)";
+    }
+    YAZDIR "";
+
+    -- 3. PARSER - AST Generation
+    YAZDIR "[3/5] Syntax analysis (parsing)...";
+    parser_baslat(tokenler);
+
+    DEĞIŞKEN ast: DİZİ[SÖZLÜK] = parse();
+
+    EĞER (UZUNLUK(ast) == 0) {
+        YAZDIR "HATA: Parsing başarısız oldu";
+        DÖNÜŞ YANLIŞ;
+    }
+
+    YAZDIR "  ✓ Parsing tamamlandı (" + sayiya_metin(UZUNLUK(ast)) + " AST node)";
+
+    -- AST göster (debug)
+    YAZDIR "  AST:";
+    DÖNGÜ (DEĞIŞKEN i: SAYI = 0; i < UZUNLUK(ast) VE i < 5; i = i + 1) {
+        DEĞIŞKEN node: SÖZLÜK = ast[i];
+        YAZDIR "    [" + sayiya_metin(i) + "] " + SÖZLÜK_AL(node, "tip");
+    }
+    EĞER (UZUNLUK(ast) > 5) {
+        YAZDIR "    ... (" + sayiya_metin(UZUNLUK(ast) - 5) + " daha)";
+    }
+    YAZDIR "";
+
+    -- 4. CODE GENERATOR - Assembly Generation
+    YAZDIR "[4/5] Code generation (assembly)...";
+
+    DEĞIŞKEN assembly_kod: METIN = generate(ast);
+
+    EĞER (assembly_kod == "" VEYA assembly_kod == BOŞ) {
+        YAZDIR "HATA: Code generation başarısız oldu";
+        DÖNÜŞ YANLIŞ;
+    }
+
+    YAZDIR "  ✓ Assembly kodu üretildi (" + sayiya_metin(UZUNLUK(assembly_kod)) + " karakter)";
+    YAZDIR "";
+
+    -- 5. DOSYAYA YAZ
+    YAZDIR "[5/5] Assembly dosyası yazılıyor: " + cikti_dosya;
+
+    DEĞIŞKEN yazim_basarili: MANTIKSAL = dosya_yaz(cikti_dosya, assembly_kod);
+
+    EĞER (DEĞİL yazim_basarili) {
+        YAZDIR "HATA: Çıktı dosyası yazılamadı: " + cikti_dosya;
+        DÖNÜŞ YANLIŞ;
+    }
+
+    YAZDIR "  ✓ Dosya yazıldı";
+    YAZDIR "";
+
+    -- Başarı
+    YAZDIR "========================================";
+    YAZDIR "✓ Derleme başarılı!";
+    YAZDIR "";
+    YAZDIR "Sonraki adımlar:";
+    YAZDIR "  1. Assembly'i derle:  nasm -f elf64 " + cikti_dosya + " -o output.o";
+    YAZDIR "  2. Link et:           gcc output.o -o program -no-pie";
+    YAZDIR "  3. Çalıştır:          ./program";
+    YAZDIR "========================================";
+
+    DÖNÜŞ DOĞRU;
+}
+
+-- ===============================================
+-- Komut Satırı Argüman İşleme
+-- ===============================================
+
+IŞLEÇ main(): SAYI {
+    -- Komut satırı argümanlarını al
+    DEĞIŞKEN argc: SAYI = ARGC();
+    DEĞIŞKEN argv: DİZİ[METIN] = ARGV();
+
+    -- Kullanım kontrolü
+    EĞER (argc < 3) {
+        YAZDIR "MLP Compiler v0.1.0 (Bootstrap)";
+        YAZDIR "";
+        YAZDIR "Kullanım:";
+        YAZDIR "  mlpc <kaynak.mlp> <çıktı.asm>";
+        YAZDIR "";
+        YAZDIR "Örnek:";
+        YAZDIR "  mlpc hello.mlp hello.asm";
+        YAZDIR "";
+        DÖNÜŞ 1;  -- Hata kodu
+    }
+
+    -- Argümanları parse et
+    DEĞIŞKEN kaynak_dosya: METIN = argv[1];
+    DEĞIŞKEN cikti_dosya: METIN = argv[2];
+
+    -- Derleme işlemini başlat
+    DEĞIŞKEN basarili: MANTIKSAL = derle(kaynak_dosya, cikti_dosya);
+
+    EĞER (basarili) {
+        DÖNÜŞ 0;  -- Başarı
+    } DEĞILSE {
+        DÖNÜŞ 1;  -- Hata
+    }
+}
+
+-- ===============================================
+-- Test İşleci (Geliştirme Aşaması)
+-- ===============================================
+
+IŞLEÇ test_derleyici(): BOŞ {
+    YAZDIR "=== MLP Derleyici Test ===";
+    YAZDIR "";
+
+    -- Test kaynak kodu
+    DEĞIŞKEN test_kod: METIN = "DEĞIŞKEN x: SAYI = 42;\nYAZDIR x;";
+
+    YAZDIR "Test Kaynak Kodu:";
+    YAZDIR test_kod;
+    YAZDIR "";
+
+    -- Lexer test
+    YAZDIR "--- LEXER TEST ---";
+    lexer_baslat(test_kod);
+    DEĞIŞKEN tokenler: DİZİ[SÖZLÜK] = tokenize(test_kod);
+    YAZDIR "Token sayısı: " + sayiya_metin(UZUNLUK(tokenler));
+    YAZDIR "";
+
+    -- Parser test
+    YAZDIR "--- PARSER TEST ---";
+    parser_baslat(tokenler);
+    DEĞIŞKEN ast: DİZİ[SÖZLÜK] = parse();
+    YAZDIR "AST node sayısı: " + sayiya_metin(UZUNLUK(ast));
+    YAZDIR "";
+
+    -- Code generator test
+    YAZDIR "--- CODE GENERATOR TEST ---";
+    DEĞIŞKEN asm_kod: METIN = generate(ast);
+    YAZDIR "Assembly kod uzunluğu: " + sayiya_metin(UZUNLUK(asm_kod));
+    YAZDIR "";
+    YAZDIR "Üretilen Assembly:";
+    YAZDIR asm_kod;
+    YAZDIR "";
+
+    YAZDIR "=== Test Tamamlandı ===";
+}
+
+-- ===============================================
+-- Bootstrap İçin Yardımcı İşleçler
+-- ===============================================
+
+-- Dosya uzantısını değiştir: kaynak.mlp -> kaynak.asm
+IŞLEÇ uzanti_degistir(dosya: METIN, yeni_uzanti: METIN): METIN {
+    -- Basit implementasyon: son noktadan sonrasını değiştir
+    DEĞIŞKEN son_nokta: SAYI = SON_INDEKS(dosya, ".");
+
+    EĞER (son_nokta == -1) {
+        DÖNÜŞ dosya + "." + yeni_uzanti;
+    }
+
+    DEĞIŞKEN temel: METIN = alt_metin(dosya, 0, son_nokta);
+    DÖNÜŞ temel + "." + yeni_uzanti;
+}
+
+-- Dosya var mı kontrol et
+IŞLEÇ dosya_var_mi(dosya: METIN): MANTIKSAL {
+    -- C'nin access() fonksiyonunu kullan
+    -- Basitleştirme için şimdilik her zaman DOĞRU döndür
+    -- Gerçek implementasyon C FFI gerektirir
+    DÖNÜŞ DOĞRU;
+}
+
+-- ===============================================
+-- Bootstrap Notları
+-- ===============================================
+--
+-- Bu main.mlp dosyası, MLP derleyicisinin self-hosting
+-- versiyonunun ana giriş noktasıdır.
+--
+-- Bootstrap süreci:
+--   1. Python TYD-MLP derleyicisi bu dosyayı ve diğer
+--      compiler/*.mlp dosyalarını assembly'e çevirir
+--   2. Assembly NASM ile object file'a derlenir
+--   3. GCC ile C runtime'a link edilerek executable oluşturulur
+--   4. Oluşan executable artık kendi kaynak kodunu derleyebilir!
+--
+-- Gerekli built-in fonksiyonlar (C FFI ile sağlanmalı):
+--   - DOSYA_OKU(yol: METIN): METIN
+--   - DOSYA_YAZ(yol: METIN, içerik: METIN): MANTIKSAL
+--   - ARGC(): SAYI
+--   - ARGV(): DİZİ[METIN]
+--   - UZUNLUK(metin: METIN): SAYI
+--   - alt_metin(metin: METIN, başlangıç: SAYI, uzunluk: SAYI): METIN
+--   - SON_INDEKS(metin: METIN, arama: METIN): SAYI
+--   - sayiya_metin(sayı: SAYI): METIN
+--
+-- ===============================================
