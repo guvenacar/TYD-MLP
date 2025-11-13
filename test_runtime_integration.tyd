@@ -1,0 +1,39 @@
+-- Test Runtime Integration: String, Array, Memory Functions
+
+SAYISAL IŞLEÇ test_string_functions()
+    METIN s_metin = "Merhaba";
+    SAYISAL s_uzunluk = UZUNLUK(s_metin);
+    YAZDIR s_uzunluk;
+
+    SAYISAL s_karakter = KARAKTER_AL(s_metin, 0);
+    YAZDIR s_karakter;
+
+    DÖNÜŞ 0;
+SON
+
+SAYISAL IŞLEÇ test_array_functions()
+    SAYISAL s_dizi = DIZI_OLUSTUR();
+    DIZI_EKLE(s_dizi, 10);
+    DIZI_EKLE(s_dizi, 20);
+    DIZI_EKLE(s_dizi, 30);
+
+    SAYISAL s_uzunluk = DIZI_UZUNLUK(s_dizi);
+    YAZDIR s_uzunluk;
+
+    SAYISAL s_eleman = DIZI_AL(s_dizi, 1);
+    YAZDIR s_eleman;
+
+    DIZI_YOK_ET(s_dizi);
+    DÖNÜŞ 0;
+SON
+
+SAYISAL IŞLEÇ test_memory_functions()
+    SAYISAL s_ptr = BELLEK_AYIR(100);
+    YAZDIR s_ptr;
+    BELLEK_SERBEST(s_ptr);
+    DÖNÜŞ 0;
+SON
+
+test_string_functions();
+test_array_functions();
+test_memory_functions();

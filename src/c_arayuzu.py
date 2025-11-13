@@ -17,12 +17,33 @@ class CArayuzu:
             "YENI": "malloc",
             "SIL": "free",
             "YAZDIR": "printf",
-            
-            # YENİLER (Sözlük):
+
+            # Sözlük:
             "SOZLUK_OLUSTUR": "sozluk_olustur",
             "SOZLUK_EKLE": "sozluk_ekle",
             "SOZLUK_GETIR": "sozluk_getir",
-            "SOZLUK_YOK_ET": "sozluk_yok_et"
+            "SOZLUK_YOK_ET": "sozluk_yok_et",
+
+            # STAGE 2 PHASE 1: Runtime Extension
+            # String Functions:
+            "UZUNLUK": "mlp_strlen",
+            "ALT_METIN": "mlp_substring",
+            "KARAKTER_AL": "mlp_char_at",
+            "METIN_BIRLESTIR": "mlp_string_concat",
+            "METIN_KARSILASTIR": "mlp_string_compare",
+
+            # Array Functions:
+            "DIZI_OLUSTUR": "mlp_array_new",
+            "DIZI_EKLE": "mlp_array_push",
+            "DIZI_AL": "mlp_array_get",
+            "DIZI_UZUNLUK": "mlp_array_length",
+            "DIZI_CIKAR": "mlp_array_pop",
+            "DIZI_YOK_ET": "mlp_array_destroy",
+
+            # Memory Management:
+            "BELLEK_AYIR": "mlp_alloc",
+            "BELLEK_SERBEST": "mlp_free",
+            "BELLEK_BOYUTLANDIR": "mlp_realloc"
         }
 
     def emit(self, instruction):
