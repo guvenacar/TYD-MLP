@@ -1,0 +1,433 @@
+-- ===============================================
+-- MLP Code Generator (Kod Üreteci)
+-- Bootstrap Aşaması - Minimal Implementation
+-- ===============================================
+--
+-- Bu dosya MLP dilinin code generator'ıdır ve MLP ile yazılmıştır.
+-- AST'den x86_64 NASM assembly kodu üretir.
+
+-- Global değişkenler
+DEĞIŞKEN asm_kod: DİZİ[METIN];           -- .text bölümü (kod)
+DEĞIŞKEN asm_data: DİZİ[METIN];          -- .data bölümü (sabitler)
+DEĞIŞKEN asm_extern: DİZİ[METIN];        -- extern bildirimleri
+DEĞIŞKEN degisken_haritasi: SÖZLÜK;      -- Değişken isim -> stack offset mapping
+DEĞIŞKEN stack_offset: SAYI;             -- Mevcut stack offset
+DEĞIŞKEN etiket_sayaci: SAYI;            -- Label counter
+DEĞIŞKEN string_sayaci: SAYI;            -- String literal counter
+
+-- Code generator'ı başlat
+IŞLEÇ codegen_baslat(): BOŞ {
+    asm_kod = [];
+    asm_data = [];
+    asm_extern = [];
+    degisken_haritasi = SÖZLÜK_OLUŞTUR();
+    stack_offset = 0;
+    etiket_sayaci = 0;
+    string_sayaci = 0;
+
+    -- Standart C fonksiyonları için extern bildirimleri
+    DİZİ_EKLE(asm_extern, "extern printf");
+    DİZİ_EKLE(asm_extern, "extern malloc");
+    DİZİ_EKLE(asm_extern, "extern free");
+
+    -- Format stringleri
+    DİZİ_EKLE(asm_data, "format_sayi db \"%d\", 10, 0");
+    DİZİ_EKLE(asm_data, "format_metin db \"%s\", 10, 0");
+}
+
+-- Kod satırı ekle (.text bölümüne)
+IŞLEÇ emit(kod: METIN): BOŞ {
+    DİZİ_EKLE(asm_kod, "    " + kod);
+}
+
+-- Data satırı ekle (.data bölümüne)
+IŞLEÇ emit_data(data: METIN): BOŞ {
+    DİZİ_EKLE(asm_data, "    " + data);
+}
+
+-- Yeni etiket oluştur
+IŞLEÇ yeni_etiket(): METIN {
+    etiket_sayaci = etiket_sayaci + 1;
+    DÖNÜŞ "_L" + sayiya_metin(etiket_sayaci);
+}
+
+-- Yeni string literal oluştur (.data'ya ekle)
+IŞLEÇ yeni_string(deger: METIN): METIN {
+    string_sayaci = string_sayaci + 1;
+    DEĞIŞKEN label: METIN = "str_" + sayiya_metin(string_sayaci);
+    emit_data(label + " db \"" + deger + "\", 0");
+    DÖNÜŞ label;
+}
+
+-- Değişken kaydet (stack'e)
+IŞLEÇ degisken_kaydet(isim: METIN, offset: SAYI): BOŞ {
+    SÖZLÜK_EKLE(degisken_haritasi, isim, sayiya_metin(offset));
+}
+
+-- Değişken offset'ini al
+IŞLEÇ degisken_offset_al(isim: METIN): SAYI {
+    DEĞIŞKEN offset_str: METIN = SÖZLÜK_AL(degisken_haritasi, isim);
+    EĞER (offset_str == BOŞ) {
+        YAZDIR "HATA: Tanımlanmamış değişken: " + isim;
+        DÖNÜŞ 0;
+    }
+    DÖNÜŞ metinden_sayiya(offset_str);
+}
+
+-- ===============================================
+-- İfade (Expression) Kod Üretimi
+-- ===============================================
+-- Sonuç RAX register'ında bırakılır
+
+IŞLEÇ gen_ifade(node: SÖZLÜK): BOŞ {
+    DEĞIŞKEN tip: METIN = SÖZLÜK_AL(node, "tip");
+
+    -- Sayı literal
+    EĞER (tip == "Sayi") {
+        DEĞIŞKEN deger: METIN = SÖZLÜK_AL(node, "deger");
+        emit("mov rax, " + deger);
+        DÖNÜŞ;
+    }
+
+    -- Metin literal
+    EĞER (tip == "Metin") {
+        DEĞIŞKEN deger: METIN = SÖZLÜK_AL(node, "deger");
+        DEĞIŞKEN label: METIN = yeni_string(deger);
+        emit("mov rax, " + label);
+        DÖNÜŞ;
+    }
+
+    -- Değişken
+    EĞER (tip == "Degisken") {
+        DEĞIŞKEN isim: METIN = SÖZLÜK_AL(node, "isim");
+        DEĞIŞKEN offset: SAYI = degisken_offset_al(isim);
+        emit("mov rax, [rbp" + sayiya_metin(offset) + "]");
+        DÖNÜŞ;
+    }
+
+    -- İkili işlem (Binary Operation)
+    EĞER (tip == "IkiliIslem") {
+        DEĞIŞKEN operator: METIN = SÖZLÜK_AL(node, "operator");
+        DEĞIŞKEN sol: SÖZLÜK = SÖZLÜK_AL(node, "sol");
+        DEĞIŞKEN sag: SÖZLÜK = SÖZLÜK_AL(node, "sag");
+
+        -- Sağ tarafı hesapla -> RAX
+        gen_ifade(sag);
+        emit("push rax  ; Sağ değeri sakla");
+
+        -- Sol tarafı hesapla -> RAX
+        gen_ifade(sol);
+        emit("pop rbx  ; Sağ değeri geri al");
+
+        -- İşlemi uygula
+        EĞER (operator == "+") {
+            emit("add rax, rbx");
+        } DEĞILSE EĞER (operator == "-") {
+            emit("sub rax, rbx");
+        } DEĞILSE EĞER (operator == "*") {
+            emit("imul rax, rbx");
+        } DEĞILSE EĞER (operator == "/") {
+            emit("xor rdx, rdx");
+            emit("idiv rbx");
+        } DEĞILSE EĞER (operator == "%") {
+            emit("xor rdx, rdx");
+            emit("idiv rbx");
+            emit("mov rax, rdx  ; Mod sonucu");
+        } DEĞILSE EĞER (operator == "==") {
+            emit("cmp rax, rbx");
+            emit("sete al");
+            emit("movzx rax, al");
+        } DEĞILSE EĞER (operator == "!=") {
+            emit("cmp rax, rbx");
+            emit("setne al");
+            emit("movzx rax, al");
+        } DEĞILSE EĞER (operator == "<") {
+            emit("cmp rax, rbx");
+            emit("setl al");
+            emit("movzx rax, al");
+        } DEĞILSE EĞER (operator == ">") {
+            emit("cmp rax, rbx");
+            emit("setg al");
+            emit("movzx rax, al");
+        } DEĞILSE EĞER (operator == "<=") {
+            emit("cmp rax, rbx");
+            emit("setle al");
+            emit("movzx rax, al");
+        } DEĞILSE EĞER (operator == ">=") {
+            emit("cmp rax, rbx");
+            emit("setge al");
+            emit("movzx rax, al");
+        } DEĞILSE EĞER (operator == "VE") {
+            emit("and rax, rbx");
+        } DEĞILSE EĞER (operator == "VEYA") {
+            emit("or rax, rbx");
+        }
+
+        DÖNÜŞ;
+    }
+
+    -- İşleç çağırma (Function Call)
+    EĞER (tip == "IslecCagirma") {
+        DEĞIŞKEN isim: METIN = SÖZLÜK_AL(node, "isim");
+        DEĞIŞKEN argumanlar: DİZİ[SÖZLÜK] = SÖZLÜK_AL(node, "argumanlar");
+
+        -- Özel built-in fonksiyonlar
+        EĞER (isim == "YAZDIR" VEYA isim == "yazdır") {
+            EĞER (UZUNLUK(argumanlar) > 0) {
+                gen_ifade(argumanlar[0]);  -- İlk argümanı hesapla
+
+                -- Argüman tipine göre format seç
+                -- Basitleştirme: Her zaman metin formatı kullan
+                emit("mov rdi, format_metin");
+                emit("mov rsi, rax");
+                emit("mov rax, 0");
+                emit("call printf");
+            }
+            DÖNÜŞ;
+        }
+
+        -- Normal işleç çağırma
+        -- System V ABI: RDI, RSI, RDX, RCX, R8, R9
+        DEĞIŞKEN reg_listesi: DİZİ[METIN] = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"];
+
+        DÖNGÜ (DEĞIŞKEN i: SAYI = 0; i < UZUNLUK(argumanlar) VE i < 6; i = i + 1) {
+            gen_ifade(argumanlar[i]);
+            emit("mov " + reg_listesi[i] + ", rax");
+        }
+
+        emit("call " + isim);
+        DÖNÜŞ;
+    }
+
+    -- Varsayılan
+    YAZDIR "HATA: Bilinmeyen ifade tipi: " + tip;
+}
+
+-- ===============================================
+-- Komut (Statement) Kod Üretimi
+-- ===============================================
+
+IŞLEÇ gen_komut(node: SÖZLÜK): BOŞ {
+    DEĞIŞKEN tip: METIN = SÖZLÜK_AL(node, "tip");
+
+    -- Değişken tanımlama: DEĞIŞKEN isim: TÜR = değer;
+    EĞER (tip == "DegiskenTanimlama") {
+        DEĞIŞKEN isim: METIN = SÖZLÜK_AL(node, "isim");
+        DEĞIŞKEN deger: SÖZLÜK = SÖZLÜK_AL(node, "deger");
+
+        -- Stack'te yer ayır
+        stack_offset = stack_offset - 8;
+        degisken_kaydet(isim, stack_offset);
+
+        emit("sub rsp, 8  ; " + isim + " için yer ayır");
+
+        -- İlk değer varsa ata
+        EĞER (deger != BOŞ) {
+            gen_ifade(deger);
+            emit("mov [rbp" + sayiya_metin(stack_offset) + "], rax");
+        }
+
+        DÖNÜŞ;
+    }
+
+    -- Atama: isim = değer;
+    EĞER (tip == "AtamaKomutu") {
+        DEĞIŞKEN isim: METIN = SÖZLÜK_AL(node, "isim");
+        DEĞIŞKEN deger: SÖZLÜK = SÖZLÜK_AL(node, "deger");
+
+        gen_ifade(deger);
+        DEĞIŞKEN offset: SAYI = degisken_offset_al(isim);
+        emit("mov [rbp" + sayiya_metin(offset) + "], rax");
+
+        DÖNÜŞ;
+    }
+
+    -- Eğer bloğu: EĞER (koşul) { ... } DEĞILSE { ... }
+    EĞER (tip == "EgerBlogu") {
+        DEĞIŞKEN kosul: SÖZLÜK = SÖZLÜK_AL(node, "kosul");
+        DEĞIŞKEN govde: DİZİ[SÖZLÜK] = SÖZLÜK_AL(node, "govde");
+        DEĞIŞKEN degilse_govde: DİZİ[SÖZLÜK] = SÖZLÜK_AL(node, "degilse_govde");
+
+        DEĞIŞKEN etiket_degilse: METIN = yeni_etiket();
+        DEĞIŞKEN etiket_son: METIN = yeni_etiket();
+
+        -- Koşulu hesapla
+        gen_ifade(kosul);
+        emit("cmp rax, 0");
+        emit("je " + etiket_degilse);
+
+        -- EĞER bloğu
+        DÖNGÜ (DEĞIŞKEN i: SAYI = 0; i < UZUNLUK(govde); i = i + 1) {
+            gen_komut(govde[i]);
+        }
+        emit("jmp " + etiket_son);
+
+        -- DEĞILSE bloğu
+        emit(etiket_degilse + ":");
+        EĞER (degilse_govde != BOŞ VE UZUNLUK(degilse_govde) > 0) {
+            DÖNGÜ (DEĞIŞKEN i: SAYI = 0; i < UZUNLUK(degilse_govde); i = i + 1) {
+                gen_komut(degilse_govde[i]);
+            }
+        }
+
+        emit(etiket_son + ":");
+        DÖNÜŞ;
+    }
+
+    -- Döngü bloğu: DÖNGÜ (koşul) { ... }
+    EĞER (tip == "DonguBlogu") {
+        DEĞIŞKEN kosul: SÖZLÜK = SÖZLÜK_AL(node, "kosul");
+        DEĞIŞKEN govde: DİZİ[SÖZLÜK] = SÖZLÜK_AL(node, "govde");
+
+        DEĞIŞKEN etiket_baslangic: METIN = yeni_etiket();
+        DEĞIŞKEN etiket_son: METIN = yeni_etiket();
+
+        -- Döngü başlangıcı
+        emit(etiket_baslangic + ":");
+
+        -- Koşulu hesapla
+        gen_ifade(kosul);
+        emit("cmp rax, 0");
+        emit("je " + etiket_son);
+
+        -- Döngü gövdesi
+        DÖNGÜ (DEĞIŞKEN i: SAYI = 0; i < UZUNLUK(govde); i = i + 1) {
+            gen_komut(govde[i]);
+        }
+
+        emit("jmp " + etiket_baslangic);
+        emit(etiket_son + ":");
+
+        DÖNÜŞ;
+    }
+
+    -- Dönüş komutu: DÖNÜŞ değer;
+    EĞER (tip == "DonusKomutu") {
+        DEĞIŞKEN deger: SÖZLÜK = SÖZLÜK_AL(node, "deger");
+
+        gen_ifade(deger);
+        emit("mov rsp, rbp");
+        emit("pop rbp");
+        emit("ret");
+
+        DÖNÜŞ;
+    }
+
+    -- İşleç çağırma (statement olarak)
+    EĞER (tip == "IslecCagirma") {
+        gen_ifade(node);  -- İfade olarak işle
+        DÖNÜŞ;
+    }
+
+    -- Varsayılan
+    YAZDIR "HATA: Bilinmeyen komut tipi: " + tip;
+}
+
+-- ===============================================
+-- İşleç (Function) Kod Üretimi
+-- ===============================================
+
+IŞLEÇ gen_islec(node: SÖZLÜK): BOŞ {
+    DEĞIŞKEN isim: METIN = SÖZLÜK_AL(node, "isim");
+    DEĞIŞKEN parametreler: DİZİ[SÖZLÜK] = SÖZLÜK_AL(node, "parametreler");
+    DEĞIŞKEN govde: DİZİ[SÖZLÜK] = SÖZLÜK_AL(node, "govde");
+
+    -- Function label
+    DİZİ_EKLE(asm_kod, "");
+    DİZİ_EKLE(asm_kod, isim + ":");
+    emit("push rbp");
+    emit("mov rbp, rsp");
+
+    -- Parametreleri stack'e kaydet
+    DEĞIŞKEN reg_listesi: DİZİ[METIN] = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"];
+    DÖNGÜ (DEĞIŞKEN i: SAYI = 0; i < UZUNLUK(parametreler) VE i < 6; i = i + 1) {
+        DEĞIŞKEN param: SÖZLÜK = parametreler[i];
+        DEĞIŞKEN param_isim: METIN = SÖZLÜK_AL(param, "isim");
+
+        stack_offset = stack_offset - 8;
+        degisken_kaydet(param_isim, stack_offset);
+
+        emit("sub rsp, 8  ; Parametre: " + param_isim);
+        emit("mov [rbp" + sayiya_metin(stack_offset) + "], " + reg_listesi[i]);
+    }
+
+    -- Gövdeyi üret
+    DÖNGÜ (DEĞIŞKEN i: SAYI = 0; i < UZUNLUK(govde); i = i + 1) {
+        gen_komut(govde[i]);
+    }
+
+    -- Varsayılan dönüş
+    emit("mov rsp, rbp");
+    emit("pop rbp");
+    emit("ret");
+}
+
+-- ===============================================
+-- Ana Üretim Fonksiyonu
+-- ===============================================
+
+IŞLEÇ generate(ast: DİZİ[SÖZLÜK]): METIN {
+    codegen_baslat();
+
+    -- Main fonksiyonu başlat
+    DİZİ_EKLE(asm_kod, "");
+    DİZİ_EKLE(asm_kod, "global main");
+    DİZİ_EKLE(asm_kod, "main:");
+    emit("push rbp");
+    emit("mov rbp, rsp");
+
+    -- AST node'larını işle
+    DÖNGÜ (DEĞIŞKEN i: SAYI = 0; i < UZUNLUK(ast); i = i + 1) {
+        DEĞIŞKEN node: SÖZLÜK = ast[i];
+        DEĞIŞKEN tip: METIN = SÖZLÜK_AL(node, "tip");
+
+        EĞER (tip == "IslecTanimlama") {
+            gen_islec(node);
+        } DEĞILSE {
+            gen_komut(node);
+        }
+    }
+
+    -- Main fonksiyonu bitir
+    emit("mov rax, 0  ; Exit code");
+    emit("mov rsp, rbp");
+    emit("pop rbp");
+    emit("ret");
+
+    -- Tüm assembly kodunu birleştir
+    DEĞIŞKEN sonuc: METIN = "";
+
+    -- Extern bildirimleri
+    DÖNGÜ (DEĞIŞKEN i: SAYI = 0; i < UZUNLUK(asm_extern); i = i + 1) {
+        sonuc = sonuc + asm_extern[i] + "\n";
+    }
+
+    -- Data bölümü
+    sonuc = sonuc + "\nsection .data\n";
+    DÖNGÜ (DEĞIŞKEN i: SAYI = 0; i < UZUNLUK(asm_data); i = i + 1) {
+        sonuc = sonuc + asm_data[i] + "\n";
+    }
+
+    -- Text bölümü (kod)
+    sonuc = sonuc + "\nsection .text\n";
+    DÖNGÜ (DEĞIŞKEN i: SAYI = 0; i < UZUNLUK(asm_kod); i = i + 1) {
+        sonuc = sonuc + asm_kod[i] + "\n";
+    }
+
+    DÖNÜŞ sonuc;
+}
+
+-- Test işleci
+IŞLEÇ codegen_test(): BOŞ {
+    -- Basit bir AST oluştur: YAZDIR 42;
+    DEĞIŞKEN ast: DİZİ[SÖZLÜK] = [];
+
+    DEĞIŞKEN sayi_node: SÖZLÜK = ast_sayi("42");
+    DEĞIŞKEN argumanlar: DİZİ[SÖZLÜK] = [sayi_node];
+    DEĞIŞKEN yazdir_node: SÖZLÜK = ast_islec_cagirma("YAZDIR", argumanlar);
+
+    DİZİ_EKLE(ast, yazdir_node);
+
+    DEĞIŞKEN asm: METIN = generate(ast);
+    YAZDIR asm;
+}
