@@ -1,0 +1,37 @@
+name: python
+language: python
+variants:
+  for:
+    long:
+      template_file: templates/for_long.j2
+      signature:
+        order: ["start","counter","in","range","end"]
+        tokens:
+          start: "for"
+          in: "in"
+          range: "range"
+          end: ":"
+      example: for i in range(100):
+                print(i)
+    short:
+      template_file: templates/for_long.j2
+      signature:
+       order: ["start","counter","in","range","end"]
+        tokens:
+          start: "for"
+          in: "in"
+          range: "range"
+          end: ":"
+      example: for i in range(100) print(i)
+  ternary:none
+operators:
+  eq: ["==","="]
+  lt: ["<"]
+  lte: ["<="]
+  gt: [">"]
+  gte: [">="]
+
+name:C
+language:C
+variants:
+  for:

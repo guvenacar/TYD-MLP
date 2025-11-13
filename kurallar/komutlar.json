@@ -1,0 +1,17 @@
+{
+  "yazdır": {
+    "args": ["metin", "sayısal"],
+    "asm": {
+      "metin": ["movq {var}(%rip), %rdi", "call print"],
+      "sayısal": ["movq {var}(%rip), %rdi", "call print_int"]
+    }
+  },
+  "toplama": {
+    "pattern": "{dst} = {a} + {b}",
+    "asm": ["movq {a}(%rip), %rax", "addq {b}(%rip), %rax", "movq %rax, {dst}(%rip)"]
+  },
+  "if": {
+    "pattern": "if {a} = {b} then {stmt}",
+    "asm": ["cmpq {b}(%rip), {a}(%rip)", "je {label_true}", "jmp {label_end}", "{label_true}: {stmt}", "{label_end}:"]
+  }
+}

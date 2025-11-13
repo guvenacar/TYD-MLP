@@ -1,0 +1,24 @@
+-- TYD Test Dosyası
+-- Bu dosyayı VSCodium'da açarak eklentiyi test edebilirsiniz
+
+YAZDIR "Merhaba TYD!";
+
+SAYISAL x = 10;
+SAYISAL y = 20;
+
+YAZDIR "x değeri:";
+YAZDIR x;
+
+EĞER x < y İSE
+    YAZDIR "x küçük";
+DEĞILSE
+    YAZDIR "y küçük";
+EĞER SON
+
+SAYISAL IŞLEÇ topla(SAYISAL a, SAYISAL b)
+    DÖNÜŞ a + b;
+IŞLEÇ SON
+
+SAYISAL sonuc = topla(x, y);
+YAZDIR "Toplam:";
+YAZDIR sonuc;

@@ -1,0 +1,26 @@
+{
+  "dil_profili": {
+    "tr-TR": { 
+      "TANIMLA_SAYI": "sayısal",
+      "TANIMLA_METIN": "metin",
+      "TANIMLA_BOOL": "zıtlık",
+      "YAPI_KOSUL_EGER": "eğer",
+      "YAPI_KOSUL_ISE": "ise",
+      "YAPI_KOSUL_DEGILSE": "değilse",
+      "YAPI_SON": "son",
+      "YAPI_DONUS": "dönüş",
+      "YAPI_YAZDIR": "yazdır",
+      "YAPI_DONGU": "döngü",
+      "YAPI_DONGU_BITIR": "döngü_bitir",
+      "YAPI_ISLEC": "işleç",
+       
+      "OP_ESIT": "eşit",
+      "OP_ARTI": "artı",
+      "OP_EKSI": "eksi",
+      "OP_CARP": "çarp",
+      "OP_BOL": "böl",
+      "OP_GT": "büyük",
+      "OP_LT": "küçük"
+    }
+  }
+}

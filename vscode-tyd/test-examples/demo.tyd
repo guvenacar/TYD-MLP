@@ -1,0 +1,94 @@
+---
+TYD VSCode Eklentisi Demo Dosyası
+Bu dosya eklentinin özelliklerini test etmek için kullanılır
+---
+
+-- Basit değişkenler
+SAYISAL x = 10;
+SAYISAL y = 20.5;
+METIN isim = "TYD Programlama Dili";
+ZITLIK aktif = DOĞRU;
+
+-- Yazdırma
+YAZDIR "Merhaba TYD!";
+YAZDIR isim;
+YAZDIR x;
+
+-- Koşul yapısı
+EĞER x > 5 İSE
+    YAZDIR "x 5'ten büyük";
+    SAYISAL sonuc = x * 2;
+    YAZDIR sonuc;
+DEĞILSE
+    YAZDIR "x 5'ten küçük veya eşit";
+EĞER SON
+
+-- Döngü yapısı
+SAYISAL i = 0;
+DÖNGÜ
+    YAZDIR i;
+    i = i + 1;
+
+    EĞER i >= 5 İSE
+        DÖNGÜ_BITIR;
+    EĞER SON
+DÖNGÜ SON
+
+-- Fonksiyon tanımlama
+SAYISAL IŞLEÇ topla(SAYISAL a, SAYISAL b)
+    SAYISAL toplam = a + b;
+    DÖNÜŞ toplam;
+IŞLEÇ SON
+
+SAYISAL IŞLEÇ kare(SAYISAL sayi)
+    DÖNÜŞ sayi * sayi;
+IŞLEÇ SON
+
+SAYISAL IŞLEÇ us_al(SAYISAL taban, SAYISAL us)
+    DÖNÜŞ taban ** us;
+IŞLEÇ SON
+
+-- Fonksiyon çağrıları
+SAYISAL toplam = topla(10, 20);
+YAZDIR "10 + 20 =";
+YAZDIR toplam;
+
+SAYISAL kare_sonuc = kare(5);
+YAZDIR "5'in karesi =";
+YAZDIR kare_sonuc;
+
+SAYISAL us_sonuc = us_al(2, 8);
+YAZDIR "2 üzeri 8 =";
+YAZDIR us_sonuc;
+
+-- Karşılaştırma operatörleri
+EĞER toplam == 30 İSE
+    YAZDIR "Toplam 30'a eşit!";
+EĞER SON
+
+EĞER x >= 10 İSE
+    YAZDIR "x 10'dan büyük veya eşit";
+EĞER SON
+
+EĞER y <= 100 İSE
+    YAZDIR "y 100'den küçük veya eşit";
+EĞER SON
+
+-- İç içe koşullar
+SAYISAL puan = 85;
+
+EĞER puan >= 90 İSE
+    YAZDIR "Notunuz: A";
+DEĞILSE
+    EĞER puan >= 80 İSE
+        YAZDIR "Notunuz: B";
+    DEĞILSE
+        EĞER puan >= 70 İSE
+            YAZDIR "Notunuz: C";
+        DEĞILSE
+            YAZDIR "Notunuz: D";
+        EĞER SON
+    EĞER SON
+EĞER SON
+
+YAZDIR "Program tamamlandı!";

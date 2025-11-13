@@ -1,0 +1,33 @@
+#include <unistd.h>
+#include <string.h>
+#include <stdio.h>
+
+// print expects a C-string pointer
+void print(const char *s) {
+    if (!s) return;
+    size_t n = strlen(s);
+    write(1, s, n);
+    write(1, "\n", 1);
+}
+
+// print_int prints a signed 64-bit integer followed by newline
+void print_int(long v) {
+    char buf[32];
+    int len = 0;
+    long x = v;
+    if (x == 0) {
+        buf[len++] = '0';
+    } else {
+        if (x < 0) { buf[len++] = '-'; x = -x; }
+        // convert into temporary buffer
+        char tmp[32];
+        int tlen = 0;
+        while (x > 0) {
+            tmp[tlen++] = '0' + (x % 10);
+            x /= 10;
+        }
+        for (int i = tlen - 1; i >= 0; --i) buf[len++] = tmp[i];
+    }
+    buf[len++] = '\n';
+    write(1, buf, len);
+}
