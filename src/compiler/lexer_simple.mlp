@@ -1,0 +1,183 @@
+-- ===============================================
+-- MLP Lexer (Kelime Çözümleyici)
+-- Bootstrap Aşaması - Python-Compatible Syntax
+-- ===============================================
+
+-- Global değişkenler (Python parser syntax: tip isim;)
+metin kaynak_kod;
+sayısal konum;
+sayısal satir;
+sayısal sutun;
+sayısal uzunluk;
+
+-- Anahtar kelimeler string'i (dizi yerine basit string kullanıyoruz)
+metin keywords = "DEĞIŞKEN,değişken,SABIT,sabit,EĞER,eğer,DEĞILSE,değilse,DÖNGÜ,döngü,IŞLEÇ,ışleç,DÖNÜŞ,dönüş,YAZDIR,yazdır,YENİ,yeni,SIL,sil,VE,ve,VEYA,veya,DEĞİL,değil,DOĞRU,doğru,YANLIŞ,yanlış,BOŞ,boş";
+
+-- Lexer'ı başlat
+metin işleç lexer_baslat(metin kod)
+    kaynak_kod = kod;
+    konum = 0;
+    satir = 1;
+    sutun = 1;
+    uzunluk = UZUNLUK(kod);
+son
+
+-- Mevcut karakteri al
+metin işleç mevcut_karakter()
+    eğer konum büyük uzunluk ise
+        dönüş "";
+    son
+    dönüş karakter_al(kaynak_kod, konum);
+son
+
+-- Sonraki karakteri al
+metin işleç sonraki_karakter()
+    eğer (konum artı 1) büyük uzunluk ise
+        dönüş "";
+    son
+    dönüş karakter_al(kaynak_kod, konum artı 1);
+son
+
+-- İlerle
+metin işleç ilerle()
+    metin k = mevcut_karakter();
+    eğer k eşit "\n" ise
+        satir = satir artı 1;
+        sutun = 1;
+    degilse
+        sutun = sutun artı 1;
+    son
+    konum = konum artı 1;
+son
+
+-- Boşlukları atla
+metin işleç bosluk_atla()
+    döngü ise
+        metin k = mevcut_karakter();
+        eğer k eşit " " ise
+            ilerle();
+        degilse
+            döngü_bitir;
+        son
+    son
+son
+
+-- Rakam mı kontrol et
+sayısal işleç rakam_mi(metin k)
+    eğer k eşit "0" ise dönüş 1; son
+    eğer k eşit "1" ise dönüş 1; son
+    eğer k eşit "2" ise dönüş 1; son
+    eğer k eşit "3" ise dönüş 1; son
+    eğer k eşit "4" ise dönüş 1; son
+    eğer k eşit "5" ise dönüş 1; son
+    eğer k eşit "6" ise dönüş 1; son
+    eğer k eşit "7" ise dönüş 1; son
+    eğer k eşit "8" ise dönüş 1; son
+    eğer k eşit "9" ise dönüş 1; son
+    dönüş 0;
+son
+
+-- Harf mi kontrol et (basitleştirilmiş)
+sayısal işleç harf_mi(metin k)
+    eğer k eşit "a" ise dönüş 1; son
+    eğer k eşit "b" ise dönüş 1; son
+    eğer k eşit "c" ise dönüş 1; son
+    eğer k eşit "x" ise dönüş 1; son
+    eğer k eşit "y" ise dönüş 1; son
+    eğer k eşit "z" ise dönüş 1; son
+    eğer k eşit "_" ise dönüş 1; son
+    dönüş 0;
+son
+
+-- Sayı oku
+metin işleç sayi_oku()
+    sayısal baslangic = konum;
+    döngü rakam_mi(mevcut_karakter()) ise
+        ilerle();
+    son
+    dönüş alt_metin(kaynak_kod, baslangic, konum eksi baslangic);
+son
+
+-- String oku
+metin işleç metin_oku()
+    metin tirnak = mevcut_karakter();
+    ilerle();
+    sayısal baslangic = konum;
+    döngü ise
+        metin k = mevcut_karakter();
+        eğer k eşit tirnak ise
+            döngü_bitir;
+        son
+        ilerle();
+    son
+    metin sonuc = alt_metin(kaynak_kod, baslangic, konum eksi baslangic);
+    ilerle();
+    dönüş sonuc;
+son
+
+-- Tanımlayıcı oku
+metin işleç tanimlayici_oku()
+    sayısal baslangic = konum;
+    döngü harf_mi(mevcut_karakter()) ise
+        ilerle();
+    son
+    dönüş alt_metin(kaynak_kod, baslangic, konum eksi baslangic);
+son
+
+-- Anahtar kelime mi kontrol et (basitleştirilmiş)
+sayısal işleç anahtar_kelime_mi(metin kelime)
+    eğer kelime eşit "DEĞIŞKEN" ise dönüş 1; son
+    eğer kelime eşit "değişken" ise dönüş 1; son
+    eğer kelime eşit "EĞER" ise dönüş 1; son
+    eğer kelime eşit "eğer" ise dönüş 1; son
+    eğer kelime eşit "YAZDIR" ise dönüş 1; son
+    eğer kelime eşit "yazdır" ise dönüş 1; son
+    eğer kelime eşit "IŞLEÇ" ise dönüş 1; son
+    eğer kelime eşit "ışleç" ise dönüş 1; son
+    eğer kelime eşit "DÖNÜŞ" ise dönüş 1; son
+    eğer kelime eşit "dönüş" ise dönüş 1; son
+    dönüş 0;
+son
+
+-- Sonraki token'ı al (basitleştirilmiş)
+metin işleç sonraki_token()
+    bosluk_atla();
+
+    metin k = mevcut_karakter();
+
+    eğer konum büyük uzunluk ise
+        dönüş "EOF";
+    son
+
+    eğer rakam_mi(k) ise
+        dönüş sayi_oku();
+    son
+
+    eğer k eşit "\"" ise
+        dönüş metin_oku();
+    son
+
+    eğer harf_mi(k) ise
+        metin kelime = tanimlayici_oku();
+        eğer anahtar_kelime_mi(kelime) ise
+            dönüş kelime;
+        son
+        dönüş kelime;
+    son
+
+    ilerle();
+    dönüş k;
+son
+
+-- Tokenize - basit string token listesi döndür
+metin işleç tokenize(metin kod)
+    lexer_baslat(kod);
+    metin sonuc = "";
+    döngü konum küçük uzunluk ise
+        metin token = sonraki_token();
+        sonuc = sonuc artı token artı ",";
+    son
+    dönüş sonuc;
+son
+
+yazdır "Lexer yüklendi";

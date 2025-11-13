@@ -1,0 +1,14 @@
+-- ===============================================
+-- Bootstrap Test - Minimal MLP Compiler Stub
+-- ===============================================
+-- Bu dosya bootstrap'ın çalışıp çalışmadığını test eder
+
+YAZDIR "MLP Bootstrap Test Başladı";
+
+SAYISAL işleç main()
+    YAZDIR "Merhaba MLP Self-Hosting!";
+    YAZDIR "Bootstrap başarılı!";
+    DÖNÜŞ 0;
+SON
+
+YAZDIR "Bootstrap test tamamlandı";

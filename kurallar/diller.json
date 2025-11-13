@@ -9,6 +9,7 @@
       "YAPI_KOSUL_ISE": "ise",
       "YAPI_KOSUL_DEGILSE": "değilse",
       "YAPI_SON": "son",
+      "YAPI_ISLEC_SON": "işleç_son",
       "YAPI_DONUS": "dönüş",
       "YAPI_YAZDIR": "yazdır",
       "YAPI_DONGU": "döngü",
