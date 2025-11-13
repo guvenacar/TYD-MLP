@@ -1,0 +1,32 @@
+-- Simple Arithmetic Test
+-- Testing basic TYD compilation
+
+SAYISAL işleç test_math()
+    SAYISAL x = 10;
+    SAYISAL y = 20;
+    SAYISAL z = x + y;
+
+    YAZDIR "x = ";
+    YAZDIR x;
+    YAZDIR "y = ";
+    YAZDIR y;
+    YAZDIR "z = x + y = ";
+    YAZDIR z;
+
+    DÖNÜŞ z;
+SON
+
+SAYISAL işleç main()
+    YAZDIR "=== Simple Arithmetic Test ===";
+
+    SAYISAL result = test_math();
+
+    YAZDIR "Result: ";
+    YAZDIR result;
+
+    YAZDIR "=== Test Complete ===";
+
+    DÖNÜŞ 0;
+SON
+
+main();

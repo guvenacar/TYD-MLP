@@ -209,7 +209,7 @@ class Lexer:
             if self.mevcut_karakter == '=':
                 if self.peek() == '=':
                     self.ilerle(); self.ilerle()
-                    return Token(TOKEN_TIPLERİ['OP_ESIT_KARSILASTIRMA'], '==')
+                    return Token(TOKEN_TIPLERI['OP_ESIT_KARSILASTIRMA'], '==')
                 else:
                     self.ilerle()
                     return Token(TOKEN_TIPLERI['ASSIGN'], '=')
