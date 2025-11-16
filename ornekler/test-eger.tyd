@@ -1,0 +1,11 @@
+SAYISAL a = 5;
+SAYISAL b = 10;
+SAYISAL c = 0;
+
+EĞER b > a İSE
+    c = 1;
+DEĞİLSE
+    c = 2;
+SON EĞER
+
+YAZDIR c;

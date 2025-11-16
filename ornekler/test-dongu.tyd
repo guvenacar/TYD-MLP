@@ -1,0 +1,13 @@
+SAYISAL i = 0;
+SAYISAL sinir = 3;
+
+DÖNGÜ
+    i = i + 1;
+    YAZDIR i;
+
+    EĞER i == sinir İSE
+        DÖNGÜ_BITIR;
+    SON EĞER
+SON DÖNGÜ
+
+YAZDIR 99; -- Beklenen çıktı: 1, 2, 3, 99

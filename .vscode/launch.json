@@ -1,14 +1,15 @@
 {
-  "version": "0.2.0",
-  "configurations": [
-    {
-      "name": "Python: TYD-MLP Compiler",
-      "type":"debugpy",
-      "request": "launch",
-      // "program" yerine "module" kullanıyoruz:
-      "module": "src.compiler",
-      "console": "integratedTerminal",
-      "justMyCode": true
-    }
-  ]
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "TYD-MLP Derleyicisini Debug Et",
+            "type": "python",
+            "request": "launch",
+            "console": "integratedTerminal",
+            "module": "src.compiler",
+            "args": [
+                "ornekler/test.tyd"
+            ]
+        }
+    ]
 }

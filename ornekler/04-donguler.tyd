@@ -12,8 +12,8 @@ DÖNGÜ
     
     EĞER sayac > 10 İSE
         DÖNGÜ_BITIR;
-    EĞER SON
-DÖNGÜ SON
+    SON EĞER
+SON DÖNGÜ
 
 YAZDIR "Döngü bitti!";
 
@@ -27,5 +27,5 @@ DÖNGÜ
     
     EĞER sayac > 10 İSE
         DÖNGÜ_BITIR;
-    EĞER SON
-DÖNGÜ SON
+    SON EĞER
+SON DÖNGÜ

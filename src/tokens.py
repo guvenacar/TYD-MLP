@@ -28,6 +28,7 @@ TOKEN_TIPLERI = {
     
     # Yapısal Anahtar Kelimeler (Kelimeler - JSON'dan)
     'YAPI_KOSUL_EGER': 'YAPI_KOSUL_EGER',
+    'YAPI_SIL': 'YAPI_SIL',
     'YAPI_KOSUL_ISE': 'YAPI_KOSUL_ISE',
     'YAPI_KOSUL_DEGILSE': 'YAPI_KOSUL_DEGILSE',
     'YAPI_YAZDIR': 'YAPI_YAZDIR',
@@ -36,6 +37,7 @@ TOKEN_TIPLERI = {
     'YAPI_DONGU': 'YAPI_DONGU',
     'YAPI_DONGU_BITIR': 'YAPI_DONGU_BITIR',
     'YAPI_SON': 'YAPI_SON',
+    
 
     # Operatör Anahtar Kelimeleri (Kelimeler - JSON'dan)
     'OP_ESIT': 'OP_ESIT',

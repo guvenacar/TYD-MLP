@@ -1,0 +1,9 @@
+METIN s1 = "Merhaba, ";
+METIN s2 = "TYD-MLP!";
+METIN s3 = s1 + s2;
+YAZDIR s3; 
+
+SIL s3;  -- YENİ: Dinamik string hafızasını serbest bırak
+
+-- 3. Temizlik --
+SOZLUK_YOK_ET();

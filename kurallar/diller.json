@@ -13,7 +13,8 @@
       "YAPI_DONGU": "döngü",
       "YAPI_DONGU_BITIR": "döngü_bitir",
       "YAPI_ISLEC": "işleç",
-       
+      "YAPI_SIL": "sil",
+
       "OP_ESIT": "eşit",
       "OP_ARTI": "artı",
       "OP_EKSI": "eksi",

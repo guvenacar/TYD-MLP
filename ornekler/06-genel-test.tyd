@@ -1,0 +1,29 @@
+-- ===============================================
+-- TYD-MLP Örnek 6: Genel Sistem Testi
+-- NOT: İŞLEÇ fonksiyonları generator'da tam desteklenmiyor
+-- ===============================================
+
+SAYISAL sayac = 1;
+SAYISAL sinir = 5;
+METIN sonuc_metin = "Sonuc: ";
+
+DÖNGÜ
+    sayac = sayac + 1;
+
+    EĞER sayac == sinir İSE
+        DÖNGÜ_BITIR;
+    SON EĞER
+SON DÖNGÜ
+
+-- Toplama işlemi
+SAYISAL toplam = sayac + 10;  -- Beklenen: 5 + 10 = 15
+YAZDIR "Toplam:";
+YAZDIR toplam;
+
+-- Metin Birleştirme
+METIN tamam = "TAMAM.";
+METIN mesaj = sonuc_metin + tamam;
+YAZDIR mesaj;  -- Çıktı: Sonuc: TAMAM.
+
+-- Dinamik Bellek Temizliği
+SIL mesaj;

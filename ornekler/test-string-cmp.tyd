@@ -1,0 +1,19 @@
+METIN s1 = "Merhaba";
+METIN s2 = "Merhaba";
+METIN s3 = "Elveda";
+
+SAYISAL sonuc = 0;
+
+EĞER s1 == s2 İSE
+    sonuc = 10; -- Eşitse 10
+DEĞİLSE
+    sonuc = 20;
+SON
+
+EĞER s1 == s3 İSE
+    sonuc = 30; -- Hata: Eşit değil
+DEĞİLSE
+    sonuc = sonuc + 1; -- Eşit değilse 10+1=11 yap
+SON
+
+YAZDIR sonuc; -- Beklenen çıktı: 11

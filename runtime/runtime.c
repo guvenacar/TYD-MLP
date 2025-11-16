@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
+#include <stdint.h> 
 
 void yazdir_sayi(int64_t sayi) {
     printf("%ld\n", sayi);
@@ -97,4 +97,43 @@ int64_t sozluk_getir(const char* anahtar) {
     }
     fprintf(stderr, "Hata: Anahtar bulunamadı: %s\n", anahtar);
     return -1;
+}
+
+char* string_birlestir(const char* str1, const char* str2) {
+    
+    // ⚠️ KORUMA: Gelen string'lerden herhangi biri NULL ise
+    // (Bellek hatası/Segfault riskini engellemek için)
+    if (str1 == NULL || str2 == NULL) {
+        // Hata ayıklama için terminale yazdıralım
+        fprintf(stderr, "Hata: Birleştirme için NULL string argümanı alındı.\n");
+        return NULL; // Bu, Assembly'ye de NULL dönecektir.
+    }
+    
+    // 1. Yeni string'in toplam uzunluğunu hesapla (+1, null terminator için)
+    size_t uzunluk = strlen(str1) + strlen(str2) + 1;
+
+    // 2. Yeni hafıza bloğu ayır (Dinamik hafıza yönetimi)
+    char* yeni_str = (char*)malloc(uzunluk);
+    if (yeni_str == NULL) {
+        fprintf(stderr, "Hata: Birleştirme için hafıza ayrılamadı.\n");
+        return NULL; 
+    }
+
+    // 3. İlk string'i yeni bloğa kopyala
+    strcpy(yeni_str, str1);
+
+    // 4. İkinci string'i ilkinin sonuna ekle (birleştir)
+    strcat(yeni_str, str2);
+
+    // 5. Birleştirilmiş yeni string'in adresini döndür
+    return yeni_str;
+}
+
+// NOT: Bu fonksiyonun döndürdüğü string'in hafızasını 
+// SIL komutu veya SOZLUK_YOK_ET gibi fonksiyonlarla serbest bırakmayı unutmamalıyız.
+
+int string_karsilastir(const char* str1, const char* str2) {
+    // strcmp her iki string eşitse 0 döndürür.
+    // Assembly'de bu sonucu doğrudan kullanacağız.
+    return strcmp(str1, str2);
 }

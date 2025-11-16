@@ -1,7 +1,9 @@
 # src/parser.py
 
 from src.tokens import TOKEN_TIPLERI
+#from src.tokens import Token # SIL komutu için gerekli olabilir
 from src import ast_nodes
+
 
 class Parser:
     """
@@ -20,10 +22,21 @@ class Parser:
         Mevcut token beklenen tipteyse bir sonrakine geçer.
         Değilse hata verir.
         """
+        # KRİTİK GÜVENLİK KONTROLÜ
+        if not hasattr(self.mevcut_token, 'tip'):
+            self.hata(f"Lexer/Token Hatası: Parser'a Token objesi yerine {type(self.mevcut_token)} ('{self.mevcut_token}') döndü.")
+
+
         if self.mevcut_token.tip == token_tipi:
-            self.mevcut_token = self.lexer.sonraki_tokeni_al()
+            yeni_token = self.lexer.sonraki_tokeni_al()
+            
+            # Yeni tokenin bir string olup olmadığını kontrol et
+            if isinstance(yeni_token, str):
+                self.hata(f"Lexer Hatası: Lexer'dan Token objesi yerine metin ('{yeni_token}') döndü. Lexer'ın EOF/Hata işleme mantığını kontrol edin.")
+            
+            self.mevcut_token = yeni_token
         else:
-            self.hata(f"Beklenen token: {token_tipi}")
+            self.hata(f"Beklenen token: {token_tipi}. Bulunan: <{self.mevcut_token.tip}>")
 
     # --- Gramer Kuralları ---
 
@@ -155,73 +168,6 @@ class Parser:
 
     # src/parser.py (içine)
 
-    # def atom(self):
-    #     """
-    #     Bir ifadenin en küçük "atomik" parçasını ayrıştırır.
-    #     (Sayı, Metin, Değişken, Dizi/Sözlük Erişimi, Fonksiyon Çağrısı, Parantezli İfade)
-    #     """
-    #     token = self.mevcut_token
-
-    #     # 1. Sayılar (INTEGER, FLOAT)
-    #     if token.tip == TOKEN_TIPLERI['INTEGER']:
-    #         self.tuket(TOKEN_TIPLERI['INTEGER'])
-    #         return ast_nodes.Sayi(token)
-        
-    #     if token.tip == TOKEN_TIPLERI['FLOAT']:
-    #         self.tuket(TOKEN_TIPLERI['FLOAT'])
-    #         return ast_nodes.Sayi(token) # Sayi düğümü her ikisini de işler
-
-    #     # 2. Metin (STRING)
-    #     if token.tip == TOKEN_TIPLERI['STRING']:
-    #         self.tuket(TOKEN_TIPLERI['STRING'])
-    #         return ast_nodes.Metin(token)
-
-    #     # 3. Parantezli Grup ( (ifade) )
-    #     if token.tip == TOKEN_TIPLERI['LEFT_PAREN']:
-    #         self.tuket(TOKEN_TIPLERI['LEFT_PAREN'])
-    #         node = self.ifade() # Parantez içindeki ifadeyi ayrıştır
-    #         self.tuket(TOKEN_TIPLERI['RIGHT_PAREN'])
-    #         return node
-
-    #     # 4. Değişken, Dizi, Sözlük veya Fonksiyon Çağrısı
-    #     if token.tip == TOKEN_TIPLERI['IDENTIFIER']:
-    #         hedef_token = self.mevcut_token
-    #         self.tuket(TOKEN_TIPLERI['IDENTIFIER'])
-
-    #         # Dizi Erişimi mi? [ ]
-    #         if self.mevcut_token.tip == TOKEN_TIPLERI['LEFT_BRACKET']:
-    #             self.tuket(TOKEN_TIPLERI['LEFT_BRACKET'])
-    #             indeks = self.ifade()
-    #             self.tuket(TOKEN_TIPLERI['RIGHT_BRACKET'])
-    #             return ast_nodes.DiziErisim(hedef_node=ast_nodes.Degisken(hedef_token), indeks_node=indeks)
-
-    #         # Sözlük Erişimi mi? { }
-    #         elif self.mevcut_token.tip == TOKEN_TIPLERI['LEFT_BRACE']:
-    #             self.tuket(TOKEN_TIPLERI['LEFT_BRACE'])
-    #             anahtar = self.ifade()
-    #             self.tuket(TOKEN_TIPLERI['RIGHT_BRACE'])
-    #             return ast_nodes.SozlukErisim(hedef_node=ast_nodes.Degisken(hedef_token), anahtar_node=anahtar)
-            
-    #         # Fonksiyon Çağrısı mı? ( )
-    #         elif self.mevcut_token.tip == TOKEN_TIPLERI['LEFT_PAREN']:
-    #             self.tuket(TOKEN_TIPLERI['LEFT_PAREN'])
-    #             argumanlar = []
-    #             if self.mevcut_token.tip != TOKEN_TIPLERI['RIGHT_PAREN']:
-    #                 while True:
-    #                     argumanlar.append(self.ifade())
-    #                     if self.mevcut_token.tip == TOKEN_TIPLERI['RIGHT_PAREN']:
-    #                         break
-    #                     self.tuket(TOKEN_TIPLERI['COMMA'])
-                
-    #             self.tuket(TOKEN_TIPLERI['RIGHT_PAREN'])
-    #             return ast_nodes.IslecCagirma(hedef_token=hedef_token, argumanlar_listesi=argumanlar)
-            
-    #         # Düz değişken (hiçbiri değilse)
-    #         return ast_nodes.Degisken(hedef_token)
-
-    #     # 5. Hata
-    #     raise Exception(f"Parser hatası: Beklenmeyen token {self.mevcut_token} (atom içinde)")
-
     def komut(self):
         """Tek bir komutu ayrıştırır."""
         token = self.mevcut_token
@@ -240,8 +186,12 @@ class Parser:
             
         # 4. YAZDIR Komutu mu?
         if token.tip == TOKEN_TIPLERI['YAPI_YAZDIR']:
-            return self.yazdir_komutu()
-            
+            return self.yazdir_komutu() 
+
+        # 5. SIL Komutu mu?  <-- BU YENİ KONTROLÜ EKLEYİN
+        if token.tip == TOKEN_TIPLERI['YAPI_SIL']:
+            return self.sil_komutu()
+
         # 5. DÖNGÜ Bloğu mu?
         if token.tip == TOKEN_TIPLERI['YAPI_DONGU']:
             return self.dongu_blogu()
@@ -333,9 +283,10 @@ class Parser:
             while self.mevcut_token.tip not in [TOKEN_TIPLERI['YAPI_SON'], TOKEN_TIPLERI['EOF']]:
                 yanlis_blok.komutlar.append(self.komut())
 
-        # 'EĞER' bloğu mutlaka 'SON' ile bitmeli
-        self.tuket(TOKEN_TIPLERI['YAPI_SON']) # 'SON'
-        
+        # 'EĞER' bloğu 'SON EĞER' ile bitmeli (IntelliSense desteği için)
+        self.tuket(TOKEN_TIPLERI['YAPI_SON'])
+        self.tuket(TOKEN_TIPLERI['YAPI_KOSUL_EGER'])  # 'EĞER' kelimesini bekle
+
         return ast_nodes.EgerBlogu(kosul, dogru_blok, yanlis_blok)
 
     def yazdir_komutu(self):
@@ -362,9 +313,11 @@ class Parser:
         blok = ast_nodes.Blok()
         while self.mevcut_token.tip not in [TOKEN_TIPLERI['YAPI_SON'], TOKEN_TIPLERI['EOF']]:
             blok.komutlar.append(self.komut())
-            
-        self.tuket(TOKEN_TIPLERI['YAPI_SON']) # 'SON'
-        
+
+        # DÖNGÜ bloğu 'SON DÖNGÜ' ile bitmeli (IntelliSense desteği için)
+        self.tuket(TOKEN_TIPLERI['YAPI_SON'])
+        self.tuket(TOKEN_TIPLERI['YAPI_DONGU'])  # 'DÖNGÜ' kelimesini bekle
+
         return ast_nodes.DonguBlogu(blok)
 
     def dongu_bitir_komutu(self):
@@ -480,13 +433,19 @@ class Parser:
         
         parametreler = self.parametre_listesi() # (...)
         
+        # <<< KRİTİK DEBUG KODU BURAYA EKLENMELİ >>>
+        print(f"[DEBUG] Fonksiyon gövdesi başlangıcı token tipi: {type(self.mevcut_token)}")
+        # <<< KRİTİK DEBUG KODU BURAYA EKLENMELİ >>>
+
         # İşleç Gövdesi
         govde = ast_nodes.Blok()
         while self.mevcut_token.tip not in [TOKEN_TIPLERI['YAPI_SON'], TOKEN_TIPLERI['EOF']]:
             govde.komutlar.append(self.komut())
-            
-        self.tuket(TOKEN_TIPLERI['YAPI_SON']) # 'SON'
-        
+
+        # İŞLEÇ bloğu 'SON İŞLEÇ' ile bitmeli (IntelliSense desteği için)
+        self.tuket(TOKEN_TIPLERI['YAPI_SON'])
+        self.tuket(TOKEN_TIPLERI['YAPI_ISLEC'])  # 'İŞLEÇ' kelimesini bekle
+
         return ast_nodes.IslecTanimlama(ad_token, parametreler, govde, donus_tipi_token)
 
 # src/parser.py
@@ -518,3 +477,28 @@ class Parser:
         hedef_node = ast_nodes.Degisken(hedef_token)
         # ast_nodes.py'deki SozlukErisim tanımımızla eşleşmeli
         return ast_nodes.SozlukErisim(hedef_node=hedef_node, anahtar_node=anahtar_ifadesi)
+    
+    def sil_komutu(self):
+        """
+        SIL ifade; komutunu temsil eder ve onu bir IslecCagirma olarak gizler.
+        """
+        # Lexer'daki Token sınıfını içe aktarmamız gerek.
+        from src.tokens import Token 
+        
+        # 1. 'SIL' anahtar kelimesini tüket
+        self.tuket(TOKEN_TIPLERI['YAPI_SIL']) 
+        
+        # 2. İfadeyi al (s3). Bu s3'ü tüketir.
+        ifade = self.ifade() 
+        
+        # 3. Komutun ; ile bittiğinden emin ol
+        self.tuket(TOKEN_TIPLERI['SEMICOLON'])
+        
+        # KRİTİK DÜZELTME: Token'ı sadece 2 argümanla oluştur
+        sil_identifier_token = Token(
+            'IDENTIFIER',
+            'SIL' # Komutun adı
+        )
+        
+        # HİLE: SIL'i bir IslecCagirma olarak döndür.
+        return ast_nodes.IslecCagirma(sil_identifier_token, [ifade])
