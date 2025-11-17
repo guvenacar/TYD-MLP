@@ -17,16 +17,24 @@ static AsmCode text_section; // .text bölümü (ana kod)
 // YENİ: Kapsam Yönetimi (Python'daki Kapsam sınıfına karşılık gelir)
 
 #define MAX_DEGISKENLER 100
+#define MAX_SCOPE_DEPTH 20
+
 typedef struct {
     char* ad;
-    char* asm_adresi; // Yığındaki adresi (örn: "[rbp-8]")
+    char* asm_adresi; // Yığındaki adresi (örn: "[rbp-8]") veya global için label
     char* tip;        // Değişkenin tipi ("SAYISAL" veya "METIN")
+    int scope_level;  // Hangi scope seviyesinde tanımlandı (0=global)
+    bool is_global;   // Global değişken mi?
 } Degisken;
 
-// Basit bir Kapsam (Scope)
+// Çok seviyeli Kapsam (Scope) - Stack bazlı
 Degisken kapsam_haritasi[MAX_DEGISKENLER];
 int kapsam_degisken_sayisi = 0;
 int kapsam_yigin_ofseti = 0; // RBP'den ne kadar aşağı inildiği (örn: -8, -16)
+
+// Scope seviyesi tracking
+int current_scope_level = 0;
+int scope_stack_offsets[MAX_SCOPE_DEPTH]; // Her scope seviyesinde stack offset
 
 // YENİ: Etiket (Label) Sayacı
 static int etiket_sayaci = 0;
@@ -51,12 +59,50 @@ void kapsam_temizle() {
         free(kapsam_haritasi[i].tip);
     }
     kapsam_degisken_sayisi = 0;
+    current_scope_level = 0;
 }
 
+// Yeni bir scope'a gir (EĞER, DÖNGÜ, İŞLEÇ blokları için)
 void kapsam_gir() {
-    // (İleride iç içe kapsamlar için burası geliştirilecek)
-    kapsam_degisken_sayisi = 0;
-    kapsam_yigin_ofseti = 0;
+    if (current_scope_level >= MAX_SCOPE_DEPTH - 1) {
+        fprintf(stderr, "HATA [Generator]: Maksimum scope derinliği aşıldı!\n");
+        exit(1);
+    }
+
+    // Mevcut stack offset'i kaydet
+    scope_stack_offsets[current_scope_level] = kapsam_yigin_ofseti;
+    current_scope_level++;
+}
+
+// Scope'tan çık - bu seviyedeki değişkenleri temizle
+void kapsam_cik() {
+    if (current_scope_level <= 0) {
+        return; // Zaten en üst seviyedeyiz
+    }
+
+    current_scope_level--;
+
+    // Bu seviyedeki değişkenleri temizle
+    int new_var_count = 0;
+    for (int i = 0; i < kapsam_degisken_sayisi; i++) {
+        if (kapsam_haritasi[i].scope_level <= current_scope_level) {
+            // Bu değişkeni tut
+            if (i != new_var_count) {
+                kapsam_haritasi[new_var_count] = kapsam_haritasi[i];
+            }
+            new_var_count++;
+        } else {
+            // Bu değişkeni temizle
+            free(kapsam_haritasi[i].ad);
+            free(kapsam_haritasi[i].asm_adresi);
+            free(kapsam_haritasi[i].tip);
+        }
+    }
+
+    kapsam_degisken_sayisi = new_var_count;
+
+    // Stack offset'i geri yükle
+    kapsam_yigin_ofseti = scope_stack_offsets[current_scope_level];
 }
 
 // Değişkeni kaydeder ve yığındaki adresini döndürür
@@ -70,6 +116,8 @@ char* kapsam_degisken_yer_ayir(const char* ad, const char* tip) {
     d->ad = strdup(ad);
     d->asm_adresi = strdup(adres);
     d->tip = strdup(tip);
+    d->scope_level = current_scope_level;
+    d->is_global = (current_scope_level == 0);
 
     return adres;
 }

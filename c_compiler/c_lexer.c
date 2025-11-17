@@ -128,6 +128,50 @@ static inline void advance_position() {
 }
 
 /**
+ * Tüm yorumları ve boşlukları atlayan helper fonksiyon
+ * Hem tek satır (--) hem de çok satır ({- ... -}) yorumları destekler
+ */
+static void skip_whitespace_and_comments() {
+    while (1) {
+        // Boşlukları atla
+        while (source_code[current_position] != '\0' && isspace(source_code[current_position])) {
+            advance_position();
+        }
+
+        // Tek satır yorum: --
+        if (source_code[current_position] == '-' && source_code[current_position + 1] == '-') {
+            // Satır sonuna kadar atla
+            while (source_code[current_position] != '\n' && source_code[current_position] != '\0') {
+                advance_position();
+            }
+            continue; // Tekrar başa dön (boşluk ve yorum kontrolü için)
+        }
+
+        // Çok satır yorum: {- ... -}
+        if (source_code[current_position] == '{' && source_code[current_position + 1] == '-') {
+            // {- işaretini atla
+            advance_position(); // {
+            advance_position(); // -
+
+            // -} bulana kadar devam et
+            while (source_code[current_position] != '\0') {
+                if (source_code[current_position] == '-' && source_code[current_position + 1] == '}') {
+                    // -} işaretini atla
+                    advance_position(); // -
+                    advance_position(); // }
+                    break;
+                }
+                advance_position();
+            }
+            continue; // Tekrar başa dön (boşluk ve yorum kontrolü için)
+        }
+
+        // Ne boşluk ne de yorum varsa, çık
+        break;
+    }
+}
+
+/**
  * Python'daki sonraki_tokeni_al() metoduna karşılık gelir.
  * Kaynak koddan bir sonraki tokeni okur ve döndürür.
  */
@@ -138,23 +182,8 @@ Token* getNextToken() {
         return createToken(TOKEN_EOF, NULL);
     }
 
-    // 2. Boşlukları ve Yeni Satırları Atla
-    while (source_code[current_position] != '\0' && isspace(source_code[current_position])) {
-        advance_position();
-    }
-
-    // YENİ: Yorum Satırlarını Atla
-    // Bu döngü, birden fazla boş satır veya yorum satırı varsa hepsini atlar.
-    while (source_code[current_position] == '-' && source_code[current_position + 1] == '-') {
-        // Satır sonuna veya dosya sonuna kadar ilerle
-        while (source_code[current_position] != '\n' && source_code[current_position] != '\0') {
-            advance_position();
-        }
-        // Boşlukları tekrar atla (yorumdan sonraki boşluklar için)
-        while (source_code[current_position] != '\0' && isspace(source_code[current_position])) {
-            advance_position();
-        }
-    }
+    // 2. Boşlukları ve Yorumları Atla
+    skip_whitespace_and_comments();
 
 
     // 3. Dosya Sonuna (EOF) ulaşıldı

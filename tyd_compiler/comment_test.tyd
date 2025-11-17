@@ -1,0 +1,27 @@
+-- Bu bir tek satır yorum
+
+YAZDIR "Test başlıyor"
+
+{-
+   Bu bir çok satırlı yorum
+   Birden fazla satır olabilir
+   Kodun ortasında kullanılabilir
+-}
+
+SAYISAL x = 10; -- Satır sonu yorumu
+
+{- İç içe açıklamalar:
+   YAZDIR "Bu çalışmayacak"
+   SAYISAL y = 20;
+   Bunlar yorum içinde
+-}
+
+EĞER x == 10 İSE
+    YAZDIR "x doğru değerde" -- Inline yorum
+    {- Blok içinde de yorum olabilir -}
+    YAZDIR x
+SON
+
+YAZDIR "Test bitti"
+
+-- Son satır yorumu
