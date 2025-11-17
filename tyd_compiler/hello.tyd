@@ -1,0 +1,4 @@
+-- Basit test programı
+
+YAZDIR "Merhaba TYD Dunyasi!"
+YAZDIR "Bu TYD derleyicisi tarafindan derlendi"

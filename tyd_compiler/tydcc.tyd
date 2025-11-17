@@ -1,0 +1,284 @@
+-- ===================================================
+-- TYDCC: TYD Compiler (TYD'de yazılmış!)
+-- Kaynak: .tyd dosyası
+-- Çıktı: .asm dosyası (x86-64 NASM)
+-- ===================================================
+
+-- ============================================
+-- YARDIMCI FONKSİYONLAR
+-- ============================================
+
+İŞLEÇ BOSLUK_MU(karakter)
+    SAYISAL kod = KARAKTER_KODU(karakter);
+    EĞER kod == 32 İSE
+        DÖNÜŞ 1
+    SON
+    EĞER kod == 9 İSE
+        DÖNÜŞ 1
+    SON
+    DÖNÜŞ 0
+SON
+
+İŞLEÇ BASLIYOR_MU(metin, prefix)
+    SAYISAL metin_uzunluk = STRING_UZUNLUK(metin);
+    SAYISAL prefix_uzunluk = STRING_UZUNLUK(prefix);
+    EĞER prefix_uzunluk > metin_uzunluk İSE
+        DÖNÜŞ 0
+    SON
+    METIN metin_baslangic = STRING_ALT(metin, 0, prefix_uzunluk);
+    SAYISAL sonuc = STRING_KARSILASTIR(metin_baslangic, prefix);
+    EĞER sonuc == 0 İSE
+        DÖNÜŞ 1
+    SON
+    DÖNÜŞ 0
+SON
+
+İŞLEÇ STRING_TRIM(metin)
+    SAYISAL uzunluk = STRING_UZUNLUK(metin);
+    EĞER uzunluk == 0 İSE
+        DÖNÜŞ metin
+    SON
+    SAYISAL baslangic = 0;
+    DÖNGÜ
+        EĞER baslangic == uzunluk İSE
+            DÖNGÜ_BITIR
+        SON
+        METIN kar = STRING_KARAKTER_AL(metin, baslangic);
+        SAYISAL bosluk = BOSLUK_MU(kar);
+        EĞER bosluk == 0 İSE
+            DÖNGÜ_BITIR
+        SON
+        baslangic = baslangic + 1
+    SON
+    SAYISAL bitis = uzunluk;
+    DÖNGÜ
+        EĞER bitis == baslangic İSE
+            DÖNGÜ_BITIR
+        SON
+        METIN kar = STRING_KARAKTER_AL(metin, bitis - 1);
+        SAYISAL bosluk = BOSLUK_MU(kar);
+        EĞER bosluk == 0 İSE
+            DÖNGÜ_BITIR
+        SON
+        bitis = bitis - 1
+    SON
+    SAYISAL yeni_uzunluk = bitis - baslangic;
+    METIN sonuc = STRING_ALT(metin, baslangic, yeni_uzunluk);
+    DÖNÜŞ sonuc
+SON
+
+-- ============================================
+-- COMPILER BAŞLANGICI
+-- ============================================
+
+YAZDIR "=== TYDCC: TYD Compiler ==="
+
+-- Kaynak dosyayı oku
+METIN dizin = DIZIN_AL();
+METIN kaynak_eki = "/../tyd_compiler/hello.tyd";
+METIN kaynak_yolu = STRING_BIRLESTIR(dizin, kaynak_eki);
+
+YAZDIR "Kaynak dosya:"
+YAZDIR kaynak_yolu
+
+METIN mod_oku = "r";
+SAYISAL kaynak_dosya = DOSYA_AC(kaynak_yolu, mod_oku);
+METIN kaynak_kod = DOSYA_OKU(kaynak_dosya);
+SAYISAL kapat1 = DOSYA_KAPAT(kaynak_dosya);
+
+YAZDIR "Kaynak kod okundu"
+
+-- ============================================
+-- ASSEMBLY TEMPLATE BAŞLANGICI
+-- ============================================
+
+METIN asm_extern = "extern printf\n";
+METIN asm_data_start = "section .data\n";
+METIN asm_fmt = "    fmt_str db \"%s\", 10, 0\n";
+
+METIN asm_header = STRING_BIRLESTIR(asm_extern, asm_data_start);
+asm_header = STRING_BIRLESTIR(asm_header, asm_fmt)
+
+METIN asm_data = "";
+
+METIN asm_text_start = "section .text\n";
+METIN asm_main_label = "global main\nmain:\n";
+METIN asm_prologue = "    push rbp\n    mov rbp, rsp\n";
+
+METIN asm_text = STRING_BIRLESTIR(asm_text_start, asm_main_label);
+asm_text = STRING_BIRLESTIR(asm_text, asm_prologue)
+
+METIN asm_code = "";
+
+SAYISAL str_counter = 0;
+
+-- ============================================
+-- SATIR SATIR PARSE (Basit Döngü)
+-- ============================================
+
+YAZDIR "Kaynak kod parse ediliyor..."
+
+SAYISAL kaynak_uzunluk = STRING_UZUNLUK(kaynak_kod);
+SAYISAL pozisyon = 0;
+SAYISAL satir_no = 1;
+
+DÖNGÜ
+    -- Eğer kaynak kodun sonuna geldiyse çık
+    EĞER pozisyon >= kaynak_uzunluk İSE
+        DÖNGÜ_BITIR
+    SON
+
+    -- Satır sonunu bul (newline)
+    SAYISAL satir_sonu = pozisyon;
+    SAYISAL i = pozisyon;
+
+    DÖNGÜ
+        EĞER i >= kaynak_uzunluk İSE
+            satir_sonu = i
+            DÖNGÜ_BITIR
+        SON
+
+        METIN kar = STRING_KARAKTER_AL(kaynak_kod, i);
+        SAYISAL kod = KARAKTER_KODU(kar);
+
+        EĞER kod == 10 İSE
+            satir_sonu = i
+            DÖNGÜ_BITIR
+        SON
+
+        i = i + 1
+    SON
+
+    -- Satırı çıkar
+    SAYISAL satir_uzunluk = satir_sonu - pozisyon;
+    METIN satir = STRING_ALT(kaynak_kod, pozisyon, satir_uzunluk);
+
+    -- Satırı temizle (whitespace)
+    satir = STRING_TRIM(satir)
+
+    -- Pozisyonu güncelle (newline'ı atla)
+    pozisyon = satir_sonu + 1
+
+    -- Boş satırları ve yorumları atla
+    SAYISAL satir_len = STRING_UZUNLUK(satir);
+
+    EĞER satir_len == 0 İSE
+        satir_no = satir_no + 1
+        DÖNGÜ_BITIR
+    SON
+
+    -- Yorum satırlarını atla (--)
+    SAYISAL yorum_mu = BASLIYOR_MU(satir, "--");
+
+    EĞER yorum_mu == 1 İSE
+        satir_no = satir_no + 1
+        DÖNGÜ_BITIR
+    SON
+
+    -- ============================================
+    -- PATTERN MATCHING: YAZDIR "..."
+    -- ============================================
+
+    SAYISAL yazdir_mu = BASLIYOR_MU(satir, "YAZDIR");
+
+    EĞER yazdir_mu == 1 İSE
+        -- String literali çıkar
+        SAYISAL j = 6;
+        SAYISAL str_baslangic = 0 - 1;
+
+        DÖNGÜ
+            EĞER j >= satir_len İSE
+                DÖNGÜ_BITIR
+            SON
+
+            METIN k = STRING_KARAKTER_AL(satir, j);
+            SAYISAL k_kod = KARAKTER_KODU(k);
+
+            EĞER k_kod == 34 İSE
+                str_baslangic = j + 1
+                DÖNGÜ_BITIR
+            SON
+
+            j = j + 1
+        SON
+
+        SAYISAL str_bitis = satir_len;
+        SAYISAL m = str_baslangic;
+
+        DÖNGÜ
+            EĞER m >= satir_len İSE
+                DÖNGÜ_BITIR
+            SON
+
+            METIN n = STRING_KARAKTER_AL(satir, m);
+            SAYISAL n_kod = KARAKTER_KODU(n);
+
+            EĞER n_kod == 34 İSE
+                str_bitis = m
+                DÖNGÜ_BITIR
+            SON
+
+            m = m + 1
+        SON
+
+        SAYISAL str_len = str_bitis - str_baslangic;
+        METIN string_literal = STRING_ALT(satir, str_baslangic, str_len);
+
+        -- Data section'a ekle
+        METIN str_label = "str_";
+        METIN str_num = "0";
+        METIN str_name = STRING_BIRLESTIR(str_label, str_num);
+        METIN str_decl = STRING_BIRLESTIR(str_name, ": db \"");
+        str_decl = STRING_BIRLESTIR(str_decl, string_literal)
+        str_decl = STRING_BIRLESTIR(str_decl, "\", 0\n")
+
+        asm_data = STRING_BIRLESTIR(asm_data, str_decl)
+
+        -- Code section'a ekle
+        METIN code_printf1 = "    mov rdi, fmt_str\n";
+        METIN code_printf2 = "    mov rsi, ";
+        code_printf2 = STRING_BIRLESTIR(code_printf2, str_name)
+        code_printf2 = STRING_BIRLESTIR(code_printf2, "\n")
+        METIN code_printf3 = "    mov rax, 0\n";
+        METIN code_printf4 = "    call printf\n";
+
+        asm_code = STRING_BIRLESTIR(asm_code, code_printf1)
+        asm_code = STRING_BIRLESTIR(asm_code, code_printf2)
+        asm_code = STRING_BIRLESTIR(asm_code, code_printf3)
+        asm_code = STRING_BIRLESTIR(asm_code, code_printf4)
+
+        str_counter = str_counter + 1
+    SON
+
+    satir_no = satir_no + 1
+SON
+
+YAZDIR "Parse tamamlandı"
+
+-- ============================================
+-- ASSEMBLY SONLANDIRMA
+-- ============================================
+
+METIN asm_epilogue = "    mov rax, 0\n    pop rbp\n    ret\n";
+
+METIN final_asm = STRING_BIRLESTIR(asm_header, asm_data);
+final_asm = STRING_BIRLESTIR(final_asm, asm_text)
+final_asm = STRING_BIRLESTIR(final_asm, asm_code)
+final_asm = STRING_BIRLESTIR(final_asm, asm_epilogue)
+
+YAZDIR "=== Oluşturulan Assembly ==="
+YAZDIR final_asm
+
+-- Çıktı dosyasına yaz
+METIN cikti_eki = "/../tyd_compiler/hello_output.asm";
+METIN cikti_yolu = STRING_BIRLESTIR(dizin, cikti_eki);
+
+METIN mod_yaz = "w";
+SAYISAL cikti_dosya = DOSYA_AC(cikti_yolu, mod_yaz);
+SAYISAL yazilan = DOSYA_YAZ(cikti_dosya, final_asm);
+SAYISAL kapat2 = DOSYA_KAPAT(cikti_dosya);
+
+YAZDIR "=== Assembly Yazıldı ==="
+YAZDIR cikti_yolu
+
+YAZDIR "=== TYDCC: Derleme Tamamlandı! ==="

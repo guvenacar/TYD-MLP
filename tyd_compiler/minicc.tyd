@@ -1,0 +1,150 @@
+-- ===================================================
+-- MiniCC: Ultra Minimal TYD Compiler
+-- Sadece YAZDIR "..." komutunu destekler
+-- İç içe döngü yok - basit!
+-- ===================================================
+
+YAZDIR "=== MiniCC: Minimal TYD Compiler ==="
+
+-- Kaynak dosyayı oku
+METIN dizin = DIZIN_AL();
+METIN kaynak_eki = "/../tyd_compiler/hello.tyd";
+METIN kaynak_yolu = STRING_BIRLESTIR(dizin, kaynak_eki);
+
+YAZDIR "Kaynak:"
+YAZDIR kaynak_yolu
+
+METIN mod_oku = "r";
+SAYISAL kaynak_dosya = DOSYA_AC(kaynak_yolu, mod_oku);
+METIN kaynak_kod = DOSYA_OKU(kaynak_dosya);
+SAYISAL kapat1 = DOSYA_KAPAT(kaynak_dosya);
+
+YAZDIR "Kaynak okundu"
+YAZDIR kaynak_kod
+
+-- Assembly template
+METIN asm1 = "extern printf\n";
+METIN asm2 = "section .data\n";
+METIN asm3 = "    fmt db \"%s\", 10, 0\n";
+
+-- Şimdilik sadece ilk YAZDIR satırını işle
+-- Pattern: YAZDIR "..."
+
+-- İlk satırı al (newline'a kadar)
+SAYISAL kaynak_len = STRING_UZUNLUK(kaynak_kod);
+SAYISAL newline_pos = 0;
+SAYISAL i = 0;
+
+DÖNGÜ
+    EĞER i == kaynak_len İSE
+        newline_pos = i
+        DÖNGÜ_BITIR
+    SON
+
+    METIN kar = STRING_KARAKTER_AL(kaynak_kod, i);
+    SAYISAL kod = KARAKTER_KODU(kar);
+
+    EĞER kod == 10 İSE
+        newline_pos = i
+        DÖNGÜ_BITIR
+    SON
+
+    i = i + 1
+SON
+
+METIN ilk_satir = STRING_ALT(kaynak_kod, 0, newline_pos);
+
+YAZDIR "İlk satır:"
+YAZDIR ilk_satir
+
+-- String literali çıkar (" işaretleri arası)
+-- YAZDIR "Merhaba" -> Merhaba
+
+SAYISAL str_start = 0;
+SAYISAL j = 0;
+
+DÖNGÜ
+    EĞER j == newline_pos İSE
+        DÖNGÜ_BITIR
+    SON
+
+    METIN k = STRING_KARAKTER_AL(ilk_satir, j);
+    SAYISAL k_kod = KARAKTER_KODU(k);
+
+    EĞER k_kod == 34 İSE
+        str_start = j + 1
+        DÖNGÜ_BITIR
+    SON
+
+    j = j + 1
+SON
+
+SAYISAL str_end = newline_pos;
+SAYISAL m = str_start;
+
+DÖNGÜ
+    EĞER m == newline_pos İSE
+        DÖNGÜ_BITIR
+    SON
+
+    METIN n = STRING_KARAKTER_AL(ilk_satir, m);
+    SAYISAL n_kod = KARAKTER_KODU(n);
+
+    EĞER n_kod == 34 İSE
+        str_end = m
+        DÖNGÜ_BITIR
+    SON
+
+    m = m + 1
+SON
+
+SAYISAL str_len = str_end - str_start;
+METIN msg = STRING_ALT(ilk_satir, str_start, str_len);
+
+YAZDIR "String literal:"
+YAZDIR msg
+
+-- Assembly data section
+METIN asm4 = "    msg db \"";
+METIN asm5 = STRING_BIRLESTIR(asm4, msg);
+METIN asm6 = "\", 0\n";
+METIN data_section = STRING_BIRLESTIR(asm5, asm6);
+
+-- Assembly text section
+METIN asm7 = "section .text\n";
+METIN asm8 = "global main\nmain:\n";
+METIN asm9 = "    push rbp\n    mov rbp, rsp\n";
+METIN asm10 = "    mov rdi, fmt\n";
+METIN asm11 = "    mov rsi, msg\n";
+METIN asm12 = "    mov rax, 0\n";
+METIN asm13 = "    call printf\n";
+METIN asm14 = "    mov rax, 0\n    pop rbp\n    ret\n";
+
+-- Birleştir
+METIN final_asm = STRING_BIRLESTIR(asm1, asm2);
+final_asm = STRING_BIRLESTIR(final_asm, asm3)
+final_asm = STRING_BIRLESTIR(final_asm, data_section)
+final_asm = STRING_BIRLESTIR(final_asm, asm7)
+final_asm = STRING_BIRLESTIR(final_asm, asm8)
+final_asm = STRING_BIRLESTIR(final_asm, asm9)
+final_asm = STRING_BIRLESTIR(final_asm, asm10)
+final_asm = STRING_BIRLESTIR(final_asm, asm11)
+final_asm = STRING_BIRLESTIR(final_asm, asm12)
+final_asm = STRING_BIRLESTIR(final_asm, asm13)
+final_asm = STRING_BIRLESTIR(final_asm, asm14)
+
+YAZDIR "=== Oluşturulan Assembly ==="
+YAZDIR final_asm
+
+-- Dosyaya yaz
+METIN cikti_eki = "/../tyd_compiler/minicc_output.asm";
+METIN cikti_yolu = STRING_BIRLESTIR(dizin, cikti_eki);
+
+METIN mod_yaz = "w";
+SAYISAL cikti_dosya = DOSYA_AC(cikti_yolu, mod_yaz);
+SAYISAL yazilan = DOSYA_YAZ(cikti_dosya, final_asm);
+SAYISAL kapat2 = DOSYA_KAPAT(cikti_dosya);
+
+YAZDIR "=== Assembly Yazıldı ==="
+YAZDIR cikti_yolu
+YAZDIR "=== MiniCC: Başarılı! ==="
