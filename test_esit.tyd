@@ -1,0 +1,12 @@
+METIN a = "SAYISAL";
+METIN b = "SAYISAL";
+METIN c = "METIN";
+
+SAYISAL sonuc1 = STRING_ESIT_MI(a, b);
+SAYISAL sonuc2 = STRING_ESIT_MI(a, c);
+
+YAZDIR "a == b: "
+YAZDIR sonuc1
+
+YAZDIR "a == c: "
+YAZDIR sonuc2

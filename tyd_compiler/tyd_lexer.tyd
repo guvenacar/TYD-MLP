@@ -1,0 +1,548 @@
+-- TYD Lexer - Self-Hosting Compiler
+-- Lexer (Sözcük Çözümleyici) TYD dilinde yazılmış
+
+{-
+   Token Tipleri:
+   0 = EOF
+   1 = SAYI
+   2 = METIN
+   3 = IDENTIFIER
+   4 = SAYISAL (keyword)
+   5 = METIN (keyword)
+   7 = YAZDIR
+   8 = EĞER
+   9 = İSE
+   10 = DEĞİLSE
+   11 = İŞLEÇ
+   12 = DÖNÜŞ
+   13 = DÖNGÜ
+   14 = DÖNGÜ_BITIR
+   15 = SON
+   16 = LEFT_PAREN (
+   17 = RIGHT_PAREN )
+   18 = COMMA ,
+   19 = ASSIGN =
+   20 = SEMICOLON ;
+   21 = PLUS +
+   22 = MINUS -
+   23 = MUL *
+   24 = DIV /
+   25 = GT >
+   26 = LT <
+   27 = OP_ESIT_KARSILASTIRMA ==
+   28 = NOT_ESIT !=
+   29 = GTE >=
+   30 = LTE <=
+-}
+
+-- Global state
+SAYISAL current_position = 0;
+SAYISAL current_line = 1;
+SAYISAL current_column = 1;
+METIN source_code = "";
+
+İŞLEÇ lexer_init(kod) İSE
+    source_code = kod
+    current_position = 0
+    current_line = 1
+    current_column = 1
+SON
+
+İŞLEÇ is_digit(c) İSE
+    SAYISAL kod = KARAKTER_KODU(c);
+    EĞER kod >= 48 İSE  -- '0' = 48
+        EĞER kod <= 57 İSE  -- '9' = 57
+            DÖNÜŞ 1
+        SON
+    SON
+    DÖNÜŞ 0
+SON
+
+İŞLEÇ is_alpha(c) İSE
+    SAYISAL kod = KARAKTER_KODU(c);
+
+    -- a-z: 97-122
+    EĞER kod >= 97 İSE
+        EĞER kod <= 122 İSE
+            DÖNÜŞ 1
+        SON
+    SON
+
+    -- A-Z: 65-90
+    EĞER kod >= 65 İSE
+        EĞER kod <= 90 İSE
+            DÖNÜŞ 1
+        SON
+    SON
+
+    -- UTF-8 multi-byte (Türkçe karakterler)
+    EĞER kod >= 128 İSE
+        DÖNÜŞ 1
+    SON
+
+    DÖNÜŞ 0
+SON
+
+İŞLEÇ is_whitespace(c) İSE
+    SAYISAL kod = KARAKTER_KODU(c);
+
+    -- Space, Tab, Newline, Carriage Return
+    EĞER kod == 32 İSE DÖNÜŞ 1 SON  -- space
+    EĞER kod == 9 İSE DÖNÜŞ 1 SON   -- tab
+    EĞER kod == 10 İSE DÖNÜŞ 1 SON  -- newline
+    EĞER kod == 13 İSE DÖNÜŞ 1 SON  -- CR
+
+    DÖNÜŞ 0
+SON
+
+İŞLEÇ advance_position() İSE
+    SAYISAL len = STRING_UZUNLUK(source_code);
+
+    EĞER current_position >= len İSE
+        DÖNÜŞ 0
+    SON
+
+    METIN c = STRING_KARAKTER_AL(source_code, current_position);
+    SAYISAL kod = KARAKTER_KODU(c);
+
+    -- Newline
+    EĞER kod == 10 İSE
+        current_line = current_line + 1
+        current_column = 1
+    DEĞİLSE
+        -- Tab = 4 spaces
+        EĞER kod == 9 İSE
+            current_column = current_column + 4
+        DEĞİLSE
+            current_column = current_column + 1
+        SON
+    SON
+
+    current_position = current_position + 1
+    DÖNÜŞ 1
+SON
+
+İŞLEÇ current_char() İSE
+    SAYISAL len = STRING_UZUNLUK(source_code);
+
+    EĞER current_position >= len İSE
+        DÖNÜŞ ""
+    SON
+
+    DÖNÜŞ STRING_KARAKTER_AL(source_code, current_position)
+SON
+
+İŞLEÇ peek_char(offset) İSE
+    SAYISAL len = STRING_UZUNLUK(source_code);
+    SAYISAL pos = current_position + offset;
+
+    EĞER pos >= len İSE
+        DÖNÜŞ ""
+    SON
+
+    DÖNÜŞ STRING_KARAKTER_AL(source_code, pos)
+SON
+
+İŞLEÇ skip_whitespace() İSE
+    DÖNGÜ
+        METIN c = current_char();
+
+        EĞER STRING_UZUNLUK(c) == 0 İSE
+            DÖNGÜ_BITIR
+        SON
+
+        EĞER is_whitespace(c) == 0 İSE
+            DÖNGÜ_BITIR
+        SON
+
+        advance_position()
+    SON
+SON
+
+İŞLEÇ skip_line_comment() İSE
+    -- Skip until newline or EOF
+    DÖNGÜ
+        METIN c = current_char();
+
+        EĞER STRING_UZUNLUK(c) == 0 İSE
+            DÖNGÜ_BITIR
+        SON
+
+        SAYISAL kod = KARAKTER_KODU(c);
+
+        EĞER kod == 10 İSE  -- newline
+            DÖNGÜ_BITIR
+        SON
+
+        advance_position()
+    SON
+SON
+
+İŞLEÇ skip_block_comment() İSE
+    -- Skip {- ... -}
+    advance_position()  -- Skip {
+    advance_position()  -- Skip -
+
+    DÖNGÜ
+        METIN c = current_char();
+
+        EĞER STRING_UZUNLUK(c) == 0 İSE
+            DÖNGÜ_BITIR
+        SON
+
+        -- Check for -}
+        METIN next = peek_char(1);
+
+        EĞER KARAKTER_KODU(c) == 45 İSE  -- '-'
+            EĞER KARAKTER_KODU(next) == 125 İSE  -- '}'
+                advance_position()  -- Skip -
+                advance_position()  -- Skip }
+                DÖNGÜ_BITIR
+            SON
+        SON
+
+        advance_position()
+    SON
+SON
+
+İŞLEÇ skip_whitespace_and_comments() İSE
+    DÖNGÜ
+        skip_whitespace()
+
+        METIN c = current_char();
+
+        EĞER STRING_UZUNLUK(c) == 0 İSE
+            DÖNGÜ_BITIR
+        SON
+
+        METIN next = peek_char(1);
+
+        -- Single line comment: --
+        EĞER KARAKTER_KODU(c) == 45 İSE  -- '-'
+            EĞER KARAKTER_KODU(next) == 45 İSE  -- '-'
+                skip_line_comment()
+                skip_whitespace()
+            DEĞİLSE
+                DÖNGÜ_BITIR
+            SON
+        DEĞİLSE
+            -- Multi-line comment: {-
+            EĞER KARAKTER_KODU(c) == 123 İSE  -- '{'
+                EĞER KARAKTER_KODU(next) == 45 İSE  -- '-'
+                    skip_block_comment()
+                    skip_whitespace()
+                DEĞİLSE
+                    DÖNGÜ_BITIR
+                SON
+            DEĞİLSE
+                DÖNGÜ_BITIR
+            SON
+        SON
+    SON
+SON
+
+İŞLEÇ read_number() İSE
+    SAYISAL start = current_position;
+
+    DÖNGÜ
+        METIN c = current_char();
+
+        EĞER STRING_UZUNLUK(c) == 0 İSE
+            DÖNGÜ_BITIR
+        SON
+
+        EĞER is_digit(c) == 0 İSE
+            DÖNGÜ_BITIR
+        SON
+
+        advance_position()
+    SON
+
+    SAYISAL len = current_position - start;
+    DÖNÜŞ STRING_ALT(source_code, start, len)
+SON
+
+İŞLEÇ read_string() İSE
+    METIN quote = current_char();
+    SAYISAL quote_code = KARAKTER_KODU(quote);
+
+    advance_position()  -- Skip opening quote
+
+    METIN result = "";
+
+    DÖNGÜ
+        METIN c = current_char();
+
+        EĞER STRING_UZUNLUK(c) == 0 İSE
+            YAZDIR "HATA: Kapanmamış string literal"
+            DÖNGÜ_BITIR
+        SON
+
+        SAYISAL kod = KARAKTER_KODU(c);
+
+        -- Closing quote
+        EĞER kod == quote_code İSE
+            advance_position()
+            DÖNGÜ_BITIR
+        SON
+
+        -- Escape sequence
+        EĞER kod == 92 İSE  -- backslash '\'
+            advance_position()
+
+            METIN escape = current_char();
+            SAYISAL escape_kod = KARAKTER_KODU(escape);
+
+            -- \n
+            EĞER escape_kod == 110 İSE
+                result = STRING_BIRLESTIR(result, KODU_KARAKTERE(10))
+            DEĞİLSE
+                -- \t
+                EĞER escape_kod == 116 İSE
+                    result = STRING_BIRLESTIR(result, KODU_KARAKTERE(9))
+                DEĞİLSE
+                    -- \", \\, \'
+                    result = STRING_BIRLESTIR(result, escape)
+                SON
+            SON
+
+            advance_position()
+        DEĞİLSE
+            result = STRING_BIRLESTIR(result, c)
+            advance_position()
+        SON
+    SON
+
+    DÖNÜŞ result
+SON
+
+İŞLEÇ read_identifier() İSE
+    SAYISAL start = current_position;
+
+    DÖNGÜ
+        METIN c = current_char();
+
+        EĞER STRING_UZUNLUK(c) == 0 İSE
+            DÖNGÜ_BITIR
+        SON
+
+        SAYISAL kod = KARAKTER_KODU(c);
+
+        -- Alpha, digit, underscore, or UTF-8
+        EĞER is_alpha(c) == 1 İSE
+            advance_position()
+        DEĞİLSE
+            EĞER is_digit(c) == 1 İSE
+                advance_position()
+            DEĞİLSE
+                EĞER kod == 95 İSE  -- underscore
+                    advance_position()
+                DEĞİLSE
+                    DÖNGÜ_BITIR
+                SON
+            SON
+        SON
+    SON
+
+    SAYISAL len = current_position - start;
+    DÖNÜŞ STRING_ALT(source_code, start, len)
+SON
+
+İŞLEÇ keyword_type(word) İSE
+    -- Return token type for keywords
+
+    -- SAYISAL = 4
+    EĞER STRING_UZUNLUK(word) == 8 İSE
+        -- TODO: Implement strcmp for "SAYISAL"
+        DÖNÜŞ 4
+    SON
+
+    -- METIN = 5
+    -- YAZDIR = 7
+    -- EĞER = 8
+    -- İSE = 9
+    -- DEĞİLSE = 10
+    -- İŞLEÇ = 11
+    -- DÖNÜŞ = 12
+    -- DÖNGÜ = 13
+    -- DÖNGÜ_BITIR = 14
+    -- SON = 15
+
+    -- Default: IDENTIFIER
+    DÖNÜŞ 3
+SON
+
+İŞLEÇ get_next_token() İSE
+    skip_whitespace_and_comments()
+
+    METIN c = current_char();
+
+    -- EOF
+    EĞER STRING_UZUNLUK(c) == 0 İSE
+        DÖNÜŞ 0  -- TOKEN_EOF
+    SON
+
+    SAYISAL kod = KARAKTER_KODU(c);
+
+    -- Number
+    EĞER is_digit(c) == 1 İSE
+        METIN num = read_number();
+        YAZDIR "TOKEN: SAYI = "
+        YAZDIR num
+        DÖNÜŞ 1  -- TOKEN_SAYI
+    SON
+
+    -- String
+    EĞER kod == 34 İSE  -- double quote
+        METIN str = read_string();
+        YAZDIR "TOKEN: METIN = "
+        YAZDIR str
+        DÖNÜŞ 2  -- TOKEN_METIN
+    SON
+
+    -- Identifier or Keyword
+    EĞER is_alpha(c) == 1 İSE
+        METIN id = read_identifier();
+        SAYISAL tipo = keyword_type(id);
+
+        YAZDIR "TOKEN: ID/KEYWORD = "
+        YAZDIR id
+        YAZDIR " (type="
+        YAZDIR tipo
+        YAZDIR ")"
+
+        DÖNÜŞ tipo
+    SON
+
+    -- Single-char tokens
+    advance_position()
+
+    -- (
+    EĞER kod == 40 İSE
+        YAZDIR "TOKEN: ("
+        DÖNÜŞ 16
+    SON
+
+    -- )
+    EĞER kod == 41 İSE
+        YAZDIR "TOKEN: )"
+        DÖNÜŞ 17
+    SON
+
+    -- ,
+    EĞER kod == 44 İSE
+        YAZDIR "TOKEN: ,"
+        DÖNÜŞ 18
+    SON
+
+    -- =
+    EĞER kod == 61 İSE
+        METIN next = current_char();
+
+        -- ==
+        EĞER KARAKTER_KODU(next) == 61 İSE
+            advance_position()
+            YAZDIR "TOKEN: =="
+            DÖNÜŞ 27
+        SON
+
+        YAZDIR "TOKEN: ="
+        DÖNÜŞ 19
+    SON
+
+    -- ;
+    EĞER kod == 59 İSE
+        YAZDIR "TOKEN: ;"
+        DÖNÜŞ 20
+    SON
+
+    -- +
+    EĞER kod == 43 İSE
+        YAZDIR "TOKEN: +"
+        DÖNÜŞ 21
+    SON
+
+    -- -
+    EĞER kod == 45 İSE
+        YAZDIR "TOKEN: -"
+        DÖNÜŞ 22
+    SON
+
+    -- *
+    EĞER kod == 42 İSE
+        YAZDIR "TOKEN: *"
+        DÖNÜŞ 23
+    SON
+
+    -- /
+    EĞER kod == 47 İSE
+        YAZDIR "TOKEN: /"
+        DÖNÜŞ 24
+    SON
+
+    -- >
+    EĞER kod == 62 İSE
+        METIN next = current_char();
+
+        -- >=
+        EĞER KARAKTER_KODU(next) == 61 İSE
+            advance_position()
+            YAZDIR "TOKEN: >="
+            DÖNÜŞ 29
+        SON
+
+        YAZDIR "TOKEN: >"
+        DÖNÜŞ 25
+    SON
+
+    -- <
+    EĞER kod == 60 İSE
+        METIN next = current_char();
+
+        -- <=
+        EĞER KARAKTER_KODU(next) == 61 İSE
+            advance_position()
+            YAZDIR "TOKEN: <="
+            DÖNÜŞ 30
+        SON
+
+        YAZDIR "TOKEN: <"
+        DÖNÜŞ 26
+    SON
+
+    -- !
+    EĞER kod == 33 İSE
+        METIN next = current_char();
+
+        -- !=
+        EĞER KARAKTER_KODU(next) == 61 İSE
+            advance_position()
+            YAZDIR "TOKEN: !="
+            DÖNÜŞ 28
+        SON
+    SON
+
+    YAZDIR "HATA: Bilinmeyen karakter"
+    DÖNÜŞ 0
+SON
+
+-- Test
+METIN test_code = "SAYISAL x = 10;";
+lexer_init(test_code)
+
+YAZDIR "=== Lexer Test ==="
+YAZDIR "Kaynak: "
+YAZDIR test_code
+YAZDIR ""
+YAZDIR "Tokenler:"
+
+DÖNGÜ
+    SAYISAL tok = get_next_token();
+
+    EĞER tok == 0 İSE
+        YAZDIR "EOF"
+        DÖNGÜ_BITIR
+    SON
+SON
+
+YAZDIR "=== Test Bitti ==="

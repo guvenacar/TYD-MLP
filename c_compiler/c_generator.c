@@ -306,22 +306,48 @@ void visit_Metin(ASTNode* node) {
 void visit_DegiskenTanimlama(ASTNode* node) {
     char* degisken_adi = node->tanimlama_data.ad->value;
     char* degisken_tipi = node->tanimlama_data.tip->value;
-    char buffer[128];
-    // sprintf'in format string'inde %s kullanmak yerine, güvenli bir şekilde birleştirelim.
-    // Ancak bu basit durumda, yorum satırı için sorun teşkil etmez.
+    char buffer[256];
+
     sprintf(buffer, "    ; --- DegiskenTanimlama: %s ---", degisken_adi);
     asm_append(&text_section, buffer);
 
-    // 1. İfadeyi (sağ tarafı) hesapla (Sonuç RAX'e yüklenir)
-    visit(node->tanimlama_data.ifade);
+    // Global değişken mi? (scope level 0)
+    if (current_scope_level == 0) {
+        // Global değişken: .data section'a ekle
+        sprintf(buffer, "global_%s: dq 0", degisken_adi);
+        asm_append(&data_section, buffer);
 
-    // 2. Değişken için yığında (stack) yer ayır
-    char* adres = kapsam_degisken_yer_ayir(degisken_adi, degisken_tipi);
+        // Değişken için yığında değil, .data'da yer ayır
+        char* global_adres = (char*)malloc(64);
+        sprintf(global_adres, "[global_%s]", degisken_adi);
 
-    // 3. İfadenin sonucunu (RAX) yığındaki yeni adrese taşı
-    sprintf(buffer, "    mov %s, rax", adres); // Örn: mov [rbp-8], rax
-    asm_append(&text_section, buffer);
-    free(adres); // kapsam_degisken_yer_ayir'dan gelen belleği temizle
+        // Scope'a ekle
+        Degisken* d = &kapsam_haritasi[kapsam_degisken_sayisi++];
+        d->ad = strdup(degisken_adi);
+        d->asm_adresi = global_adres;
+        d->tip = strdup(degisken_tipi);
+        d->scope_level = 0;
+        d->is_global = true;
+
+        // İfadeyi hesapla (sonuç RAX'te)
+        visit(node->tanimlama_data.ifade);
+
+        // Global değişkene ata
+        sprintf(buffer, "    mov %s, rax", global_adres);
+        asm_append(&text_section, buffer);
+    } else {
+        // Local değişken: Stack'te
+        // 1. İfadeyi (sağ tarafı) hesapla (Sonuç RAX'e yüklenir)
+        visit(node->tanimlama_data.ifade);
+
+        // 2. Değişken için yığında (stack) yer ayır
+        char* adres = kapsam_degisken_yer_ayir(degisken_adi, degisken_tipi);
+
+        // 3. İfadenin sonucunu (RAX) yığındaki yeni adrese taşı
+        sprintf(buffer, "    mov %s, rax", adres); // Örn: mov [rbp-8], rax
+        asm_append(&text_section, buffer);
+        free(adres); // kapsam_degisken_yer_ayir'dan gelen belleği temizle
+    }
 }
 
 void visit_Degisken(ASTNode* node) {
@@ -443,10 +469,28 @@ void visit_IslecTanimlama(ASTNode* node) {
     // Fonksiyon için yeni kapsam aç
     int onceki_degisken_sayisi = kapsam_degisken_sayisi;
     int onceki_yigin_ofseti = kapsam_yigin_ofseti;
-    
-    // Yeni kapsam başlat
-    kapsam_degisken_sayisi = 0;
-    kapsam_yigin_ofseti = 0;
+
+    // Global değişkenleri koru, sadece stack offset'i sıfırla
+    // Global değişkenleri say (scope_level == 0)
+    int global_sayisi = 0;
+    for (int i = 0; i < kapsam_degisken_sayisi; i++) {
+        if (kapsam_haritasi[i].scope_level == 0) {
+            global_sayisi++;
+        }
+    }
+
+    // Global değişkenleri başa taşı ve sayıyı ayarla
+    int new_idx = 0;
+    for (int i = 0; i < kapsam_degisken_sayisi; i++) {
+        if (kapsam_haritasi[i].scope_level == 0) {
+            if (i != new_idx) {
+                kapsam_haritasi[new_idx] = kapsam_haritasi[i];
+            }
+            new_idx++;
+        }
+    }
+    kapsam_degisken_sayisi = global_sayisi;
+    kapsam_yigin_ofseti = 0;  // Fonksiyon stack'i sıfırdan başlar
 
     // 1. Fonksiyon Etiketini Tanımla
     sprintf(buffer, "%s:", islec_adi);
@@ -656,6 +700,18 @@ void visit_IslecCagirma(ASTNode* node) {
         return; // Sonuç RAX'te (uzunluk)
     }
 
+    else if (strcmp(islec_adi, "STRING_ESIT_MI") == 0 && arg_sayisi == 2) {
+        // Argüman 1: string1
+        visit(node->islec_cagirma_data.argumanlar[0]);
+        asm_append(&text_section, "    push rax");
+        // Argüman 2: string2
+        visit(node->islec_cagirma_data.argumanlar[1]);
+        asm_append(&text_section, "    pop rdi");  // string1 -> rdi
+        asm_append(&text_section, "    mov rsi, rax"); // string2 -> rsi
+        asm_append(&text_section, "    call string_esit_mi");
+        return; // Sonuç RAX'te (1 = eşit, 0 = farklı)
+    }
+
     // ===== KULLANICI TANIMLI FONKSİYONLAR =====
     // 1. Argümanları hesapla ve yığına (stack) it
     for (int i = 0; i < arg_sayisi; i++) {
@@ -860,6 +916,15 @@ char* generate_asm(ASTNode* root) {
     asm_append(&data_section, "extern dosya_kapat");
     asm_append(&data_section, "extern runtime_dizin_al"); // Self-host için eklendi
     asm_append(&data_section, "extern tyd_fix_cwd"); // ✅ yeni
+
+    // String fonksiyonları (runtime.c'deki wrapperlar)
+    asm_append(&data_section, "extern string_birlestir");
+    asm_append(&data_section, "extern string_karsilastir");
+    asm_append(&data_section, "extern string_uzunluk");
+    asm_append(&data_section, "extern string_esit_mi");
+    asm_append(&data_section, "extern string_karakter_al");
+    asm_append(&data_section, "extern string_alt");
+
     asm_append(&data_section, "section .data");
     asm_append(&data_section, "    format_sayi db \"%ld\", 10, 0"); // %d -> %ld
     asm_append(&data_section, "    format_metin db \"%s\", 10, 0");

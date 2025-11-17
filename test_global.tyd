@@ -1,0 +1,13 @@
+SAYISAL global_x = 10;
+SAYISAL global_y = 20;
+
+İŞLEÇ test_func() İSE
+    YAZDIR "global_x = "
+    YAZDIR global_x
+
+    global_x = global_x + 5
+    YAZDIR "Yeni global_x = "
+    YAZDIR global_x
+SON
+
+test_func()

@@ -160,6 +160,19 @@ int string_karsilastir(const char* str1, const char* str2) {
 }
 
 /**
+ * STRING_ESIT_MI - İki string'in eşit olup olmadığını kontrol eder
+ * @param str1: İlk string
+ * @param str2: İkinci string
+ * @return: Eşitse 1, değilse 0 (Boolean)
+ */
+int64_t string_esit_mi(const char* str1, const char* str2) {
+    if (str1 == NULL || str2 == NULL) {
+        return 0;  // NULL stringler eşit değildir
+    }
+    return strcmp(str1, str2) == 0 ? 1 : 0;
+}
+
+/**
  * STRING_UZUNLUK - String'in uzunluğunu döndürür
  * @param str: String
  * @return: String uzunluğu (karakter sayısı)
