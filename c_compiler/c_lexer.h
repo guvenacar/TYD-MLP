@@ -57,6 +57,8 @@ typedef enum {
 typedef struct {
     TokenType type;
     char* value; // Token'ın string değeri (örn: "topla" veya "123")
+    int line;    // Token'ın bulunduğu satır numarası (1'den başlar)
+    int column;  // Token'ın bulunduğu kolon numarası (1'den başlar)
 } Token;
 
 // Lexer Fonksiyon Bildirimleri

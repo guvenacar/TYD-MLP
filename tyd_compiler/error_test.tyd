@@ -1,0 +1,9 @@
+-- Error Test - Kasıtlı hata
+
+YAZDIR "Test başlıyor"
+
+SAYISAL x = 10
+
+EĞER x == 10 İSE
+    YAZDIR "x 10'a eşit"
+SON

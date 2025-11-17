@@ -9,15 +9,69 @@
 // --- Parser Durum Yönetimi ---
 static Token* current_token = NULL;
 
+// Token tip ismini döndüren helper fonksiyon
+static const char* getTokenTypeName(TokenType type) {
+    switch (type) {
+        case TOKEN_EOF: return "EOF";
+        case TOKEN_SAYI: return "SAYI";
+        case TOKEN_METIN: return "METIN";
+        case TOKEN_IDENTIFIER: return "IDENTIFIER";
+        case TOKEN_TANIMLA_SAYI: return "SAYISAL";
+        case TOKEN_TANIMLA_METIN: return "METIN (tip)";
+        case TOKEN_TANIMLA_BOOL: return "BOOL";
+        case TOKEN_YAPI_YAZDIR: return "YAZDIR";
+        case TOKEN_YAPI_KOSUL_EGER: return "EĞER";
+        case TOKEN_YAPI_KOSUL_ISE: return "İSE";
+        case TOKEN_YAPI_KOSUL_DEGILSE: return "DEĞİLSE";
+        case TOKEN_YAPI_ISLEC: return "İŞLEÇ";
+        case TOKEN_YAPI_DONUS: return "DÖNÜŞ";
+        case TOKEN_YAPI_DONGU: return "DÖNGÜ";
+        case TOKEN_YAPI_DONGU_BITIR: return "DÖNGÜ_BITIR";
+        case TOKEN_YAPI_SON: return "SON";
+        case TOKEN_LEFT_PAREN: return "(";
+        case TOKEN_RIGHT_PAREN: return ")";
+        case TOKEN_COMMA: return ",";
+        case TOKEN_ASSIGN: return "=";
+        case TOKEN_SEMICOLON: return ";";
+        case TOKEN_PLUS: return "+";
+        case TOKEN_MINUS: return "-";
+        case TOKEN_MUL: return "*";
+        case TOKEN_DIV: return "/";
+        case TOKEN_GT: return ">";
+        case TOKEN_LT: return "<";
+        case TOKEN_OP_ESIT_KARSILASTIRMA: return "==";
+        case TOKEN_NOT_ESIT: return "!=";
+        case TOKEN_GTE: return ">=";
+        case TOKEN_LTE: return "<=";
+        default: return "UNKNOWN";
+    }
+}
+
 // --- Hata Yönetimi ---
 void parseError(const char* message, const char* expected) {
-    fprintf(stderr, "HATA [Parser]: Sözdizimi Hatası!\n");
-    fprintf(stderr, "Beklenen: %s\n", expected);
+    fprintf(stderr, "\n╔════════════════════════════════════════════════════════════╗\n");
+    fprintf(stderr, "║ HATA [Parser]: Sözdizimi Hatası!                          ║\n");
+    fprintf(stderr, "╚════════════════════════════════════════════════════════════╝\n\n");
+
     if (current_token != NULL) {
-        fprintf(stderr, "Bulunan: Tip %d (%s)\n", current_token->type, current_token->value ? current_token->value : "NULL");
+        fprintf(stderr, "📍 Konum: Satır %d, Kolon %d\n\n", current_token->line, current_token->column);
+        fprintf(stderr, "❌ Bulunan: ");
+        if (current_token->value) {
+            fprintf(stderr, "\"%s\" (%s)\n", current_token->value, getTokenTypeName(current_token->type));
+        } else {
+            fprintf(stderr, "%s\n", getTokenTypeName(current_token->type));
+        }
     } else {
-        fprintf(stderr, "Bulunan: Dosya Sonu veya NULL\n");
+        fprintf(stderr, "📍 Konum: Dosya sonu\n\n");
+        fprintf(stderr, "❌ Bulunan: Dosya Sonu veya NULL\n");
     }
+
+    fprintf(stderr, "✓ Beklenen: %s\n\n", expected);
+
+    if (message && strlen(message) > 0) {
+        fprintf(stderr, "💡 Açıklama: %s\n\n", message);
+    }
+
     exit(EXIT_FAILURE);
 }
 
@@ -41,8 +95,9 @@ void consume(TokenType expected_type) {
         free(current_token);
         current_token = getNextToken();
     } else {
-        char expected_str[20];
-        sprintf(expected_str, "Tip %d", expected_type);
+        char expected_str[100];
+        sprintf(expected_str, "%s (%s)", getTokenTypeName(expected_type),
+                expected_type == TOKEN_SEMICOLON ? "SAYISAL, METIN, BOOL değişken tanımlarında gerekli" : "Token");
         parseError("Token tipi uyuşmuyor.", expected_str);
     }
 }

@@ -17,11 +17,15 @@ static const char* source_code = NULL;
 static int current_position = 0;
 static int eof_reached = 0; // <-- YENİ: EOF bayrağı
 
+// Satır ve kolon tracking (hata mesajları için)
+static int current_line = 1;    // Satır numarası (1'den başlar)
+static int current_column = 1;  // Kolon numarası (1'den başlar)
+
 // --- Bellek Yönetimi ve Yardımcı Fonksiyonlar ---
 
 /**
  * Yeni bir Token nesnesi oluşturur ve bellek ayırır.
- * NOT: Bu fonksiyon, dinamik bellek (malloc) kullandığı için, 
+ * NOT: Bu fonksiyon, dinamik bellek (malloc) kullandığı için,
  * oluşturulan Token'ların program sonunda serbest bırakılması (free) gerekir.
  */
 Token* createToken(TokenType type, const char* value) {
@@ -31,12 +35,12 @@ Token* createToken(TokenType type, const char* value) {
         perror("Hafıza ayırma hatası (Token)");
         exit(EXIT_FAILURE);
     }
-    
+
     token->type = type;
-    
+
     // Değer (value) string'ini dinamik olarak kopyala
     if (value != NULL) {
-        token->value = strdup(value); 
+        token->value = strdup(value);
         if (token->value == NULL) {
             perror("Hafıza ayırma hatası (Token Value)");
             exit(EXIT_FAILURE);
@@ -44,6 +48,11 @@ Token* createToken(TokenType type, const char* value) {
     } else {
         token->value = NULL;
     }
+
+    // Pozisyon bilgisini ekle
+    token->line = current_line;
+    token->column = current_column;
+
     return token;
 }
 
@@ -88,25 +97,50 @@ void initLexer(const char* source) {
     source_code = source;
     current_position = 0;
     eof_reached = 0; // <-- RESET
+
+    // Pozisyon tracking'i reset et
+    current_line = 1;
+    current_column = 1;
 }
 
 
 // --- Ana Lexer Mantığı ---
 
 /**
+ * Pozisyon ilerletme helper fonksiyonu
+ * current_position'ı 1 artırır ve line/column'u günceller
+ */
+static inline void advance_position() {
+    if (source_code[current_position] == '\0') {
+        return; // EOF'ta ilerleme yok
+    }
+
+    if (source_code[current_position] == '\n') {
+        current_line++;
+        current_column = 1;
+    } else if (source_code[current_position] == '\t') {
+        current_column += 4; // Tab = 4 space
+    } else {
+        current_column++;
+    }
+
+    current_position++;
+}
+
+/**
  * Python'daki sonraki_tokeni_al() metoduna karşılık gelir.
  * Kaynak koddan bir sonraki tokeni okur ve döndürür.
  */
 Token* getNextToken() {
-    
+
     // 1. EOF zaten döndürüldüyse hemen EOF döndür.
     if (eof_reached) {
         return createToken(TOKEN_EOF, NULL);
     }
-    
+
     // 2. Boşlukları ve Yeni Satırları Atla
     while (source_code[current_position] != '\0' && isspace(source_code[current_position])) {
-        current_position++;
+        advance_position();
     }
 
     // YENİ: Yorum Satırlarını Atla
@@ -114,11 +148,11 @@ Token* getNextToken() {
     while (source_code[current_position] == '-' && source_code[current_position + 1] == '-') {
         // Satır sonuna veya dosya sonuna kadar ilerle
         while (source_code[current_position] != '\n' && source_code[current_position] != '\0') {
-            current_position++;
+            advance_position();
         }
         // Boşlukları tekrar atla (yorumdan sonraki boşluklar için)
         while (source_code[current_position] != '\0' && isspace(source_code[current_position])) {
-            current_position++;
+            advance_position();
         }
     }
 
