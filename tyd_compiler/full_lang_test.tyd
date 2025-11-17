@@ -1,0 +1,108 @@
+-- TYD Full Language Test
+-- Tüm dil özelliklerini test eder
+
+YAZDIR "=== TYD Full Language Test ==="
+
+-- 1. Değişken Tanımlamaları (METIN, SAYISAL)
+YAZDIR "\n1. Değişken Tanımlamaları:"
+SAYISAL sayi1 = 42;
+SAYISAL sayi2 = 10;
+METIN isim = "Ahmet";
+METIN mesaj = "Merhaba TYD!";
+
+YAZDIR "sayi1:"
+YAZDIR sayi1
+YAZDIR "isim:"
+YAZDIR isim
+
+-- 2. Aritmetik İşlemler
+YAZDIR "\n2. Aritmetik İşlemler:"
+SAYISAL toplam = sayi1 + sayi2;
+SAYISAL fark = sayi1 - sayi2;
+SAYISAL carpim = sayi1 * 2;
+SAYISAL bolum = sayi1 / sayi2;
+
+YAZDIR "42 + 10 ="
+YAZDIR toplam
+YAZDIR "42 - 10 ="
+YAZDIR fark
+
+-- 3. EĞER/DEĞİLSE Yapıları
+YAZDIR "\n3. Koşul İfadeleri:"
+EĞER sayi1 > sayi2 İSE
+    YAZDIR "sayi1 > sayi2 (doğru)"
+DEĞİLSE
+    YAZDIR "sayi1 <= sayi2 (yanlış)"
+SON
+
+EĞER toplam == 52 İSE
+    YAZDIR "Toplam doğru: 52"
+SON
+
+-- 4. DÖNGÜ Yapıları
+YAZDIR "\n4. Döngü:"
+SAYISAL sayac = 0;
+DÖNGÜ
+    YAZDIR "Döngü sayacı:"
+    YAZDIR sayac
+
+    sayac = sayac + 1
+
+    EĞER sayac == 3 İSE
+        DÖNGÜ_BITIR
+    SON
+SON
+YAZDIR "Döngü bitti"
+
+-- 5. İŞLEÇ (Function) Tanımlamaları
+YAZDIR "\n5. İşleç Tanımları:"
+
+İŞLEÇ TOPLA(a, b) İSE
+    SAYISAL sonuc = a + b;
+    DÖNÜŞ sonuc
+SON
+
+İŞLEÇ SELAMLA(ad) İSE
+    METIN selam = "Merhaba ";
+    METIN tam_mesaj = STRING_BIRLESTIR(selam, ad);
+    DÖNÜŞ tam_mesaj
+SON
+
+-- 6. İşleç Çağrıları
+YAZDIR "\n6. İşleç Çağrıları:"
+SAYISAL toplam2 = TOPLA(100, 50);
+YAZDIR "TOPLA(100, 50) ="
+YAZDIR toplam2
+
+METIN selam_mesaji = SELAMLA("Mehmet");
+YAZDIR selam_mesaji
+
+-- 7. String İşlemleri
+YAZDIR "\n7. String İşlemleri:"
+METIN ad = "TYD";
+METIN tam_ad = STRING_BIRLESTIR("Türkçe ", ad);
+YAZDIR tam_ad
+
+SAYISAL uzunluk = STRING_UZUNLUK(ad);
+YAZDIR "TYD uzunluğu:"
+YAZDIR uzunluk
+
+-- 8. İç İçe Yapılar
+YAZDIR "\n8. İç İçe Yapılar:"
+SAYISAL i = 0;
+DÖNGÜ
+    EĞER i == 0 İSE
+        YAZDIR "i = 0"
+    DEĞİLSE
+        EĞER i == 1 İSE
+            YAZDIR "i = 1"
+        DEĞİLSE
+            YAZDIR "i > 1, döngüden çık"
+            DÖNGÜ_BITIR
+        SON
+    SON
+
+    i = i + 1
+SON
+
+YAZDIR "\n=== Tüm Testler Başarılı! ==="

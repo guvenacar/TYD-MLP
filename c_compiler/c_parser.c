@@ -321,7 +321,12 @@ ASTNode* komut() {
         return donus_komutu(); // Kendi içinde yönetir
     }
 
-    // 7. Atama veya İfade Komutu (Noktalı virgülsüz)
+    // 7. İŞLEÇ (Function Definition) (Noktalı virgülsüz)
+    if (current_token->type == TOKEN_YAPI_ISLEC) {
+        return islec_tanimlama(); // Kendi içinde yönetir
+    }
+
+    // 8. Atama veya İfade Komutu (Noktalı virgülsüz)
     if (current_token->type == TOKEN_IDENTIFIER) {
         ASTNode* sol_node = ifade(); // 'birincil()' çağrılır
 
