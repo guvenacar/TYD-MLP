@@ -1,6 +1,6 @@
-YAZDIR "=== TYD Self-Hosting Demo v1 ===";
+YAZDIR "=== TYD Self-Hosting Demo v1 ==="
 
-YAZDIR "Kaynak kod okunuyor...";
+YAZDIR "Kaynak kod okunuyor..."
 
 METIN kaynak_dosya = "ornekler/hello.tyd";
 METIN mod = "r";
@@ -9,10 +9,10 @@ SAYISAL dosya = DOSYA_AC(kaynak_dosya, mod);
 METIN kaynak = DOSYA_OKU(dosya);
 SAYISAL kapat1 = DOSYA_KAPAT(dosya);
 
-YAZDIR "Okunan kaynak:";
-YAZDIR kaynak;
+YAZDIR "Okunan kaynak:"
+YAZDIR kaynak
 
-YAZDIR "Assembly uretiliyor...";
+YAZDIR "Assembly uretiliyor..."
 
 METIN asm1 = "extern printf\n";
 METIN asm2 = "section .data\n";
@@ -30,5 +30,5 @@ SAYISAL n4 = DOSYA_YAZ(cikti, asm4);
 
 SAYISAL kapat2 = DOSYA_KAPAT(cikti);
 
-YAZDIR "Olusturuldu!";
-YAZDIR cikti_dosya;
+YAZDIR "Olusturuldu!"
+YAZDIR cikti_dosya

@@ -6,6 +6,9 @@
 #include <unistd.h>  // readlink için
 #include <libgen.h>  // dirname için
 
+// Forward declarations
+char* runtime_dizin_al();
+
 // Çalıştırılabilir dosyanın tam yolunu alır
 char* get_executable_path() {
     char* path = (char*)malloc(1024);
@@ -16,7 +19,7 @@ char* get_executable_path() {
         path[len] = '\0';
         return path;
     }
-    
+
     free(path);
     return NULL;
 }
@@ -174,9 +177,13 @@ int64_t string_uzunluk(const char* str) {
 
 /**
  * DOSYA_AC - Dosya açar ve dosya tanıtıcısını (FILE*) döndürür
- * @param yol: Dosya yolu (string)
+ * @param yol: Dosya yolu (string) - relative veya absolute
  * @param mod: Açma modu ("r", "w", "a", vb.)
  * @return: FILE* pointer (int64_t olarak cast edilmiş)
+ *
+ * NOT: Eğer yol relative ise (/ ile başlamıyorsa), programın bulunduğu
+ * dizin ile birleştirilerek absolute path oluşturulur. Bu sayede
+ * program farklı dizinlerden çalıştırılsa bile dosyaları bulabilir.
  */
 int64_t dosya_ac(const char* yol, const char* mod) {
     if (yol == NULL || mod == NULL) {
@@ -184,10 +191,48 @@ int64_t dosya_ac(const char* yol, const char* mod) {
         return 0; // NULL pointer
     }
 
-    FILE* dosya = fopen(yol, mod);
+    char* kullanilacak_yol = NULL;
+    int path_allocated = 0; // Flag to track if we allocated memory
+
+    // Path absolute mi kontrol et (/ ile başlıyorsa absolute)
+    if (yol[0] == '/') {
+        // Absolute path - olduğu gibi kullan
+        kullanilacak_yol = (char*)yol;
+    } else {
+        // Relative path - executable'ın dizini ile birleştir
+        char* exe_dir = runtime_dizin_al();
+        if (exe_dir == NULL) {
+            fprintf(stderr, "HATA [DOSYA_AC]: Executable dizini alınamadı\n");
+            return 0;
+        }
+
+        // Birleştir: exe_dir + "/" + yol
+        size_t uzunluk = strlen(exe_dir) + 1 + strlen(yol) + 1;
+        kullanilacak_yol = (char*)malloc(uzunluk);
+        if (kullanilacak_yol == NULL) {
+            free(exe_dir);
+            fprintf(stderr, "HATA [DOSYA_AC]: Hafıza ayırma hatası\n");
+            return 0;
+        }
+
+        snprintf(kullanilacak_yol, uzunluk, "%s/%s", exe_dir, yol);
+        free(exe_dir);
+        path_allocated = 1;
+    }
+
+    FILE* dosya = fopen(kullanilacak_yol, mod);
+
     if (dosya == NULL) {
-        fprintf(stderr, "HATA [DOSYA_AC]: Dosya açılamadı: %s\n", yol);
+        fprintf(stderr, "HATA [DOSYA_AC]: Dosya açılamadı: %s\n", kullanilacak_yol);
+        if (path_allocated) {
+            free(kullanilacak_yol);
+        }
         return 0;
+    }
+
+    // Eğer yeni path oluşturduysak, onu serbest bırak
+    if (path_allocated) {
+        free(kullanilacak_yol);
     }
 
     // FILE* pointer'ı int64_t olarak döndür
