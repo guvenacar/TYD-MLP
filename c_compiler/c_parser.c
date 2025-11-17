@@ -170,6 +170,31 @@ ASTNode* createAST_AtamaKomutu(Token* ad, ASTNode* ifade) {
     return node;
 }
 
+ASTNode* createAST_ArrayTanimlama(Token* tip, Token* ad, ASTNode* boyut) {
+    ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
+    if (node == NULL) return NULL;
+    node->type = AST_ARRAY_TANIMLAMA;
+    node->array_tanimlama_data.tip = (Token*)malloc(sizeof(Token));
+    node->array_tanimlama_data.tip->type = tip->type;
+    node->array_tanimlama_data.tip->value = strdup(tip->value);
+    node->array_tanimlama_data.ad = (Token*)malloc(sizeof(Token));
+    node->array_tanimlama_data.ad->type = ad->type;
+    node->array_tanimlama_data.ad->value = strdup(ad->value);
+    node->array_tanimlama_data.boyut = boyut;
+    return node;
+}
+
+ASTNode* createAST_ArrayErisim(Token* ad, ASTNode* indeks) {
+    ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
+    if (node == NULL) return NULL;
+    node->type = AST_ARRAY_ERISIM;
+    node->array_erisim_data.ad = (Token*)malloc(sizeof(Token));
+    node->array_erisim_data.ad->type = ad->type;
+    node->array_erisim_data.ad->value = strdup(ad->value);
+    node->array_erisim_data.indeks = indeks;
+    return node;
+}
+
 ASTNode* createAST_KosulKomutu(ASTNode* kosul, ASTNode* ise_blok, ASTNode* degilse_blok) {
     ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
     if (node == NULL) return NULL;
@@ -261,8 +286,9 @@ ASTNode* birincil() {
         Token ad_token_kopya;
         ad_token_kopya.type = current_token->type;
         ad_token_kopya.value = strdup(current_token->value);
-        consume(TOKEN_IDENTIFIER); 
+        consume(TOKEN_IDENTIFIER);
 
+        // Fonksiyon çağrısı mı? (func(args))
         if (current_token->type == TOKEN_LEFT_PAREN) {
             consume(TOKEN_LEFT_PAREN);
             ASTNode** arguman_listesi = NULL;
@@ -270,7 +296,7 @@ ASTNode* birincil() {
             if (current_token->type != TOKEN_RIGHT_PAREN) {
                 arguman_listesi = (ASTNode**)malloc(sizeof(ASTNode*) * 10);
                 do {
-                    arguman_listesi[a_sayisi] = ifade(); 
+                    arguman_listesi[a_sayisi] = ifade();
                     a_sayisi++;
                 } while (current_token->type == TOKEN_COMMA && (consume(TOKEN_COMMA), 1));
             }
@@ -278,7 +304,18 @@ ASTNode* birincil() {
             ASTNode* call_node = createAST_IslecCagirma(&ad_token_kopya, arguman_listesi, a_sayisi);
             free(ad_token_kopya.value);
             return call_node;
-        } else {
+        }
+        // Array erişimi mi? (arr[index])
+        else if (current_token->type == TOKEN_LEFT_BRACKET) {
+            consume(TOKEN_LEFT_BRACKET);
+            ASTNode* indeks = ifade();
+            consume(TOKEN_RIGHT_BRACKET);
+            ASTNode* array_erisim = createAST_ArrayErisim(&ad_token_kopya, indeks);
+            free(ad_token_kopya.value);
+            return array_erisim;
+        }
+        // Normal değişken
+        else {
             ASTNode* var_node = createAST_Degisken(&ad_token_kopya);
             free(ad_token_kopya.value);
             return var_node;
@@ -325,26 +362,40 @@ ASTNode* komut() {
     }
     
     // 2. Değişken Tanımlama (Noktalı virgüllü)
-    if (current_token->type == TOKEN_TANIMLA_SAYI || 
+    if (current_token->type == TOKEN_TANIMLA_SAYI ||
         current_token->type == TOKEN_TANIMLA_METIN ||
-        current_token->type == TOKEN_TANIMLA_BOOL) 
+        current_token->type == TOKEN_TANIMLA_BOOL)
     {
         Token tip_token;
         tip_token.type = current_token->type;
         tip_token.value = strdup(current_token->value);
-        consume(current_token->type); 
+        consume(current_token->type);
 
         Token ad_token;
         if (current_token->type != TOKEN_IDENTIFIER) parseError("Değişken adı", "IDENTIFIER");
         ad_token.type = current_token->type;
         ad_token.value = strdup(current_token->value);
-        consume(TOKEN_IDENTIFIER); 
+        consume(TOKEN_IDENTIFIER);
 
-        consume(TOKEN_ASSIGN); 
-        ASTNode* ifade_dugumu = ifade(); 
-        
+        // Array tanımlaması mı? (SAYISAL arr[10];)
+        if (current_token->type == TOKEN_LEFT_BRACKET) {
+            consume(TOKEN_LEFT_BRACKET);
+            ASTNode* boyut = ifade();  // Array boyutu
+            consume(TOKEN_RIGHT_BRACKET);
+            consume(TOKEN_SEMICOLON);
+
+            ASTNode* array_node = createAST_ArrayTanimlama(&tip_token, &ad_token, boyut);
+            free(tip_token.value);
+            free(ad_token.value);
+            return array_node;
+        }
+
+        // Normal değişken tanımlaması (SAYISAL x = 5;)
+        consume(TOKEN_ASSIGN);
+        ASTNode* ifade_dugumu = ifade();
+
         // ✅ KURAL: Tanımlamalar noktalı virgül ALIR
-        consume(TOKEN_SEMICOLON); 
+        consume(TOKEN_SEMICOLON);
 
         ASTNode* tanimlama_node = createAST_DegiskenTanimlama(&tip_token, &ad_token, ifade_dugumu);
         free(tip_token.value);
@@ -385,25 +436,64 @@ ASTNode* komut() {
     if (current_token->type == TOKEN_IDENTIFIER) {
         ASTNode* sol_node = ifade(); // 'birincil()' çağrılır
 
-        // DURUM 7.1: ATAMA (örn: x = 5)
-        // 'ifade()' bize bir AST_DEGISKEN (x) döndürdüyse
-        if (sol_node->type == AST_DEGISKEN && current_token->type == TOKEN_ASSIGN) {
+        // DURUM 7.1: ATAMA (örn: x = 5 veya arr[i] = 5)
+        // 'ifade()' bize bir AST_DEGISKEN (x) veya AST_ARRAY_ERISIM döndürdüyse
+        if ((sol_node->type == AST_DEGISKEN || sol_node->type == AST_ARRAY_ERISIM) &&
+            current_token->type == TOKEN_ASSIGN) {
             consume(TOKEN_ASSIGN); // '=' tüket
             ASTNode* sag_ifade = ifade(); // Sağ tarafı (5) ayrıştır
-            
+
             specs_check_no_semicolon("Atama komutu");
 
-            // 'sol_node'u (AST_DEGISKEN) AST_ATAMA_KOMUTU'na dönüştür
-            Token* ad_token = sol_node->degisken_data.ad; // Adı al
-            
-            ASTNode* atama_node = createAST_AtamaKomutu(ad_token, sag_ifade);
-            
-            // sol_node'un belleğini düzgün yönet
-            free(ad_token->value);
-            free(ad_token);
-            free(sol_node);
-            
-            return atama_node;
+            // Normal değişken ataması
+            if (sol_node->type == AST_DEGISKEN) {
+                Token* ad_token = sol_node->degisken_data.ad; // Adı al
+                ASTNode* atama_node = createAST_AtamaKomutu(ad_token, sag_ifade);
+
+                // sol_node'un belleğini düzgün yönet
+                free(ad_token->value);
+                free(ad_token);
+                free(sol_node);
+
+                return atama_node;
+            }
+            // Array erişimi ataması (arr[i] = value)
+            // Bu durumda sol_node zaten AST_ARRAY_ERISIM
+            // Bunu özel bir atama komutu olarak wrap etmeliyiz
+            else if (sol_node->type == AST_ARRAY_ERISIM) {
+                // Şimdilik array erişimini atama ifadesi olarak saklamak için
+                // atama node'u oluşturalım (ad'ı boş bırakıp hedefi sol_node yapabiliriz)
+                // Ama mevcut struct buna uygun değil.
+                // Geçici çözüm: AST_ARRAY_ERISIM'i tek_ifade_data ile wrap edip
+                // tip olarak AST_ATAMA_KOMUTU kullanabiliriz.
+                // Ama bu da temiz değil.
+
+                // En iyi çözüm: Generator'da bu durumu handle etmek
+                // Şimdilik AST_ARRAY_ERISIM node'unu değer ataması için kullanabiliriz
+                // Generator'da AST_ARRAY_ERISIM tipini kontrol edip atama olarak handle ederiz
+
+                // Yeni bir wrapper node oluşturalım
+                ASTNode* array_atama = (ASTNode*)malloc(sizeof(ASTNode));
+                array_atama->type = AST_ATAMA_KOMUTU;
+                // HACK: ad yerine array_erisim node'unu kullanacağız
+                // atama_data.ad normalde Token* ama burada array node tutacağız
+                // Bu çirkin ama çalışır. Generator'da type check yapacağız.
+                array_atama->atama_data.ad = NULL;  // İşaret: bu bir array atama
+                array_atama->atama_data.ifade = sag_ifade;
+
+                // sol_node'u (array erişimi) yeni bir field'a kaydetmeliyiz
+                // Ama mevcut struct'ta böyle bir field yok
+                // Geçici hack: tek_ifade_data kullan
+
+                // Aslında daha iyi: yeni bir tip tanımlayalım
+                // Ama şimdi compile edip test etmek için hack yapalım
+
+                fprintf(stderr, "UYARI: Array ataması henüz tam desteklenmiyor.\n");
+                free(sol_node);
+                free(sag_ifade);
+                parseError("Array ataması", "Henüz desteklenmiyor");
+                return NULL;
+            }
         }
         
         // DURUM 7.2: İFADE KOMUTU (örn: test())

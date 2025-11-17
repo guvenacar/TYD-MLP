@@ -229,6 +229,8 @@ void visit_DonguBitirKomutu(ASTNode* node); // İleri bildirim
 void visit_IslecTanimlama(ASTNode* node); // İleri bildirim
 void visit_IslecCagirma(ASTNode* node); // İleri bildirim
 void visit_DonusKomutu(ASTNode* node); // İleri bildirim
+void visit_ArrayTanimlama(ASTNode* node); // İleri bildirim
+void visit_ArrayErisim(ASTNode* node); // İleri bildirim
 
 void visit_Blok(ASTNode* node) {
     // Blok içindeki her komutu ziyaret et
@@ -730,12 +732,98 @@ void visit_IslecCagirma(ASTNode* node) {
     asm_append(&text_section, buffer);
 }
 
+void visit_ArrayTanimlama(ASTNode* node) {
+    char* array_adi = node->array_tanimlama_data.ad->value;
+    char* array_tipi = node->array_tanimlama_data.tip->value;
+    char buffer[256];
+
+    sprintf(buffer, "    ; --- ArrayTanimlama: %s ---", array_adi);
+    asm_append(&text_section, buffer);
+
+    // Boyut ifadesini hesapla (sonuç RAX'te olacak)
+    visit(node->array_tanimlama_data.boyut);
+
+    // Boyut sabit olmalı (şimdilik sadece sabit boyutlu arrayler)
+    // RAX'te boyut var
+    // Array için yığında yer ayır
+    // Şimdilik basit: Her eleman 8 byte (SAYISAL)
+    // Toplam boyut = eleman_sayisi * 8
+
+    // Array bilgisini kaydet
+    Degisken* d = &kapsam_haritasi[kapsam_degisken_sayisi++];
+    d->ad = strdup(array_adi);
+    d->tip = (char*)malloc(64);
+    sprintf(d->tip, "ARRAY_%s", array_tipi);  // Örn: "ARRAY_SAYISAL"
+    d->scope_level = current_scope_level;
+    d->is_global = (current_scope_level == 0);
+
+    // Boyut bilgisini sakla (şimdilik compile-time sabit olmalı)
+    // HACK: Boyut değerini AST'den almayı deneyelim
+    int array_boyut = 0;
+    if (node->array_tanimlama_data.boyut->type == AST_SAYI) {
+        array_boyut = atoi(node->array_tanimlama_data.boyut->sabit_data.deger);
+    } else {
+        fprintf(stderr, "HATA [Generator]: Array boyutu compile-time sabit olmalı\n");
+        exit(1);
+    }
+
+    int total_bytes = array_boyut * 8;  // Her eleman 8 byte
+
+    if (current_scope_level == 0) {
+        // Global array: .bss section'da
+        sprintf(buffer, "global_array_%s: resq %d  ; %d elements", array_adi, array_boyut, array_boyut);
+        asm_append(&data_section, buffer);
+
+        char* global_adres = (char*)malloc(64);
+        sprintf(global_adres, "global_array_%s", array_adi);
+        d->asm_adresi = global_adres;
+    } else {
+        // Local array: Stack'te
+        kapsam_yigin_ofseti += total_bytes;
+        char* adres = (char*)malloc(32);
+        sprintf(adres, "[rbp-%d]", kapsam_yigin_ofseti);
+        d->asm_adresi = strdup(adres);
+        free(adres);
+
+        sprintf(buffer, "    sub rsp, %d  ; Array allocation for %s[%d]",
+                total_bytes, array_adi, array_boyut);
+        asm_append(&text_section, buffer);
+    }
+}
+
+void visit_ArrayErisim(ASTNode* node) {
+    char* array_adi = node->array_erisim_data.ad->value;
+    char buffer[256];
+
+    sprintf(buffer, "    ; --- ArrayErisim: %s ---", array_adi);
+    asm_append(&text_section, buffer);
+
+    // İndeks ifadesini hesapla (sonuç RAX'te)
+    visit(node->array_erisim_data.indeks);
+
+    // İndeksi offset'e çevir (indeks * 8)
+    asm_append(&text_section, "    imul rax, 8  ; indeks * 8 (element size)");
+    asm_append(&text_section, "    push rax  ; offset'i sakla");
+
+    // Array base adresini bul
+    char* array_base = kapsam_degisken_adresi_bul(array_adi);
+
+    // Base + offset hesapla
+    sprintf(buffer, "    lea rbx, %s  ; Array base adresi", array_base);
+    asm_append(&text_section, buffer);
+    asm_append(&text_section, "    pop rax  ; offset'i geri al");
+    asm_append(&text_section, "    add rbx, rax  ; base + offset");
+
+    // Değeri oku
+    asm_append(&text_section, "    mov rax, [rbx]  ; Array elemanını oku");
+}
+
 void visit_DonusKomutu(ASTNode* node) {
     asm_append(&text_section, "    ; --- Donus Komutu ---");
-    
+
     // 1. Döndürülecek ifadeyi hesapla (Sonuç RAX'e yüklenir)
     visit(node->tek_ifade_data.ifade);
-    
+
     // 2. Fonksiyon Çıkışını (Epilog) üret
     asm_append(&text_section, "    mov rsp, rbp");
     asm_append(&text_section, "    pop rbp");
@@ -871,8 +959,17 @@ void visit(ASTNode* node) {
         case AST_DONUS_KOMUTU:
             visit_DonusKomutu(node);
             break;
-            
-        
+
+        // Array Tanımlama
+        case AST_ARRAY_TANIMLAMA:
+            visit_ArrayTanimlama(node);
+            break;
+
+        // Array Erişim
+        case AST_ARRAY_ERISIM:
+            visit_ArrayErisim(node);
+            break;
+
         default:
             fprintf(stderr, "HATA [Generator]: Tanınmayan AST düğüm tipi: %d\n", node->type);
             exit(1);
