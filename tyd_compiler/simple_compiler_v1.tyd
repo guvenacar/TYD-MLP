@@ -1,0 +1,73 @@
+-- ===================================================
+-- TYD Simple Compiler v1
+-- Sadece YAZDIR komutunu destekler (proof of concept)
+-- ===================================================
+
+YAZDIR "=== TYD Simple Compiler v1 ==="
+
+-- Assembly header oluştur
+METIN header1 = "extern printf\n";
+METIN header2 = "section .data\n";
+METIN header3 = "    format_metin db \"%s\", 10, 0\n";
+METIN header4 = "section .text\n";
+METIN header5 = "global main\n";
+METIN header6 = "main:\n";
+METIN header7 = "    push rbp\n";
+METIN header8 = "    mov rbp, rsp\n";
+
+METIN asm_header = STRING_BIRLESTIR(header1, header2);
+asm_header = STRING_BIRLESTIR(asm_header, header3)
+asm_header = STRING_BIRLESTIR(asm_header, header4)
+asm_header = STRING_BIRLESTIR(asm_header, header5)
+asm_header = STRING_BIRLESTIR(asm_header, header6)
+asm_header = STRING_BIRLESTIR(asm_header, header7)
+asm_header = STRING_BIRLESTIR(asm_header, header8)
+
+YAZDIR "Assembly header oluşturuldu"
+
+-- Basit bir YAZDIR komutu için assembly üret
+-- YAZDIR "Merhaba" -> assembly
+METIN data1 = "msg: db \"Merhaba Dunya\", 0\n";
+METIN code1 = "    mov rdi, format_metin\n";
+METIN code2 = "    mov rsi, msg\n";
+METIN code3 = "    mov rax, 0\n";
+METIN code4 = "    call printf\n";
+
+METIN asm_data = data1;
+METIN asm_code = STRING_BIRLESTIR(code1, code2);
+asm_code = STRING_BIRLESTIR(asm_code, code3)
+asm_code = STRING_BIRLESTIR(asm_code, code4)
+
+YAZDIR "Assembly kod bloğu oluşturuldu"
+
+-- Assembly footer
+METIN footer1 = "    mov rax, 0\n";
+METIN footer2 = "    pop rbp\n";
+METIN footer3 = "    ret\n";
+
+METIN asm_footer = STRING_BIRLESTIR(footer1, footer2);
+asm_footer = STRING_BIRLESTIR(asm_footer, footer3)
+
+YAZDIR "Assembly footer oluşturuldu"
+
+-- Tüm assembly'i birleştir
+-- Header içinde data section başlangıcı var, oraya data ekle
+METIN final_asm = STRING_BIRLESTIR(asm_header, asm_data);
+final_asm = STRING_BIRLESTIR(final_asm, asm_code)
+final_asm = STRING_BIRLESTIR(final_asm, asm_footer)
+
+YAZDIR "=== Oluşturulan Assembly ==="
+YAZDIR final_asm
+
+-- Şimdi dosyaya yazalım
+METIN dizin = DIZIN_AL();
+METIN dosya_eki = "/../tyd_compiler/output.asm";
+METIN dosya_yolu = STRING_BIRLESTIR(dizin, dosya_eki);
+
+METIN mod = "w";
+SAYISAL dosya = DOSYA_AC(dosya_yolu, mod);
+SAYISAL yazilan = DOSYA_YAZ(dosya, final_asm);
+SAYISAL kapat = DOSYA_KAPAT(dosya);
+
+YAZDIR "=== Assembly dosyası yazıldı: output.asm ==="
+YAZDIR dosya_yolu

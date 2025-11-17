@@ -1,0 +1,180 @@
+-- ===================================================
+-- TYD Minimal Self-Hosting Compiler
+-- Hedef: Sadece kendini derleyebilecek kadar basit!
+-- ===================================================
+
+-- ============================================
+-- YARDIMCI FONKSİYONLAR
+-- ============================================
+
+-- Bir karakterin boşluk olup olmadığını kontrol et
+İŞLEÇ BOSLUK_MU(karakter)
+    SAYISAL kod = KARAKTER_KODU(karakter);
+
+    EĞER kod == 32 İSE
+        DÖNÜŞ 1
+    SON
+
+    EĞER kod == 9 İSE
+        DÖNÜŞ 1
+    SON
+
+    EĞER kod == 10 İSE
+        DÖNÜŞ 1
+    SON
+
+    EĞER kod == 13 İSE
+        DÖNÜŞ 1
+    SON
+
+    DÖNÜŞ 0
+SON
+
+-- String'in başlangıcından belirli bir prefix ile başlayıp başlamadığını kontrol et
+İŞLEÇ BASLIYOR_MU(metin, prefix)
+    SAYISAL metin_uzunluk = STRING_UZUNLUK(metin);
+    SAYISAL prefix_uzunluk = STRING_UZUNLUK(prefix);
+
+    EĞER prefix_uzunluk > metin_uzunluk İSE
+        DÖNÜŞ 0
+    SON
+
+    METIN metin_baslangic = STRING_ALT(metin, 0, prefix_uzunluk);
+    SAYISAL sonuc = STRING_KARSILASTIR(metin_baslangic, prefix);
+
+    EĞER sonuc == 0 İSE
+        DÖNÜŞ 1
+    SON
+
+    DÖNÜŞ 0
+SON
+
+-- String'de belirli bir karakteri ara ve ilk bulunduğu indeksi döndür
+İŞLEÇ STRING_BUL(metin, aranan)
+    SAYISAL uzunluk = STRING_UZUNLUK(metin);
+    SAYISAL i = 0;
+
+    DÖNGÜ
+        EĞER i == uzunluk İSE
+            DÖNGÜ_BITIR
+        SON
+
+        METIN karakter = STRING_KARAKTER_AL(metin, i);
+        SAYISAL sonuc = STRING_KARSILASTIR(karakter, aranan);
+
+        EĞER sonuc == 0 İSE
+            DÖNÜŞ i
+        SON
+
+        i = i + 1
+    SON
+
+    DÖNÜŞ 0 - 1
+SON
+
+-- String'i belirli bir ayraçtan böl (sadece ilk bulunan)
+-- Döndürülen format: "SOL_TARAF|SAG_TARAF"
+İŞLEÇ STRING_BOL(metin, ayrac)
+    SAYISAL pos = STRING_BUL(metin, ayrac);
+
+    EĞER pos < 0 İSE
+        DÖNÜŞ metin
+    SON
+
+    METIN sol = STRING_ALT(metin, 0, pos);
+    SAYISAL uzunluk = STRING_UZUNLUK(metin);
+    SAYISAL sag_uzunluk = uzunluk - pos;
+    sag_uzunluk = sag_uzunluk - 1
+    METIN sag = STRING_ALT(metin, pos + 1, sag_uzunluk);
+
+    METIN ayrac2 = "|";
+    METIN tmp = STRING_BIRLESTIR(sol, ayrac2);
+    METIN sonuc = STRING_BIRLESTIR(tmp, sag);
+
+    DÖNÜŞ sonuc
+SON
+
+-- String'in başındaki ve sonundaki boşlukları temizle
+İŞLEÇ STRING_TRIM(metin)
+    SAYISAL uzunluk = STRING_UZUNLUK(metin);
+
+    EĞER uzunluk == 0 İSE
+        DÖNÜŞ metin
+    SON
+
+    -- Baştan boşlukları temizle
+    SAYISAL baslangic = 0;
+
+    DÖNGÜ
+        EĞER baslangic == uzunluk İSE
+            DÖNGÜ_BITIR
+        SON
+
+        METIN kar = STRING_KARAKTER_AL(metin, baslangic);
+        SAYISAL bosluk = BOSLUK_MU(kar);
+
+        EĞER bosluk == 0 İSE
+            DÖNGÜ_BITIR
+        SON
+
+        baslangic = baslangic + 1
+    SON
+
+    -- Sondan boşlukları temizle
+    SAYISAL bitis = uzunluk;
+
+    DÖNGÜ
+        EĞER bitis == baslangic İSE
+            DÖNGÜ_BITIR
+        SON
+
+        METIN kar = STRING_KARAKTER_AL(metin, bitis - 1);
+        SAYISAL bosluk = BOSLUK_MU(kar);
+
+        EĞER bosluk == 0 İSE
+            DÖNGÜ_BITIR
+        SON
+
+        bitis = bitis - 1
+    SON
+
+    SAYISAL yeni_uzunluk = bitis - baslangic;
+    METIN sonuc = STRING_ALT(metin, baslangic, yeni_uzunluk);
+
+    DÖNÜŞ sonuc
+SON
+
+-- ============================================
+-- TEST: Yardımcı Fonksiyonlar
+-- ============================================
+
+YAZDIR "=== TYD Minimal Compiler - Yardımcı Fonksiyon Testleri ==="
+
+-- Test BASLIYOR_MU
+METIN test1 = "YAZDIR Merhaba";
+METIN prefix1 = "YAZDIR";
+SAYISAL sonuc1 = BASLIYOR_MU(test1, prefix1);
+YAZDIR "BASLIYOR_MU testi:"
+YAZDIR sonuc1
+
+-- Test STRING_BUL
+METIN test2 = "METIN x = abc";
+METIN ara = "=";
+SAYISAL sonuc2 = STRING_BUL(test2, ara);
+YAZDIR "STRING_BUL testi (= pozisyonu):"
+YAZDIR sonuc2
+
+-- Test STRING_BOL
+METIN test3 = "METIN x = abc";
+METIN esittir = "=";
+METIN sonuc3 = STRING_BOL(test3, esittir);
+YAZDIR "STRING_BOL testi:"
+YAZDIR sonuc3
+
+-- Test STRING_TRIM
+METIN test4 = "  Merhaba  ";
+METIN sonuc4 = STRING_TRIM(test4);
+YAZDIR "STRING_TRIM testi:"
+YAZDIR sonuc4
+
+YAZDIR "=== Testler Tamamlandı ==="
