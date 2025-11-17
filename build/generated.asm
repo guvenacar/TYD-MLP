@@ -1,0 +1,1 @@
+extern printf\nsection .data\nsection .text\nglobal main\n

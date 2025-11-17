@@ -1,0 +1,173 @@
+extern printf
+extern string_birlestir
+extern string_karsilastir
+extern string_uzunluk
+extern dosya_ac
+extern dosya_oku
+extern dosya_yaz
+extern dosya_kapat
+section .data
+    format_sayi db "%d", 10, 0
+    format_metin db "%s", 10, 0
+str_0: db "=== TYD Self-Hosting Demo v1 ===", 0
+str_1: db "Kaynak kod okunuyor...", 0
+str_2: db "ornekler/hello.tyd", 0
+str_3: db "r", 0
+str_4: db "Okunan kaynak:", 0
+str_5: db "Assembly uretiliyor...", 0
+str_6: db "extern printf\n", 0
+str_7: db "section .data\n", 0
+str_8: db "section .text\n", 0
+str_9: db "global main\n", 0
+str_10: db "build/generated.asm", 0
+str_11: db "w", 0
+str_12: db "Olusturuldu!", 0
+
+section .text
+global main
+main:
+    push rbp
+    mov rbp, rsp
+    and rsp, -16  ; Stack alignment (16-byte)
+    mov rax, str_0
+    ; --- YAZDIR Başlangıç ---
+    mov rdi, format_metin
+    mov rsi, rax
+    mov rax, 0
+    call printf
+    mov rax, str_1
+    ; --- YAZDIR Başlangıç ---
+    mov rdi, format_metin
+    mov rsi, rax
+    mov rax, 0
+    call printf
+    ; --- DegiskenTanimlama: kaynak_dosya ---
+    mov rax, str_2
+    mov [rbp-8], rax
+    ; --- DegiskenTanimlama: mod ---
+    mov rax, str_3
+    mov [rbp-16], rax
+    ; --- DegiskenTanimlama: dosya ---
+    mov rax, [rbp-8]
+    push rax
+    mov rax, [rbp-16]
+    push rax
+    pop rsi
+    pop rdi
+    call dosya_ac
+    mov [rbp-24], rax
+    ; --- DegiskenTanimlama: kaynak ---
+    mov rax, [rbp-24]
+    push rax
+    pop rdi
+    call dosya_oku
+    mov [rbp-32], rax
+    ; --- DegiskenTanimlama: kapat1 ---
+    mov rax, [rbp-24]
+    push rax
+    pop rdi
+    call dosya_kapat
+    mov [rbp-40], rax
+    mov rax, str_4
+    ; --- YAZDIR Başlangıç ---
+    mov rdi, format_metin
+    mov rsi, rax
+    mov rax, 0
+    call printf
+    mov rax, [rbp-32]
+    ; --- YAZDIR Başlangıç ---
+    mov rdi, format_metin
+    mov rsi, rax
+    mov rax, 0
+    call printf
+    mov rax, str_5
+    ; --- YAZDIR Başlangıç ---
+    mov rdi, format_metin
+    mov rsi, rax
+    mov rax, 0
+    call printf
+    ; --- DegiskenTanimlama: asm1 ---
+    mov rax, str_6
+    mov [rbp-48], rax
+    ; --- DegiskenTanimlama: asm2 ---
+    mov rax, str_7
+    mov [rbp-56], rax
+    ; --- DegiskenTanimlama: asm3 ---
+    mov rax, str_8
+    mov [rbp-64], rax
+    ; --- DegiskenTanimlama: asm4 ---
+    mov rax, str_9
+    mov [rbp-72], rax
+    ; --- DegiskenTanimlama: cikti_dosya ---
+    mov rax, str_10
+    mov [rbp-80], rax
+    ; --- DegiskenTanimlama: mod_yaz ---
+    mov rax, str_11
+    mov [rbp-88], rax
+    ; --- DegiskenTanimlama: cikti ---
+    mov rax, [rbp-80]
+    push rax
+    mov rax, [rbp-88]
+    push rax
+    pop rsi
+    pop rdi
+    call dosya_ac
+    mov [rbp-96], rax
+    ; --- DegiskenTanimlama: n1 ---
+    mov rax, [rbp-96]
+    push rax
+    mov rax, [rbp-48]
+    push rax
+    pop rsi
+    pop rdi
+    call dosya_yaz
+    mov [rbp-104], rax
+    ; --- DegiskenTanimlama: n2 ---
+    mov rax, [rbp-96]
+    push rax
+    mov rax, [rbp-56]
+    push rax
+    pop rsi
+    pop rdi
+    call dosya_yaz
+    mov [rbp-112], rax
+    ; --- DegiskenTanimlama: n3 ---
+    mov rax, [rbp-96]
+    push rax
+    mov rax, [rbp-64]
+    push rax
+    pop rsi
+    pop rdi
+    call dosya_yaz
+    mov [rbp-120], rax
+    ; --- DegiskenTanimlama: n4 ---
+    mov rax, [rbp-96]
+    push rax
+    mov rax, [rbp-72]
+    push rax
+    pop rsi
+    pop rdi
+    call dosya_yaz
+    mov [rbp-128], rax
+    ; --- DegiskenTanimlama: kapat2 ---
+    mov rax, [rbp-96]
+    push rax
+    pop rdi
+    call dosya_kapat
+    mov [rbp-136], rax
+    mov rax, str_12
+    ; --- YAZDIR Başlangıç ---
+    mov rdi, format_metin
+    mov rsi, rax
+    mov rax, 0
+    call printf
+    mov rax, [rbp-80]
+    ; --- YAZDIR Başlangıç ---
+    mov rdi, format_metin
+    mov rsi, rax
+    mov rax, 0
+    call printf
+    xor rax, rax
+    mov rsp, rbp
+    pop rbp
+    ret

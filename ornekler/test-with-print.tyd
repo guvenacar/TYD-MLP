@@ -1,0 +1,8 @@
+YAZDIR "Basliyor";
+METIN yol = "test.txt";
+METIN mod = "w";
+YAZDIR "Dosya aciliyor";
+SAYISAL f = DOSYA_AC(yol, mod);
+YAZDIR "Kapat iliyor";
+SAYISAL k = DOSYA_KAPAT(f);
+YAZDIR "Bitti";

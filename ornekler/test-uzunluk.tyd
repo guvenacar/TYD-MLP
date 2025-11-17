@@ -1,0 +1,3 @@
+METIN mesaj = "Merhaba Dunya TYD!";
+SAYISAL uzunluk = STRING_UZUNLUK(mesaj);
+YAZDIR uzunluk;

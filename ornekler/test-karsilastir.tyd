@@ -1,0 +1,7 @@
+METIN a = "Test";
+METIN b = "Test";
+METIN c = "Baska";
+SAYISAL esit = STRING_KARSILASTIR(a, b);
+SAYISAL farkli = STRING_KARSILASTIR(a, c);
+YAZDIR esit;
+YAZDIR farkli;

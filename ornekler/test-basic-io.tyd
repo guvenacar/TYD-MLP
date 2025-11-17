@@ -1,0 +1,9 @@
+METIN yol = "test.txt";
+METIN mod = "w";
+SAYISAL f = DOSYA_AC(yol, mod);
+YAZDIR f;
+METIN txt = "Hello World";
+SAYISAL n = DOSYA_YAZ(f, txt);
+YAZDIR n;
+SAYISAL k = DOSYA_KAPAT(f);
+YAZDIR k;

@@ -1,0 +1,34 @@
+# TYD-MLP AI Kuralları
+
+## 🚫 ASLA YAPMAYIN
+
+1. **SPECS.md'yi değiştirmeyin** - Bu dosya kilitlidir
+2. **Noktalı virgül (;) eklememeyin** - Sadece değişken tanımında
+3. **Blok sonuna ; eklemeyin** - `SON İŞLEÇ` yeterli
+
+## ✅ HER ZAMAN YAPMANIZ GEREKENLER
+
+1. **SPECS.md'yi okuyun** - Her değişiklikten önce
+2. **tools/validate_syntax.py çalıştırın** - Koddan önce
+3. **Test edin** - Her değişiklikten sonra
+
+## 📚 Referanslar
+
+- Syntax kuralları: `SPECS.md`
+- Test örnekleri: `ornekler/*.tyd`
+- Değişiklik günlüğü: `SPECS_LOCK.md`
+
+## 🤖 AI-Specific Notlar
+
+**Siz (AI) bu projede değişiklik yaparken:**
+
+1. İlk mesajda `SPECS.md` dosyasını okuyun
+2. Önerdiğiniz değişikliğin SPECS'e uygun olduğunu kontrol edin
+3. Şüpheniz varsa kullanıcıya sorun
+
+**Örnek Kontrol:**
+```
+AI: "Bu değişikliği yapmadan önce SPECS.md'yi kontrol ediyorum..."
+AI: "SPECS.md'ye göre ';' sadece değişken tanımında. Tamam, uygun."
+AI: "İşte düzeltme..."
+```
