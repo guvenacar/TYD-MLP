@@ -12,8 +12,8 @@ DÖNGÜ
 
     EĞER sayac == sinir İSE
         DÖNGÜ_BITIR;
-    SON EĞER
-SON DÖNGÜ
+    EĞER SON
+DÖNGÜ SON
 
 -- Toplama işlemi
 SAYISAL toplam = sayac + 10;  -- Beklenen: 5 + 10 = 15

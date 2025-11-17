@@ -1,0 +1,4 @@
+METIN a = "Merhaba ";
+METIN b = "Dunya";
+METIN c = STRING_BIRLESTIR(a, b);
+YAZDIR c;

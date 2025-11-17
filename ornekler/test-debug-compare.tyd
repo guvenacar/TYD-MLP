@@ -1,0 +1,6 @@
+METIN a = "ABC";
+METIN b = "ABC";
+YAZDIR a;
+YAZDIR b;
+SAYISAL sonuc = STRING_KARSILASTIR(a, b);
+YAZDIR sonuc;

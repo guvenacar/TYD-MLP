@@ -2,7 +2,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h> 
+#include <stdint.h>
+#include <unistd.h>  // readlink için
+#include <libgen.h>  // dirname için
+
+// Çalıştırılabilir dosyanın tam yolunu alır
+char* get_executable_path() {
+    char* path = (char*)malloc(1024);
+    if (path == NULL) return NULL;
+
+    ssize_t len = readlink("/proc/self/exe", path, 1023);
+    if (len != -1) {
+        path[len] = '\0';
+        return path;
+    }
+    
+    free(path);
+    return NULL;
+}
 
 void yazdir_sayi(int64_t sayi) {
     printf("%ld\n", sayi);
@@ -137,3 +154,200 @@ int string_karsilastir(const char* str1, const char* str2) {
     // Assembly'de bu sonucu doğrudan kullanacağız.
     return strcmp(str1, str2);
 }
+
+/**
+ * STRING_UZUNLUK - String'in uzunluğunu döndürür
+ * @param str: String
+ * @return: String uzunluğu (karakter sayısı)
+ */
+int64_t string_uzunluk(const char* str) {
+    if (str == NULL) {
+        fprintf(stderr, "HATA [STRING_UZUNLUK]: NULL string\n");
+        return 0;
+    }
+    return (int64_t)strlen(str);
+}
+
+// =============================================================================
+// FILE I/O FONKSİYONLARI
+// =============================================================================
+
+/**
+ * DOSYA_AC - Dosya açar ve dosya tanıtıcısını (FILE*) döndürür
+ * @param yol: Dosya yolu (string)
+ * @param mod: Açma modu ("r", "w", "a", vb.)
+ * @return: FILE* pointer (int64_t olarak cast edilmiş)
+ */
+int64_t dosya_ac(const char* yol, const char* mod) {
+    if (yol == NULL || mod == NULL) {
+        fprintf(stderr, "HATA [DOSYA_AC]: NULL argüman alındı\n");
+        return 0; // NULL pointer
+    }
+
+    FILE* dosya = fopen(yol, mod);
+    if (dosya == NULL) {
+        fprintf(stderr, "HATA [DOSYA_AC]: Dosya açılamadı: %s\n", yol);
+        return 0;
+    }
+
+    // FILE* pointer'ı int64_t olarak döndür
+    return (int64_t)dosya;
+}
+
+/**
+ * DOSYA_OKU - Dosyadan tüm içeriği okur ve string olarak döndürür
+ * @param dosya_ptr: FILE* pointer (int64_t olarak)
+ * @return: Dosya içeriği (dynamically allocated string)
+ */
+char* dosya_oku(int64_t dosya_ptr) {
+    FILE* dosya = (FILE*)dosya_ptr;
+
+    if (dosya == NULL) {
+        fprintf(stderr, "HATA [DOSYA_OKU]: Geçersiz dosya pointer\n");
+        return NULL;
+    }
+
+    // Dosya boyutunu öğren
+    fseek(dosya, 0, SEEK_END);
+    long dosya_boyutu = ftell(dosya);
+    fseek(dosya, 0, SEEK_SET);
+
+    if (dosya_boyutu < 0) {
+        fprintf(stderr, "HATA [DOSYA_OKU]: Dosya boyutu okunamadı\n");
+        return NULL;
+    }
+
+    // Bellek ayır
+    char* icerik = (char*)malloc(dosya_boyutu + 1);
+    if (icerik == NULL) {
+        fprintf(stderr, "HATA [DOSYA_OKU]: Hafıza ayırma hatası\n");
+        return NULL;
+    }
+
+    // Dosyayı oku
+    size_t okunan = fread(icerik, 1, dosya_boyutu, dosya);
+    icerik[okunan] = '\0'; // Null terminator
+
+    return icerik;
+}
+
+/**
+ * DOSYA_YAZ - Dosyaya string yazar
+ * @param dosya_ptr: FILE* pointer (int64_t olarak)
+ * @param veri: Yazılacak string
+ * @return: Yazılan byte sayısı
+ */
+int64_t dosya_yaz(int64_t dosya_ptr, const char* veri) {
+    FILE* dosya = (FILE*)dosya_ptr;
+
+    if (dosya == NULL) {
+        fprintf(stderr, "HATA [DOSYA_YAZ]: Geçersiz dosya pointer\n");
+        return -1;
+    }
+
+    if (veri == NULL) {
+        fprintf(stderr, "HATA [DOSYA_YAZ]: NULL veri\n");
+        return -1;
+    }
+
+    size_t yazilan = fwrite(veri, 1, strlen(veri), dosya);
+    return (int64_t)yazilan;
+}
+
+/**
+ * DOSYA_KAPAT - Dosyayı kapatır
+ * @param dosya_ptr: FILE* pointer (int64_t olarak)
+ * @return: 0 başarılı, -1 hata
+ */
+int64_t dosya_kapat(int64_t dosya_ptr) {
+    FILE* dosya = (FILE*)dosya_ptr;
+
+    if (dosya == NULL) {
+        fprintf(stderr, "HATA [DOSYA_KAPAT]: Geçersiz dosya pointer\n");
+        return -1;
+    }
+
+    int sonuc = fclose(dosya);
+    if (sonuc != 0) {
+        fprintf(stderr, "HATA [DOSYA_KAPAT]: Dosya kapatılamadı\n");
+        return -1;
+    }
+
+    return 0;
+}
+
+// =============================================================================
+// YOL (PATH) YÖNETİMİ
+// =============================================================================
+
+/**
+ * DIZIN_AL - Çalışan programın bulunduğu dizini döndürür.
+ * (Self-hosting için dosya yolu sorununu çözer)
+ * * @return: Programın dizin yolu (char*). Bu hafıza 'free' edilmeli.
+ */
+char* tyd_fix_cwd() {
+    // 1. Programın tam yolunu al (zaten var olan fonksiyon)
+    char* exe_path = get_executable_path();
+    if (exe_path == NULL) {
+        fprintf(stderr, "HATA [DIZIN_AL]: Program yolu alınamadı.\n");
+        return NULL;
+    }
+
+    // 2. 'dirname' girdisini değiştirebilir, bu yüzden bir kopya üzerinde çalış
+    // (Aksi takdirde 'exe_path' belleği bozulabilir)
+    char* path_copy = strdup(exe_path);
+    if (path_copy == NULL) {
+        free(exe_path);
+        fprintf(stderr, "HATA [DIZIN_AL]: Hafıza kopyalama hatası.\n");
+        return NULL;
+    }
+
+    // 3. Dizin adını al (örn: /home/pardus/proje/c_compiler)
+    char* dir = dirname(path_copy);
+
+    // 4. 'dir' şu anda path_copy'nin içini işaret ediyor.
+    // Bellek sızıntısını önlemek için 'dir'in de bir kopyasını oluşturup 
+    // onu döndürmeliyiz.
+    char* result = strdup(dir);
+
+    // 5. Ara bellekleri temizle
+    free(exe_path);   // Orijinal path'i serbest bırak
+    free(path_copy);  // Kopyayı serbest bırak
+
+    // 6. Yeni, bağımsız dizin kopyasını döndür
+    return result;
+}
+
+char* runtime_dizin_al() {
+    // 1. Programın tam yolunu al (zaten var olan fonksiyon)
+    char* exe_path = get_executable_path();
+    if (exe_path == NULL) {
+        fprintf(stderr, "HATA [DIZIN_AL]: Program yolu alınamadı.\n");
+        return NULL;
+    }
+
+    // 2. 'dirname' girdisini değiştirebilir, bu yüzden bir kopya üzerinde çalış
+    // (Aksi takdirde 'exe_path' belleği bozulabilir)
+    char* path_copy = strdup(exe_path);
+    if (path_copy == NULL) {
+        free(exe_path);
+        fprintf(stderr, "HATA [DIZIN_AL]: Hafıza kopyalama hatası.\n");
+        return NULL;
+    }
+
+    // 3. Dizin adını al (örn: /home/pardus/proje/c_compiler)
+    char* dir = dirname(path_copy);
+
+    // 4. 'dir' şu anda path_copy'nin içini işaret ediyor.
+    // Bellek sızıntısını önlemek için 'dir'in de bir kopyasını oluşturup 
+    // onu döndürmeliyiz.
+    char* result = strdup(dir);
+
+    // 5. Ara bellekleri temizle
+    free(exe_path);   // Orijinal path'i serbest bırak
+    free(path_copy);  // Kopyayı serbest bırak
+
+    // 6. Yeni, bağımsız dizin kopyasını döndür
+    return result;
+}
+

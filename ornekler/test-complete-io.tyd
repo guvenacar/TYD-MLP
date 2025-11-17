@@ -1,0 +1,20 @@
+YAZDIR "Dosya I/O Testi";
+
+METIN yol = "output.txt";
+METIN yazmod = "w";
+SAYISAL f = DOSYA_AC(yol, yazmod);
+
+METIN mesaj = "Merhaba TYD!";
+SAYISAL yazilan = DOSYA_YAZ(f, mesaj);
+
+SAYISAL kapat1 = DOSYA_KAPAT(f);
+
+METIN okumod = "r";
+SAYISAL f2 = DOSYA_AC(yol, okumod);
+
+METIN icerik = DOSYA_OKU(f2);
+YAZDIR icerik;
+
+SAYISAL kapat2 = DOSYA_KAPAT(f2);
+
+YAZDIR "Tamamlandi";

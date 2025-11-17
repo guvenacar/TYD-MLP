@@ -4,7 +4,7 @@
 
 -- İşleç tanımlama (fonksiyon gibi)
 SAYISAL İŞLEÇ TOPLA(SAYISAL a, SAYISAL b)
-    DÖNÜŞ a + b;
+    DÖNÜŞ a + b
 SON İŞLEÇ
 
 -- İşleç kullanımı

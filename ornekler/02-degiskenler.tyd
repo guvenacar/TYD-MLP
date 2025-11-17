@@ -1,32 +1,36 @@
 -- ===============================================
 -- TYD-MLP Örnek 2: Değişkenler ve Tipler
+-- (SPECS.md UYUMLU: Atamalarda ; YOK)
 -- ===============================================
 
+-- Tanımlamalar noktalı virgül ALIR
 SAYISAL yas = 25;
-YAZDIR "Yaş:";
-YAZDIR yas;
+YAZDIR "Yaş:"
+YAZDIR yas
 
 SAYISAL pi = 3.14159;
-YAZDIR "Pi sayısı:";
-YAZDIR pi;
+YAZDIR "Pi sayısı:"
+YAZDIR pi
 
 SAYISAL sonuc = yas + 10;
-YAZDIR "10 yıl sonra:";
-YAZDIR sonuc;
+YAZDIR "10 yıl sonra:"
+YAZDIR sonuc
 
-sonuc = pi * 2;
-YAZDIR "2 * Pi:";
-YAZDIR sonuc;
+-- Atamalar noktalı virgül ALMAZ
+sonuc = pi * 2
+YAZDIR "2 * Pi:"
+YAZDIR sonuc
 
+-- Tanımlamalar noktalı virgül ALIR
 METIN isim = "Ahmet";
-YAZDIR "İsim:";
-YAZDIR isim;
+YAZDIR "İsim:"
+YAZDIR isim
 
 METIN soyisim = "Yılmaz";
-YAZDIR "Soyisim:";
-YAZDIR soyisim;
+YAZDIR "Soyisim:"
+YAZDIR soyisim
 
-SAYISAL us = 2 ** 10;
-YAZDIR "2^10 =";
-YAZDIR us;
-
+-- Atamalar noktalı virgül ALMAZ
+isim = "Mehmet"
+YAZDIR "Yeni İsim:"
+YAZDIR isim

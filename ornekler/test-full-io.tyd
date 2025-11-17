@@ -1,0 +1,27 @@
+YAZDIR "=== Dosya I/O Testi ===";
+
+METIN dosya_yolu = "test_cikti.txt";
+METIN mod_yaz = "w";
+
+YAZDIR "Dosya açılıyor (yazma modu)...";
+SAYISAL dosya = DOSYA_AC(dosya_yolu, mod_yaz);
+
+METIN mesaj = "Merhaba TYD Dünyası!";
+YAZDIR "Dosyaya yazılıyor...";
+SAYISAL yazilan = DOSYA_YAZ(dosya, mesaj);
+
+YAZDIR "Dosya kapatılıyor...";
+SAYISAL sonuc1 = DOSYA_KAPAT(dosya);
+
+YAZDIR "Dosya açılıyor (okuma modu)...";
+METIN mod_oku = "r";
+SAYISAL dosya2 = DOSYA_AC(dosya_yolu, mod_oku);
+
+YAZDIR "Dosyadan okunuyor...";
+METIN icerik = DOSYA_OKU(dosya2);
+YAZDIR "Okunan içerik:";
+YAZDIR icerik;
+
+SAYISAL sonuc2 = DOSYA_KAPAT(dosya2);
+
+YAZDIR "Test tamamlandı!";

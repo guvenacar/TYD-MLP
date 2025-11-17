@@ -1,0 +1,13 @@
+METIN dosya1 = "ornekler/hello.tyd";
+METIN mod_r = "r";
+SAYISAL f1 = DOSYA_AC(dosya1, mod_r);
+METIN icerik = DOSYA_OKU(f1);
+SAYISAL k1 = DOSYA_KAPAT(f1);
+
+METIN dosya2 = "build/output.txt";
+METIN mod_w = "w";
+SAYISAL f2 = DOSYA_AC(dosya2, mod_w);
+SAYISAL n = DOSYA_YAZ(f2, icerik);
+SAYISAL k2 = DOSYA_KAPAT(f2);
+
+YAZDIR "Tamamlandi";

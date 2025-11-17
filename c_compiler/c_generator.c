@@ -496,13 +496,13 @@ void visit_IslecCagirma(ASTNode* node) {
         visit(node->islec_cagirma_data.argumanlar[1]);
         asm_append(&text_section, "    pop rdi");
         asm_append(&text_section, "    mov rsi, rax");
-        asm_append(&text_section, "    call tyd_dosya_ac");
+        asm_append(&text_section, "    call dosya_ac");
         return;
     }
     else if (strcmp(islec_adi, "DOSYA_OKU") == 0 && arg_sayisi == 1) {
         visit(node->islec_cagirma_data.argumanlar[0]);
         asm_append(&text_section, "    mov rdi, rax");
-        asm_append(&text_section, "    call tyd_dosya_oku");
+        asm_append(&text_section, "    call dosya_oku");
         return;
     }
     else if (strcmp(islec_adi, "DOSYA_YAZ") == 0 && arg_sayisi == 2) {
@@ -511,13 +511,21 @@ void visit_IslecCagirma(ASTNode* node) {
         visit(node->islec_cagirma_data.argumanlar[1]);
         asm_append(&text_section, "    pop rdi");
         asm_append(&text_section, "    mov rsi, rax");
-        asm_append(&text_section, "    call tyd_dosya_yaz");
+        asm_append(&text_section, "    call dosya_yaz");
         return;
     }
     else if (strcmp(islec_adi, "DOSYA_KAPAT") == 0 && arg_sayisi == 1) {
         visit(node->islec_cagirma_data.argumanlar[0]);
         asm_append(&text_section, "    mov rdi, rax");
-        asm_append(&text_section, "    call tyd_dosya_kapat");
+        asm_append(&text_section, "    call dosya_kapat");
+        return;
+    }
+    // YENİ: DIZIN_AL fonksiyonu (self-hosting için)
+    else if (strcmp(islec_adi, "DIZIN_AL") == 0 && arg_sayisi == 0) {
+        asm_append(&text_section, "    ; --- DIZIN_AL cagirma ---");
+        asm_append(&text_section, "    mov rax, 0"); // SSE kuralı
+        asm_append(&text_section, "    call runtime_dizin_al");
+        // Sonuç (dizin yolu char*) zaten RAX'te olacak
         return;
     }
 
@@ -719,10 +727,11 @@ char* generate_asm(ASTNode* root) {
     asm_append(&data_section, "extern strstr");      // ✅ Ekle
     asm_append(&data_section, "extern tyd_substr");  // ✅ Ekle
     asm_append(&data_section, "extern tyd_strcat");  // ✅ Ekle
-    asm_append(&data_section, "extern tyd_dosya_ac");
-    asm_append(&data_section, "extern tyd_dosya_oku");
-    asm_append(&data_section, "extern tyd_dosya_yaz");
-    asm_append(&data_section, "extern tyd_dosya_kapat");
+    asm_append(&data_section, "extern dosya_ac");
+    asm_append(&data_section, "extern dosya_oku");
+    asm_append(&data_section, "extern dosya_yaz");
+    asm_append(&data_section, "extern dosya_kapat");
+    asm_append(&data_section, "extern runtime_dizin_al"); // Self-host için eklendi
     asm_append(&data_section, "extern tyd_fix_cwd"); // ✅ yeni
     asm_append(&data_section, "section .data");
     asm_append(&data_section, "    format_sayi db \"%ld\", 10, 0"); // %d -> %ld

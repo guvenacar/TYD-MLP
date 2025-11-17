@@ -1,31 +1,18 @@
 -- ===============================================
 -- TYD-MLP Örnek 4: Döngüler
+-- (SPECS.md UYUMLU: ; YOK)
 -- ===============================================
 
-YAZDIR "1'den 10'a kadar sayılar:";
-
-SAYISAL sayac = 1;
+SAYISAL sayac = 0;
 
 DÖNGÜ
-    YAZDIR sayac;
-    sayac = sayac + 1;
+    sayac = sayac + 1
+    YAZDIR sayac
     
-    EĞER sayac > 10 İSE
-        DÖNGÜ_BITIR;
+    EĞER sayac == 5 İSE
+        YAZDIR "Döngü bitiyor..."
+        DÖNGÜ_BITIR
     SON EĞER
 SON DÖNGÜ
 
-YAZDIR "Döngü bitti!";
-
-YAZDIR "5'in çarpım tablosu:";
-sayac = 1;
-
-DÖNGÜ
-    SAYISAL carp = 5 * sayac;
-    YAZDIR carp;
-    sayac = sayac + 1;
-    
-    EĞER sayac > 10 İSE
-        DÖNGÜ_BITIR;
-    SON EĞER
-SON DÖNGÜ
+YAZDIR "Döngü tamamlandı"

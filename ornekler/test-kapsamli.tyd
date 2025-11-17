@@ -1,0 +1,16 @@
+YAZDIR "=== TYD Derleyici Test Programı ===";
+
+SAYISAL sayi1 = 10;
+SAYISAL sayi2 = 20;
+YAZDIR sayi1;
+YAZDIR sayi2;
+
+METIN isim = "Ahmet";
+METIN soyisim = "Yılmaz";
+YAZDIR isim;
+YAZDIR soyisim;
+
+SAYISAL toplam = sayi1 + sayi2;
+YAZDIR toplam;
+
+YAZDIR "Test tamamlandı!";

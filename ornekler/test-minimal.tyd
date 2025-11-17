@@ -1,0 +1,4 @@
+METIN yol = "test.txt";
+METIN mod = "w";
+SAYISAL f = DOSYA_AC(yol, mod);
+SAYISAL k = DOSYA_KAPAT(f);

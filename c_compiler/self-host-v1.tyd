@@ -1,25 +1,42 @@
-YAZDIR "=== TYD Self-Hosting Demo v1 ===";
+-- ===================================================
+-- TYD Self-Hosting Derleyici v1
+-- (KILAVUZA UYGUN: Tanımlamalarda ';' var)
+-- ===================================================
 
-YAZDIR "Kaynak kod okunuyor...";
+YAZDIR "=== TYD Self-Hosting Demo v1 ==="
 
-METIN kaynak_dosya = "ornekler/hello.tyd";
+-- Adım 1: Çalışma dizinini al
+YAZDIR "Calisma dizini aliniyor..."
+METIN ana_dizin = DIZIN_AL();
+YAZDIR ana_dizin
+
+-- Adım 2: Okunacak kaynak dosyanın yolunu oluştur
+YAZDIR "Kaynak kod yolu olusturuluyor..."
+METIN kaynak_yol_eki = "/../ornekler/01-merhaba.tyd";
+METIN kaynak_dosya = STRING_BIRLESTIR(ana_dizin, kaynak_yol_eki);
+YAZDIR kaynak_dosya
+
 METIN mod = "r";
 SAYISAL dosya = DOSYA_AC(kaynak_dosya, mod);
 
 METIN kaynak = DOSYA_OKU(dosya);
 SAYISAL kapat1 = DOSYA_KAPAT(dosya);
 
-YAZDIR "Okunan kaynak:";
-YAZDIR kaynak;
+YAZDIR "Okunan kaynak:"
+YAZDIR kaynak
 
-YAZDIR "Assembly uretiliyor...";
+YAZDIR "Assembly uretiliyor..."
 
 METIN asm1 = "extern printf\n";
 METIN asm2 = "section .data\n";
 METIN asm3 = "section .text\n";
 METIN asm4 = "global main\n";
 
-METIN cikti_dosya = "build/generated.asm";
+-- Adım 3: Yazılacak ASM dosyasının yolunu oluştur
+METIN cikti_yol_eki = "/../build/generated.asm";
+METIN cikti_dosya = STRING_BIRLESTIR(ana_dizin, cikti_yol_eki);
+YAZDIR cikti_dosya
+
 METIN mod_yaz = "w";
 SAYISAL cikti = DOSYA_AC(cikti_dosya, mod_yaz);
 
@@ -30,5 +47,5 @@ SAYISAL n4 = DOSYA_YAZ(cikti, asm4);
 
 SAYISAL kapat2 = DOSYA_KAPAT(cikti);
 
-YAZDIR "Olusturuldu!";
-YAZDIR cikti_dosya;
+YAZDIR "Olusturuldu!"
+YAZDIR cikti_dosya

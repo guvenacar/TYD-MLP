@@ -1,0 +1,23 @@
+YAZDIR "=== String İşlemleri Testi ===";
+
+METIN isim = "Ahmet";
+METIN soyisim = "Yilmaz";
+
+YAZDIR "String Birleştirme:";
+METIN tam_isim = STRING_BIRLESTIR(isim, soyisim);
+YAZDIR tam_isim;
+
+YAZDIR "String Uzunluk:";
+SAYISAL uzunluk = STRING_UZUNLUK(tam_isim);
+YAZDIR uzunluk;
+
+YAZDIR "String Karşılaştırma:";
+METIN test1 = "Merhaba";
+METIN test2 = "Merhaba";
+METIN test3 = "Selam";
+SAYISAL sonuc1 = STRING_KARSILASTIR(test1, test2);
+SAYISAL sonuc2 = STRING_KARSILASTIR(test1, test3);
+YAZDIR sonuc1;
+YAZDIR sonuc2;
+
+YAZDIR "Test tamamlandı!";
