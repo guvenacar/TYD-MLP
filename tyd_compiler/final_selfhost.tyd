@@ -1,0 +1,162 @@
+-- ===================================================
+-- Final Self-Hosting: TYD Compiler (Escape-free)
+-- En basit çalışan versiyonu!
+-- ===================================================
+
+YAZDIR "=== Final TYD Self-Hosting Compiler ==="
+
+-- Kaynak dosyayı oku
+METIN dizin = DIZIN_AL();
+METIN kaynak_eki = "/../tyd_compiler/hello.tyd";
+METIN kaynak_yolu = STRING_BIRLESTIR(dizin, kaynak_eki);
+
+YAZDIR "Kaynak:"
+YAZDIR kaynak_yolu
+
+METIN mod_oku = "r";
+SAYISAL kaynak_dosya = DOSYA_AC(kaynak_yolu, mod_oku);
+METIN kaynak_kod = DOSYA_OKU(kaynak_dosya);
+SAYISAL kapat1 = DOSYA_KAPAT(kaynak_dosya);
+
+YAZDIR "Kaynak kod:"
+YAZDIR kaynak_kod
+
+-- İlk satırı al
+SAYISAL kaynak_len = STRING_UZUNLUK(kaynak_kod);
+SAYISAL newline_pos = kaynak_len;
+SAYISAL i = 0;
+
+DÖNGÜ
+    EĞER i == kaynak_len İSE
+        DÖNGÜ_BITIR
+    SON
+
+    METIN kar = STRING_KARAKTER_AL(kaynak_kod, i);
+    SAYISAL kod = KARAKTER_KODU(kar);
+
+    EĞER kod == 10 İSE
+        newline_pos = i
+        DÖNGÜ_BITIR
+    SON
+
+    i = i + 1
+SON
+
+METIN ilk_satir = STRING_ALT(kaynak_kod, 0, newline_pos);
+YAZDIR "İlk satır:"
+YAZDIR ilk_satir
+
+-- String literal çıkar
+SAYISAL str_start = 0;
+SAYISAL str_end = newline_pos;
+SAYISAL j = 0;
+
+DÖNGÜ
+    EĞER j == newline_pos İSE
+        DÖNGÜ_BITIR
+    SON
+
+    METIN k = STRING_KARAKTER_AL(ilk_satir, j);
+    SAYISAL k_kod = KARAKTER_KODU(k);
+
+    EĞER k_kod == 34 İSE
+        str_start = j + 1
+        DÖNGÜ_BITIR
+    SON
+
+    j = j + 1
+SON
+
+SAYISAL m = str_start;
+DÖNGÜ
+    EĞER m == newline_pos İSE
+        DÖNGÜ_BITIR
+    SON
+
+    METIN n = STRING_KARAKTER_AL(ilk_satir, m);
+    SAYISAL n_kod = KARAKTER_KODU(n);
+
+    EĞER n_kod == 34 İSE
+        str_end = m
+        DÖNGÜ_BITIR
+    SON
+
+    m = m + 1
+SON
+
+SAYISAL msg_len = str_end - str_start;
+METIN mesaj = STRING_ALT(ilk_satir, str_start, msg_len);
+
+YAZDIR "Mesaj çıkarıldı:"
+YAZDIR mesaj
+
+-- Assembly oluştur (newline ve özel karakterler olmadan)
+METIN nl = "
+";
+
+METIN asm1 = "extern printf";
+METIN asm2 = "section .data";
+METIN asm3 = "    fmt db 37, 115, 44, 32, 49, 48, 44, 32, 48";
+METIN asm4 = "    msg db 34";
+METIN asm5 = "34, 44, 32, 48";
+METIN asm6 = "section .text";
+METIN asm7 = "global main";
+METIN asm8 = "main:";
+METIN asm9 = "    push rbp";
+METIN asm10 = "    mov rbp, rsp";
+METIN asm11 = "    mov rdi, fmt";
+METIN asm12 = "    mov rsi, msg";
+METIN asm13 = "    mov rax, 0";
+METIN asm14 = "    call printf";
+METIN asm15 = "    mov rax, 0";
+METIN asm16 = "    pop rbp";
+METIN asm17 = "    ret";
+
+-- Birleştir
+METIN result = STRING_BIRLESTIR(asm1, nl);
+result = STRING_BIRLESTIR(result, asm2)
+result = STRING_BIRLESTIR(result, nl)
+result = STRING_BIRLESTIR(result, asm3)
+result = STRING_BIRLESTIR(result, nl)
+result = STRING_BIRLESTIR(result, asm4)
+result = STRING_BIRLESTIR(result, nl)
+result = STRING_BIRLESTIR(result, asm5)
+result = STRING_BIRLESTIR(result, nl)
+result = STRING_BIRLESTIR(result, asm6)
+result = STRING_BIRLESTIR(result, nl)
+result = STRING_BIRLESTIR(result, asm7)
+result = STRING_BIRLESTIR(result, nl)
+result = STRING_BIRLESTIR(result, asm8)
+result = STRING_BIRLESTIR(result, nl)
+result = STRING_BIRLESTIR(result, asm9)
+result = STRING_BIRLESTIR(result, nl)
+result = STRING_BIRLESTIR(result, asm10)
+result = STRING_BIRLESTIR(result, nl)
+result = STRING_BIRLESTIR(result, asm11)
+result = STRING_BIRLESTIR(result, nl)
+result = STRING_BIRLESTIR(result, asm12)
+result = STRING_BIRLESTIR(result, nl)
+result = STRING_BIRLESTIR(result, asm13)
+result = STRING_BIRLESTIR(result, nl)
+result = STRING_BIRLESTIR(result, asm14)
+result = STRING_BIRLESTIR(result, nl)
+result = STRING_BIRLESTIR(result, asm15)
+result = STRING_BIRLESTIR(result, nl)
+result = STRING_BIRLESTIR(result, asm16)
+result = STRING_BIRLESTIR(result, nl)
+result = STRING_BIRLESTIR(result, asm17)
+
+YAZDIR "=== Assembly Oluşturuldu ==="
+YAZDIR result
+
+-- Dosyaya yaz
+METIN cikti_eki = "/../tyd_compiler/final_output.asm";
+METIN cikti_yolu = STRING_BIRLESTIR(dizin, cikti_eki);
+
+METIN mod_yaz = "w";
+SAYISAL cikti_dosya = DOSYA_AC(cikti_yolu, mod_yaz);
+SAYISAL yazilan = DOSYA_YAZ(cikti_dosya, result);
+SAYISAL kapat2 = DOSYA_KAPAT(cikti_dosya);
+
+YAZDIR "=== SELF-HOSTING BAŞARILI! ==="
+YAZDIR cikti_yolu

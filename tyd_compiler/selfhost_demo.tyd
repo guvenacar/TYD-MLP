@@ -1,0 +1,169 @@
+-- ===================================================
+-- Self-Hosting Demo: TYD Compiler (TYD'de!)
+-- Kaynak: hello.tyd (YAZDIR "...")
+-- Çıktı: hello_compiled.asm
+-- ===================================================
+
+YAZDIR "=== TYD Self-Hosting Compiler Demo ==="
+
+-- Kaynak dosyayı oku
+METIN dizin = DIZIN_AL();
+METIN kaynak_eki = "/../tyd_compiler/hello.tyd";
+METIN kaynak_yolu = STRING_BIRLESTIR(dizin, kaynak_eki);
+
+YAZDIR "Kaynak dosya:"
+YAZDIR kaynak_yolu
+
+METIN mod_oku = "r";
+SAYISAL kaynak_dosya = DOSYA_AC(kaynak_yolu, mod_oku);
+METIN kaynak_kod = DOSYA_OKU(kaynak_dosya);
+SAYISAL kapat1 = DOSYA_KAPAT(kaynak_dosya);
+
+YAZDIR "Kaynak kod:"
+YAZDIR kaynak_kod
+
+-- ============================================
+-- PATTERN MATCHING: İlk satırı parse et
+-- ============================================
+
+-- İlk satırı al (newline'a kadar)
+SAYISAL kaynak_len = STRING_UZUNLUK(kaynak_kod);
+SAYISAL newline_pos = kaynak_len;
+SAYISAL i = 0;
+
+DÖNGÜ
+    EĞER i == kaynak_len İSE
+        DÖNGÜ_BITIR
+    SON
+
+    METIN kar = STRING_KARAKTER_AL(kaynak_kod, i);
+    SAYISAL kod = KARAKTER_KODU(kar);
+
+    EĞER kod == 10 İSE
+        newline_pos = i
+        DÖNGÜ_BITIR
+    SON
+
+    i = i + 1
+SON
+
+METIN ilk_satir = STRING_ALT(kaynak_kod, 0, newline_pos);
+
+YAZDIR "İlk satır:"
+YAZDIR ilk_satir
+
+-- String literal'i çıkar (" işaretleri arası)
+-- Örnek: YAZDIR "Merhaba" -> Merhaba
+
+SAYISAL str_start = 0;
+SAYISAL str_end = newline_pos;
+
+-- İlk " karakterini bul
+SAYISAL j = 0;
+DÖNGÜ
+    EĞER j == newline_pos İSE
+        DÖNGÜ_BITIR
+    SON
+
+    METIN k = STRING_KARAKTER_AL(ilk_satir, j);
+    SAYISAL k_kod = KARAKTER_KODU(k);
+
+    EĞER k_kod == 34 İSE
+        str_start = j + 1
+        DÖNGÜ_BITIR
+    SON
+
+    j = j + 1
+SON
+
+-- İkinci " karakterini bul
+SAYISAL m = str_start;
+DÖNGÜ
+    EĞER m == newline_pos İSE
+        DÖNGÜ_BITIR
+    SON
+
+    METIN n = STRING_KARAKTER_AL(ilk_satir, m);
+    SAYISAL n_kod = KARAKTER_KODU(n);
+
+    EĞER n_kod == 34 İSE
+        str_end = m
+        DÖNGÜ_BITIR
+    SON
+
+    m = m + 1
+SON
+
+SAYISAL msg_len = str_end - str_start;
+METIN mesaj = STRING_ALT(ilk_satir, str_start, msg_len);
+
+YAZDIR "String literal çıkarıldı:"
+YAZDIR mesaj
+
+-- ============================================
+-- ASSEMBLY GENERATION
+-- ============================================
+
+YAZDIR "Assembly üretiliyor..."
+
+-- Assembly header
+METIN asm_h1 = "extern printf\n";
+METIN asm_h2 = "section .data\n";
+METIN asm_h3 = "    fmt db \"%s\", 10, 0\n";
+METIN asm_h4 = "    msg db \"";
+
+-- String literali assembly'e ekle
+METIN asm_h5 = STRING_BIRLESTIR(asm_h4, mesaj);
+METIN asm_h6 = "\", 0\n";
+METIN asm_data = STRING_BIRLESTIR(asm_h5, asm_h6);
+
+-- Assembly text section
+METIN asm_t1 = "section .text\n";
+METIN asm_t2 = "global main\n";
+METIN asm_t3 = "main:\n";
+METIN asm_t4 = "    push rbp\n";
+METIN asm_t5 = "    mov rbp, rsp\n";
+METIN asm_t6 = "    mov rdi, fmt\n";
+METIN asm_t7 = "    mov rsi, msg\n";
+METIN asm_t8 = "    mov rax, 0\n";
+METIN asm_t9 = "    call printf\n";
+METIN asm_t10 = "    mov rax, 0\n";
+METIN asm_t11 = "    pop rbp\n";
+METIN asm_t12 = "    ret\n";
+
+-- Hepsini birleştir
+METIN asm_final = STRING_BIRLESTIR(asm_h1, asm_h2);
+asm_final = STRING_BIRLESTIR(asm_final, asm_h3)
+asm_final = STRING_BIRLESTIR(asm_final, asm_data)
+asm_final = STRING_BIRLESTIR(asm_final, asm_t1)
+asm_final = STRING_BIRLESTIR(asm_final, asm_t2)
+asm_final = STRING_BIRLESTIR(asm_final, asm_t3)
+asm_final = STRING_BIRLESTIR(asm_final, asm_t4)
+asm_final = STRING_BIRLESTIR(asm_final, asm_t5)
+asm_final = STRING_BIRLESTIR(asm_final, asm_t6)
+asm_final = STRING_BIRLESTIR(asm_final, asm_t7)
+asm_final = STRING_BIRLESTIR(asm_final, asm_t8)
+asm_final = STRING_BIRLESTIR(asm_final, asm_t9)
+asm_final = STRING_BIRLESTIR(asm_final, asm_t10)
+asm_final = STRING_BIRLESTIR(asm_final, asm_t11)
+asm_final = STRING_BIRLESTIR(asm_final, asm_t12)
+
+YAZDIR "=== Oluşturulan Assembly ==="
+YAZDIR asm_final
+
+-- ============================================
+-- ASSEMBLY DOSYAYA YAZMA
+-- ============================================
+
+METIN cikti_eki = "/../tyd_compiler/hello_compiled.asm";
+METIN cikti_yolu = STRING_BIRLESTIR(dizin, cikti_eki);
+
+METIN mod_yaz = "w";
+SAYISAL cikti_dosya = DOSYA_AC(cikti_yolu, mod_yaz);
+SAYISAL yazilan = DOSYA_YAZ(cikti_dosya, asm_final);
+SAYISAL kapat2 = DOSYA_KAPAT(cikti_dosya);
+
+YAZDIR "=== Self-Hosting Başarılı! ==="
+YAZDIR "Derlenen dosya:"
+YAZDIR cikti_yolu
+YAZDIR "TYD derleyicisi TYD'de yazıldı ve çalıştı!"
