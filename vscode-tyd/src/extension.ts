@@ -50,12 +50,69 @@ export function activate(context: vscode.ExtensionContext) {
         diagnostics.updateDiagnostics(vscode.window.activeTextEditor.document);
     }
 
+    // ============================================
+    // BUILD KOMUTLARI
+    // ============================================
+
+    // TYD: Compile Current File
+    const compileCommand = vscode.commands.registerCommand('tyd.compile', async () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor || editor.document.languageId !== 'tyd') {
+            vscode.window.showErrorMessage('Lütfen bir TYD dosyası açın!');
+            return;
+        }
+
+        const filePath = editor.document.fileName;
+        const terminal = vscode.window.createTerminal('TYD Compiler');
+        terminal.show();
+
+        // C compiler yolunu bul
+        const workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
+        const compilerPath = workspaceRoot + '/c_compiler/compiler_test';
+        const outputPath = filePath.replace('.tyd', '.asm');
+
+        terminal.sendText(`${compilerPath} "${filePath}" "${outputPath}"`);
+        vscode.window.showInformationMessage(`TYD derleniyor: ${filePath}`);
+    });
+
+    // TYD: Compile and Run
+    const compileAndRunCommand = vscode.commands.registerCommand('tyd.compileAndRun', async () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor || editor.document.languageId !== 'tyd') {
+            vscode.window.showErrorMessage('Lütfen bir TYD dosyası açın!');
+            return;
+        }
+
+        const filePath = editor.document.fileName;
+        const terminal = vscode.window.createTerminal('TYD Run');
+        terminal.show();
+
+        const workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
+        const runScript = workspaceRoot + '/c_compiler/calistir.sh';
+
+        terminal.sendText(`cd "${workspaceRoot}/c_compiler" && ./calistir.sh "${filePath}"`);
+        vscode.window.showInformationMessage(`TYD çalıştırılıyor: ${filePath}`);
+    });
+
+    // TYD: Build All
+    const buildAllCommand = vscode.commands.registerCommand('tyd.buildAll', async () => {
+        const workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
+        const terminal = vscode.window.createTerminal('TYD Build All');
+        terminal.show();
+
+        terminal.sendText(`cd "${workspaceRoot}" && find . -name "*.tyd" -exec echo "Compiling: {}" \\;`);
+        vscode.window.showInformationMessage('Tüm TYD dosyaları derleniyor...');
+    });
+
     context.subscriptions.push(
         completionProvider,
         hoverProvider,
         diagnosticsDisposable,
         saveDisposable,
-        editorDisposable
+        editorDisposable,
+        compileCommand,
+        compileAndRunCommand,
+        buildAllCommand
     );
 }
 

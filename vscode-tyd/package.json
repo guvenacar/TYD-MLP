@@ -44,6 +44,55 @@
         "language": "tyd",
         "path": "./snippets/tyd.json"
       }
+    ],
+    "commands": [
+      {
+        "command": "tyd.compile",
+        "title": "TYD: Compile Current File",
+        "category": "TYD"
+      },
+      {
+        "command": "tyd.compileAndRun",
+        "title": "TYD: Compile and Run",
+        "category": "TYD"
+      },
+      {
+        "command": "tyd.buildAll",
+        "title": "TYD: Build All TYD Files",
+        "category": "TYD"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "tyd.compile",
+        "key": "ctrl+shift+b",
+        "mac": "cmd+shift+b",
+        "when": "editorLangId == tyd"
+      },
+      {
+        "command": "tyd.compileAndRun",
+        "key": "f5",
+        "mac": "f5",
+        "when": "editorLangId == tyd"
+      }
+    ],
+    "taskDefinitions": [
+      {
+        "type": "tyd",
+        "required": [
+          "task"
+        ],
+        "properties": {
+          "task": {
+            "type": "string",
+            "description": "The TYD task to execute"
+          },
+          "file": {
+            "type": "string",
+            "description": "The TYD file to compile"
+          }
+        }
+      }
     ]
   },
   "scripts": {
