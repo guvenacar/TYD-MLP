@@ -1,0 +1,160 @@
+-- ===================================================
+-- Pattern Matching Compiler v2
+-- Newline: KODU_KARAKTERE(10) kullanarak
+-- ===================================================
+
+YAZDIR "=== Pattern v2: Newline Fix ==="
+
+-- Kaynak dosyayı oku
+METIN dizin = DIZIN_AL();
+METIN kaynak_eki = "/../tyd_compiler/hello.tyd";
+METIN kaynak_yolu = STRING_BIRLESTIR(dizin, kaynak_eki);
+
+YAZDIR "Kaynak:"
+YAZDIR kaynak_yolu
+
+METIN mod_oku = "r";
+SAYISAL kaynak_dosya = DOSYA_AC(kaynak_yolu, mod_oku);
+METIN kaynak_kod = DOSYA_OKU(kaynak_dosya);
+SAYISAL kapat1 = DOSYA_KAPAT(kaynak_dosya);
+
+YAZDIR "Kaynak okundu"
+
+-- İlk satırı al
+SAYISAL kaynak_len = STRING_UZUNLUK(kaynak_kod);
+SAYISAL newline_pos = kaynak_len;
+SAYISAL i = 0;
+
+DÖNGÜ
+    EĞER i == kaynak_len İSE
+        DÖNGÜ_BITIR
+    SON
+
+    METIN kar = STRING_KARAKTER_AL(kaynak_kod, i);
+    SAYISAL kod = KARAKTER_KODU(kar);
+
+    EĞER kod == 10 İSE
+        newline_pos = i
+        DÖNGÜ_BITIR
+    SON
+
+    i = i + 1
+SON
+
+METIN ilk_satir = STRING_ALT(kaynak_kod, 0, newline_pos);
+YAZDIR "İlk satır:"
+YAZDIR ilk_satir
+
+-- String literal çıkar
+SAYISAL str_start = 0;
+SAYISAL str_end = newline_pos;
+SAYISAL j = 0;
+
+DÖNGÜ
+    EĞER j == newline_pos İSE
+        DÖNGÜ_BITIR
+    SON
+
+    METIN k = STRING_KARAKTER_AL(ilk_satir, j);
+    SAYISAL k_kod = KARAKTER_KODU(k);
+
+    EĞER k_kod == 34 İSE
+        str_start = j + 1
+        DÖNGÜ_BITIR
+    SON
+
+    j = j + 1
+SON
+
+SAYISAL m = str_start;
+DÖNGÜ
+    EĞER m == newline_pos İSE
+        DÖNGÜ_BITIR
+    SON
+
+    METIN n = STRING_KARAKTER_AL(ilk_satir, m);
+    SAYISAL n_kod = KARAKTER_KODU(n);
+
+    EĞER n_kod == 34 İSE
+        str_end = m
+        DÖNGÜ_BITIR
+    SON
+
+    m = m + 1
+SON
+
+SAYISAL msg_len = str_end - str_start;
+METIN mesaj = STRING_ALT(ilk_satir, str_start, msg_len);
+
+YAZDIR "Mesaj çıkarıldı:"
+YAZDIR mesaj
+
+-- Newline karakteri oluştur
+METIN nl = KODU_KARAKTERE(10);
+
+-- Assembly satırları (basit, escape yok)
+METIN line1 = "extern printf";
+METIN line2 = "section .data";
+METIN line3 = "    fmt db 37, 115, 44, 32, 49, 48, 44, 32, 48";
+METIN line4 = "    msg db 34";
+METIN temp1 = STRING_BIRLESTIR(line4, mesaj);
+METIN line5 = STRING_BIRLESTIR(temp1, "34, 44, 32, 48");
+METIN line6 = "section .text";
+METIN line7 = "global main";
+METIN line8 = "main:";
+METIN line9 = "    push rbp";
+METIN line10 = "    mov rbp, rsp";
+METIN line11 = "    mov rdi, fmt";
+METIN line12 = "    mov rsi, msg";
+METIN line13 = "    mov rax, 0";
+METIN line14 = "    call printf";
+METIN line15 = "    mov rax, 0";
+METIN line16 = "    pop rbp";
+METIN line17 = "    ret";
+
+-- Birleştir
+METIN result = STRING_BIRLESTIR(line1, nl);
+result = STRING_BIRLESTIR(result, line2)
+result = STRING_BIRLESTIR(result, nl)
+result = STRING_BIRLESTIR(result, line3)
+result = STRING_BIRLESTIR(result, nl)
+result = STRING_BIRLESTIR(result, line5)
+result = STRING_BIRLESTIR(result, nl)
+result = STRING_BIRLESTIR(result, line6)
+result = STRING_BIRLESTIR(result, nl)
+result = STRING_BIRLESTIR(result, line7)
+result = STRING_BIRLESTIR(result, nl)
+result = STRING_BIRLESTIR(result, line8)
+result = STRING_BIRLESTIR(result, nl)
+result = STRING_BIRLESTIR(result, line9)
+result = STRING_BIRLESTIR(result, nl)
+result = STRING_BIRLESTIR(result, line10)
+result = STRING_BIRLESTIR(result, nl)
+result = STRING_BIRLESTIR(result, line11)
+result = STRING_BIRLESTIR(result, nl)
+result = STRING_BIRLESTIR(result, line12)
+result = STRING_BIRLESTIR(result, nl)
+result = STRING_BIRLESTIR(result, line13)
+result = STRING_BIRLESTIR(result, nl)
+result = STRING_BIRLESTIR(result, line14)
+result = STRING_BIRLESTIR(result, nl)
+result = STRING_BIRLESTIR(result, line15)
+result = STRING_BIRLESTIR(result, nl)
+result = STRING_BIRLESTIR(result, line16)
+result = STRING_BIRLESTIR(result, nl)
+result = STRING_BIRLESTIR(result, line17)
+
+YAZDIR "=== Assembly Oluşturuldu ==="
+YAZDIR result
+
+-- Dosyaya yaz
+METIN cikti_eki = "/../tyd_compiler/pattern_v2_output.asm";
+METIN cikti_yolu = STRING_BIRLESTIR(dizin, cikti_eki);
+
+METIN mod_yaz = "w";
+SAYISAL cikti_dosya = DOSYA_AC(cikti_yolu, mod_yaz);
+SAYISAL yazilan = DOSYA_YAZ(cikti_dosya, result);
+SAYISAL kapat2 = DOSYA_KAPAT(cikti_dosya);
+
+YAZDIR "=== BAŞARILI! ==="
+YAZDIR cikti_yolu

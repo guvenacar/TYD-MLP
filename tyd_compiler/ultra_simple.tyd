@@ -1,0 +1,20 @@
+-- Ultra Simple: Hiç escape char yok!
+
+YAZDIR "=== Ultra Simple Test ==="
+
+METIN test = "Merhaba";
+
+YAZDIR "Test mesaj:"
+YAZDIR test
+
+SAYISAL test_len = STRING_UZUNLUK(test);
+
+YAZDIR "Uzunluk:"
+YAZDIR test_len
+
+METIN ilk_harf = STRING_KARAKTER_AL(test, 0);
+
+YAZDIR "İlk harf:"
+YAZDIR ilk_harf
+
+YAZDIR "=== Başarılı! ==="

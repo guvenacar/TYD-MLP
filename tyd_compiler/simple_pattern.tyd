@@ -1,0 +1,60 @@
+-- ===================================================
+-- Simple Pattern: Ultra minimal working version
+-- ===================================================
+
+YAZDIR "=== Simple Pattern Compiler ==="
+
+-- Test için basit string
+METIN test_kaynak = "YAZDIR \"Merhaba TYD!\"";
+
+YAZDIR "Test kaynak:"
+YAZDIR test_kaynak
+
+-- String literal çıkar (basit)
+SAYISAL kaynak_len = STRING_UZUNLUK(test_kaynak);
+SAYISAL str_start = 0;
+SAYISAL str_end = kaynak_len;
+SAYISAL i = 0;
+
+-- İlk " bul
+DÖNGÜ
+    EĞER i == kaynak_len İSE
+        DÖNGÜ_BITIR
+    SON
+
+    METIN kar = STRING_KARAKTER_AL(test_kaynak, i);
+    SAYISAL kod = KARAKTER_KODU(kar);
+
+    EĞER kod == 34 İSE
+        str_start = i + 1
+        DÖNGÜ_BITIR
+    SON
+
+    i = i + 1
+SON
+
+-- İkinci " bul
+SAYISAL j = str_start;
+DÖNGÜ
+    EĞER j == kaynak_len İSE
+        DÖNGÜ_BITIR
+    SON
+
+    METIN kar2 = STRING_KARAKTER_AL(test_kaynak, j);
+    SAYISAL kod2 = KARAKTER_KODU(kar2);
+
+    EĞER kod2 == 34 İSE
+        str_end = j
+        DÖNGÜ_BITIR
+    SON
+
+    j = j + 1
+SON
+
+SAYISAL msg_len = str_end - str_start;
+METIN mesaj = STRING_ALT(test_kaynak, str_start, msg_len);
+
+YAZDIR "Çıkarılan mesaj:"
+YAZDIR mesaj
+
+YAZDIR "=== Başarılı! Pattern matching çalıştı! ==="
