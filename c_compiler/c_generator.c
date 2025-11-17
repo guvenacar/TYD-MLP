@@ -529,6 +529,85 @@ void visit_IslecCagirma(ASTNode* node) {
         return;
     }
 
+    // ===== BOOTSTRAP STRING FONKSİYONLARI =====
+    // (Bu fonksiyonlar sadece TYD compiler'ını TYD'de yazmak için gerekli)
+
+    else if (strcmp(islec_adi, "STRING_KARAKTER_AL") == 0 && arg_sayisi == 2) {
+        // Argüman 1: string
+        visit(node->islec_cagirma_data.argumanlar[0]);
+        asm_append(&text_section, "    push rax");
+        // Argüman 2: indeks
+        visit(node->islec_cagirma_data.argumanlar[1]);
+        asm_append(&text_section, "    pop rdi");  // string -> rdi
+        asm_append(&text_section, "    mov rsi, rax"); // indeks -> rsi
+        asm_append(&text_section, "    call string_karakter_al");
+        return; // Sonuç RAX'te (tek karakterlik string)
+    }
+
+    else if (strcmp(islec_adi, "STRING_ALT") == 0 && arg_sayisi == 3) {
+        // Argüman 1: string
+        visit(node->islec_cagirma_data.argumanlar[0]);
+        asm_append(&text_section, "    push rax");
+        // Argüman 2: baslangic
+        visit(node->islec_cagirma_data.argumanlar[1]);
+        asm_append(&text_section, "    push rax");
+        // Argüman 3: uzunluk
+        visit(node->islec_cagirma_data.argumanlar[2]);
+        asm_append(&text_section, "    pop rsi");  // baslangic -> rsi
+        asm_append(&text_section, "    pop rdi");  // string -> rdi
+        asm_append(&text_section, "    mov rdx, rax"); // uzunluk -> rdx
+        asm_append(&text_section, "    call string_alt");
+        return; // Sonuç RAX'te (substring)
+    }
+
+    else if (strcmp(islec_adi, "KARAKTER_KODU") == 0 && arg_sayisi == 1) {
+        // Argüman: tek karakterlik string
+        visit(node->islec_cagirma_data.argumanlar[0]);
+        asm_append(&text_section, "    mov rdi, rax");
+        asm_append(&text_section, "    call karakter_kodu");
+        return; // Sonuç RAX'te (ASCII kodu)
+    }
+
+    else if (strcmp(islec_adi, "KODU_KARAKTERE") == 0 && arg_sayisi == 1) {
+        // Argüman: ASCII kodu
+        visit(node->islec_cagirma_data.argumanlar[0]);
+        asm_append(&text_section, "    mov rdi, rax");
+        asm_append(&text_section, "    call kodu_karaktere");
+        return; // Sonuç RAX'te (tek karakterlik string)
+    }
+
+    else if (strcmp(islec_adi, "STRING_BIRLESTIR") == 0 && arg_sayisi == 2) {
+        // Argüman 1: string1
+        visit(node->islec_cagirma_data.argumanlar[0]);
+        asm_append(&text_section, "    push rax");
+        // Argüman 2: string2
+        visit(node->islec_cagirma_data.argumanlar[1]);
+        asm_append(&text_section, "    pop rdi");  // string1 -> rdi
+        asm_append(&text_section, "    mov rsi, rax"); // string2 -> rsi
+        asm_append(&text_section, "    call string_birlestir");
+        return; // Sonuç RAX'te (birleştirilmiş string)
+    }
+
+    else if (strcmp(islec_adi, "STRING_KARSILASTIR") == 0 && arg_sayisi == 2) {
+        // Argüman 1: string1
+        visit(node->islec_cagirma_data.argumanlar[0]);
+        asm_append(&text_section, "    push rax");
+        // Argüman 2: string2
+        visit(node->islec_cagirma_data.argumanlar[1]);
+        asm_append(&text_section, "    pop rdi");  // string1 -> rdi
+        asm_append(&text_section, "    mov rsi, rax"); // string2 -> rsi
+        asm_append(&text_section, "    call string_karsilastir");
+        return; // Sonuç RAX'te (0 = eşit, !=0 = farklı)
+    }
+
+    else if (strcmp(islec_adi, "STRING_UZUNLUK") == 0 && arg_sayisi == 1) {
+        // Argüman: string
+        visit(node->islec_cagirma_data.argumanlar[0]);
+        asm_append(&text_section, "    mov rdi, rax");
+        asm_append(&text_section, "    call string_uzunluk");
+        return; // Sonuç RAX'te (uzunluk)
+    }
+
     // ===== KULLANICI TANIMLI FONKSİYONLAR =====
     // 1. Argümanları hesapla ve yığına (stack) it
     for (int i = 0; i < arg_sayisi; i++) {

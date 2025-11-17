@@ -1,0 +1,45 @@
+-- Test: Bootstrap String Fonksiyonları
+
+YAZDIR "=== Bootstrap String Fonksiyonları Testi ==="
+
+-- Test 1: STRING_KARAKTER_AL
+METIN metin1 = "Merhaba";
+METIN karakter = STRING_KARAKTER_AL(metin1, 0);
+YAZDIR "İlk karakter:"
+YAZDIR karakter
+
+-- Test 2: STRING_ALT
+METIN alt_metin = STRING_ALT(metin1, 3, 2);
+YAZDIR "Alt metin (3, 2):"
+YAZDIR alt_metin
+
+-- Test 3: STRING_UZUNLUK
+SAYISAL uzunluk = STRING_UZUNLUK(metin1);
+YAZDIR "Uzunluk:"
+YAZDIR uzunluk
+
+-- Test 4: KARAKTER_KODU
+METIN a_harfi = "A";
+SAYISAL ascii_kod = KARAKTER_KODU(a_harfi);
+YAZDIR "A karakterinin ASCII kodu:"
+YAZDIR ascii_kod
+
+-- Test 5: KODU_KARAKTERE
+METIN yeni_karakter = KODU_KARAKTERE(66);
+YAZDIR "ASCII 66 karakteri:"
+YAZDIR yeni_karakter
+
+-- Test 6: STRING_BIRLESTIR
+METIN metin2 = " Dünya";
+METIN birlesik = STRING_BIRLESTIR(metin1, metin2);
+YAZDIR "Birleşik metin:"
+YAZDIR birlesik
+
+-- Test 7: STRING_KARSILASTIR
+METIN test1 = "abc";
+METIN test2 = "abc";
+SAYISAL sonuc = STRING_KARSILASTIR(test1, test2);
+YAZDIR "Karşılaştırma sonucu (0=eşit):"
+YAZDIR sonuc
+
+YAZDIR "=== Testler Tamamlandı ==="

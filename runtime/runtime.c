@@ -385,7 +385,7 @@ char* runtime_dizin_al() {
     char* dir = dirname(path_copy);
 
     // 4. 'dir' şu anda path_copy'nin içini işaret ediyor.
-    // Bellek sızıntısını önlemek için 'dir'in de bir kopyasını oluşturup 
+    // Bellek sızıntısını önlemek için 'dir'in de bir kopyasını oluşturup
     // onu döndürmeliyiz.
     char* result = strdup(dir);
 
@@ -395,5 +395,133 @@ char* runtime_dizin_al() {
 
     // 6. Yeni, bağımsız dizin kopyasını döndür
     return result;
+}
+
+// =============================================================================
+// STRING İŞLEMLERİ (BOOTSTRAP FONKSİYONLARI)
+// =============================================================================
+// NOT: Bu fonksiyonlar sadece TYD compiler'ını TYD'de yazmak için gerekli.
+// Self-hosting tamamlandıktan sonra bu işlevler TYD'de yeniden yazılacak.
+
+/**
+ * STRING_KARAKTER_AL - String'in belirtilen indeksindeki karakteri döndürür
+ * @param str: Kaynak string
+ * @param indeks: Karakter indeksi (0-tabanlı)
+ * @return: Tek karakterlik string (dynamically allocated)
+ *
+ * Örnek: STRING_KARAKTER_AL("Merhaba", 0) -> "M"
+ */
+char* string_karakter_al(const char* str, int64_t indeks) {
+    if (str == NULL) {
+        fprintf(stderr, "HATA [STRING_KARAKTER_AL]: NULL string\n");
+        return NULL;
+    }
+
+    int64_t uzunluk = strlen(str);
+    if (indeks < 0 || indeks >= uzunluk) {
+        fprintf(stderr, "HATA [STRING_KARAKTER_AL]: İndeks sınır dışı (indeks=%ld, uzunluk=%ld)\n",
+                indeks, uzunluk);
+        return NULL;
+    }
+
+    // Tek karakterlik string oluştur
+    char* sonuc = (char*)malloc(2); // 1 karakter + null terminator
+    if (sonuc == NULL) {
+        fprintf(stderr, "HATA [STRING_KARAKTER_AL]: Hafıza ayırma hatası\n");
+        return NULL;
+    }
+
+    sonuc[0] = str[indeks];
+    sonuc[1] = '\0';
+
+    return sonuc;
+}
+
+/**
+ * STRING_ALT - String'in bir kısmını (substring) döndürür
+ * @param str: Kaynak string
+ * @param baslangic: Başlangıç indeksi (0-tabanlı, dahil)
+ * @param uzunluk: Alınacak karakter sayısı
+ * @return: Substring (dynamically allocated)
+ *
+ * Örnek: STRING_ALT("Merhaba", 3, 2) -> "ha"
+ */
+char* string_alt(const char* str, int64_t baslangic, int64_t uzunluk) {
+    if (str == NULL) {
+        fprintf(stderr, "HATA [STRING_ALT]: NULL string\n");
+        return NULL;
+    }
+
+    int64_t str_uzunluk = strlen(str);
+
+    if (baslangic < 0 || baslangic >= str_uzunluk) {
+        fprintf(stderr, "HATA [STRING_ALT]: Başlangıç indeksi sınır dışı\n");
+        return NULL;
+    }
+
+    if (uzunluk < 0) {
+        fprintf(stderr, "HATA [STRING_ALT]: Negatif uzunluk\n");
+        return NULL;
+    }
+
+    // Gerçek alınabilecek uzunluğu hesapla (string sonunu aşmamalı)
+    int64_t gercek_uzunluk = uzunluk;
+    if (baslangic + uzunluk > str_uzunluk) {
+        gercek_uzunluk = str_uzunluk - baslangic;
+    }
+
+    // Yeni string için bellek ayır
+    char* sonuc = (char*)malloc(gercek_uzunluk + 1);
+    if (sonuc == NULL) {
+        fprintf(stderr, "HATA [STRING_ALT]: Hafıza ayırma hatası\n");
+        return NULL;
+    }
+
+    // Karakterleri kopyala
+    strncpy(sonuc, str + baslangic, gercek_uzunluk);
+    sonuc[gercek_uzunluk] = '\0';
+
+    return sonuc;
+}
+
+/**
+ * KARAKTER_KODU - Bir karakterin ASCII kodunu döndürür
+ * @param karakter_str: Tek karakterlik string
+ * @return: ASCII kodu (int64_t)
+ *
+ * Örnek: KARAKTER_KODU("A") -> 65
+ */
+int64_t karakter_kodu(const char* karakter_str) {
+    if (karakter_str == NULL || karakter_str[0] == '\0') {
+        fprintf(stderr, "HATA [KARAKTER_KODU]: NULL veya boş string\n");
+        return -1;
+    }
+
+    return (int64_t)karakter_str[0];
+}
+
+/**
+ * KODU_KARAKTERE - ASCII kodunu karaktere dönüştürür
+ * @param kod: ASCII kodu
+ * @return: Tek karakterlik string (dynamically allocated)
+ *
+ * Örnek: KODU_KARAKTERE(65) -> "A"
+ */
+char* kodu_karaktere(int64_t kod) {
+    if (kod < 0 || kod > 127) {
+        fprintf(stderr, "HATA [KODU_KARAKTERE]: Geçersiz ASCII kodu: %ld\n", kod);
+        return NULL;
+    }
+
+    char* sonuc = (char*)malloc(2);
+    if (sonuc == NULL) {
+        fprintf(stderr, "HATA [KODU_KARAKTERE]: Hafıza ayırma hatası\n");
+        return NULL;
+    }
+
+    sonuc[0] = (char)kod;
+    sonuc[1] = '\0';
+
+    return sonuc;
 }
 

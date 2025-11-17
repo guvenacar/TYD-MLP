@@ -1,0 +1,137 @@
+-- ===================================================
+-- TYD Self-Hosting Compiler: LEXER
+-- Kaynak kodu token'lara ayırır
+-- ===================================================
+
+-- Token tipleri (basit string kodlama)
+-- Her token: "TIP:DEGER" formatında
+
+İŞLEÇ LEXER_TOKEN_OLUSTUR(tip, deger)
+    METIN ayrac = ":";
+    METIN token = STRING_BIRLESTIR(tip, ayrac);
+    METIN sonuc = STRING_BIRLESTIR(token, deger);
+    DÖNÜŞ sonuc
+SON
+
+-- Bir karakterin boşluk olup olmadığını kontrol et
+İŞLEÇ BOSLUK_MU(karakter)
+    SAYISAL kod = KARAKTER_KODU(karakter);
+
+    -- Boşluk (32), tab (9), newline (10), carriage return (13)
+    EĞER kod == 32 İSE
+        DÖNÜŞ 1
+    SON
+
+    EĞER kod == 9 İSE
+        DÖNÜŞ 1
+    SON
+
+    EĞER kod == 10 İSE
+        DÖNÜŞ 1
+    SON
+
+    EĞER kod == 13 İSE
+        DÖNÜŞ 1
+    SON
+
+    DÖNÜŞ 0
+SON
+
+-- Bir karakterin rakam olup olmadığını kontrol et
+İŞLEÇ RAKAM_MI(karakter)
+    SAYISAL kod = KARAKTER_KODU(karakter);
+
+    -- ASCII: 48-57 ('0'-'9')
+    EĞER kod < 48 İSE
+        DÖNÜŞ 0
+    SON
+
+    EĞER kod > 57 İSE
+        DÖNÜŞ 0
+    SON
+
+    DÖNÜŞ 1
+SON
+
+-- String'in başındaki ve sonundaki boşlukları temizle
+İŞLEÇ STRING_TRIM(metin)
+    SAYISAL uzunluk = STRING_UZUNLUK(metin);
+
+    EĞER uzunluk == 0 İSE
+        DÖNÜŞ metin
+    SON
+
+    -- Baştan boşlukları temizle
+    SAYISAL baslangic = 0;
+
+    DÖNGÜ
+        EĞER baslangic == uzunluk İSE
+            DÖNGÜ_BITIR
+        SON
+
+        METIN kar = STRING_KARAKTER_AL(metin, baslangic);
+        SAYISAL bosluk = BOSLUK_MU(kar);
+
+        EĞER bosluk == 0 İSE
+            DÖNGÜ_BITIR
+        SON
+
+        baslangic = baslangic + 1
+    SON
+
+    -- Sondan boşlukları temizle
+    SAYISAL bitis = uzunluk;
+
+    DÖNGÜ
+        EĞER bitis == baslangic İSE
+            DÖNGÜ_BITIR
+        SON
+
+        METIN kar = STRING_KARAKTER_AL(metin, bitis - 1);
+        SAYISAL bosluk = BOSLUK_MU(kar);
+
+        EĞER bosluk == 0 İSE
+            DÖNGÜ_BITIR
+        SON
+
+        bitis = bitis - 1
+    SON
+
+    -- Substring çıkar
+    SAYISAL yeni_uzunluk = bitis - baslangic;
+    METIN sonuc = STRING_ALT(metin, baslangic, yeni_uzunluk);
+
+    DÖNÜŞ sonuc
+SON
+
+YAZDIR "=== TYD Lexer Testi ==="
+
+-- Test: BOSLUK_MU
+METIN bosluk_kar = " ";
+SAYISAL test1 = BOSLUK_MU(bosluk_kar);
+YAZDIR "Boşluk testi:"
+YAZDIR test1
+
+-- Test: RAKAM_MI
+METIN rakam = "5";
+SAYISAL test2 = RAKAM_MI(rakam);
+YAZDIR "Rakam testi (5):"
+YAZDIR test2
+
+METIN harf = "A";
+SAYISAL test3 = RAKAM_MI(harf);
+YAZDIR "Rakam testi (A):"
+YAZDIR test3
+
+-- Test: STRING_TRIM
+METIN bosluklu = "  Merhaba  ";
+METIN temiz = STRING_TRIM(bosluklu);
+YAZDIR "Trim testi:"
+YAZDIR temiz
+
+-- Test: TOKEN_OLUSTUR
+METIN token = LEXER_TOKEN_OLUSTUR("SAYI", "123");
+YAZDIR "Token testi:"
+YAZDIR token
+
+YAZDIR "=== Lexer Testleri Tamamlandı ==="
