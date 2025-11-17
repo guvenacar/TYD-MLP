@@ -1,0 +1,3 @@
+METIN dosya_adi = "test.txt";
+METIN mod = "r";
+SAYISAL dosya = DOSYA_AC(dosya_adi, mod);

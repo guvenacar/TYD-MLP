@@ -1,0 +1,5 @@
+İŞLEÇ topla(a, b) İSE
+    DÖNÜŞ a + b;
+SON;
+
+YAZDIR topla(100, 200);

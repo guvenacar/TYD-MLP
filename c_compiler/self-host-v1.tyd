@@ -1,0 +1,34 @@
+YAZDIR "=== TYD Self-Hosting Demo v1 ===";
+
+YAZDIR "Kaynak kod okunuyor...";
+
+METIN kaynak_dosya = "ornekler/hello.tyd";
+METIN mod = "r";
+SAYISAL dosya = DOSYA_AC(kaynak_dosya, mod);
+
+METIN kaynak = DOSYA_OKU(dosya);
+SAYISAL kapat1 = DOSYA_KAPAT(dosya);
+
+YAZDIR "Okunan kaynak:";
+YAZDIR kaynak;
+
+YAZDIR "Assembly uretiliyor...";
+
+METIN asm1 = "extern printf\n";
+METIN asm2 = "section .data\n";
+METIN asm3 = "section .text\n";
+METIN asm4 = "global main\n";
+
+METIN cikti_dosya = "build/generated.asm";
+METIN mod_yaz = "w";
+SAYISAL cikti = DOSYA_AC(cikti_dosya, mod_yaz);
+
+SAYISAL n1 = DOSYA_YAZ(cikti, asm1);
+SAYISAL n2 = DOSYA_YAZ(cikti, asm2);
+SAYISAL n3 = DOSYA_YAZ(cikti, asm3);
+SAYISAL n4 = DOSYA_YAZ(cikti, asm4);
+
+SAYISAL kapat2 = DOSYA_KAPAT(cikti);
+
+YAZDIR "Olusturuldu!";
+YAZDIR cikti_dosya;

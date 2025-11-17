@@ -1,0 +1,13 @@
+YAZDIR "=== TYD Self-Hosting Demo v1 ===";
+
+YAZDIR "Kaynak kod okunuyor...";
+
+METIN kaynak_dosya = "ornekler/hello.tyd";
+METIN mod = "r";
+SAYISAL dosya = DOSYA_AC(kaynak_dosya, mod);
+
+METIN kaynak = DOSYA_OKU(dosya);
+SAYISAL kapat1 = DOSYA_KAPAT(dosya);
+
+YAZDIR "Okunan kaynak:";
+YAZDIR kaynak;

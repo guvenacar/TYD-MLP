@@ -1,0 +1,81 @@
+-- TYD Self-Hosting Compiler (Minimal Version)
+
+YAZDIR "=== TYD Self-Hosting Compiler v1.0 ==="
+YAZDIR "----------------------------------------"
+YAZDIR "Stage: Reading source file..."
+
+-- Kaynak dosyayı oku
+METIN kaynak_dosya = "ornekler/hello.tyd"
+METIN mod_oku = "r"
+SAYISAL dosya_girdi = DOSYA_AC(kaynak_dosya, mod_oku)
+METIN kaynak = DOSYA_OKU(dosya_girdi)
+SAYISAL kapat1 = DOSYA_KAPAT(dosya_girdi)
+
+YAZDIR "Source code:"
+YAZDIR kaynak
+YAZDIR ""
+
+YAZDIR "Stage: Generating assembly..."
+
+-- Assembly kodu oluştur (basit)
+METIN asm_kod = "extern printf\n"
+
+METIN asm2 = "section .data\n"
+asm_kod = STRCAT(asm_kod, asm2)
+
+METIN asm3 = "    fmt db \"%s\", 10, 0\n"
+asm_kod = STRCAT(asm_kod, asm3)
+
+METIN asm4 = "    msg db \"Merhaba Dunya!\", 0\n\n"
+asm_kod = STRCAT(asm_kod, asm4)
+
+METIN asm5 = "section .text\n"
+asm_kod = STRCAT(asm_kod, asm5)
+
+METIN asm6 = "global main\n\n"
+asm_kod = STRCAT(asm_kod, asm6)
+
+METIN asm7 = "main:\n"
+asm_kod = STRCAT(asm_kod, asm7)
+
+METIN asm8 = "    push rbp\n"
+asm_kod = STRCAT(asm_kod, asm8)
+
+METIN asm9 = "    mov rbp, rsp\n"
+asm_kod = STRCAT(asm_kod, asm9)
+
+METIN asm10 = "    lea rdi, [rel fmt]\n"
+asm_kod = STRCAT(asm_kod, asm10)
+
+METIN asm11 = "    lea rsi, [rel msg]\n"
+asm_kod = STRCAT(asm_kod, asm11)
+
+METIN asm12 = "    xor eax, eax\n"
+asm_kod = STRCAT(asm_kod, asm12)
+
+METIN asm13 = "    call printf\n"
+asm_kod = STRCAT(asm_kod, asm13)
+
+METIN asm14 = "    xor eax, eax\n"
+asm_kod = STRCAT(asm_kod, asm14)
+
+METIN asm15 = "    pop rbp\n"
+asm_kod = STRCAT(asm_kod, asm15)
+
+METIN asm16 = "    ret\n"
+asm_kod = STRCAT(asm_kod, asm16)
+
+YAZDIR ""
+YAZDIR "Stage: Writing output..."
+
+-- Assembly dosyasına yaz
+METIN cikti_dosya = "build/self-host-output.asm"
+METIN mod_yaz = "w"
+SAYISAL dosya_cikti = DOSYA_AC(cikti_dosya, mod_yaz)
+SAYISAL yazilan = DOSYA_YAZ(dosya_cikti, asm_kod)
+SAYISAL kapat2 = DOSYA_KAPAT(dosya_cikti)
+
+YAZDIR "----------------------------------------"
+YAZDIR "SUCCESS! Output written to:"
+YAZDIR cikti_dosya
+YAZDIR "========================================="
