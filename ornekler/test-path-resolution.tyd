@@ -1,0 +1,13 @@
+YAZDIR "Path Resolution Test"
+
+METIN dosya_yolu = "ornekler/hello.tyd"
+METIN mod = "r"
+SAYISAL dosya = DOSYA_AC(dosya_yolu, mod)
+
+METIN icerik = DOSYA_OKU(dosya)
+SAYISAL sonuc = DOSYA_KAPAT(dosya)
+
+YAZDIR "Dosya icerigi:"
+YAZDIR icerik
+
+YAZDIR "Test tamamlandi!"

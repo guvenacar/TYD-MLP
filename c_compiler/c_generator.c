@@ -409,7 +409,7 @@ void visit_IslecTanimlama(ASTNode* node) {
     // 2. Fonksiyon Girişi (Prolog)
     asm_append(&text_section, "    push rbp");
     asm_append(&text_section, "    mov rbp, rsp");
-    asm_append(&text_section, "    sub rsp, 128"); // ✅ Yeterli stack alanı ayır
+    asm_append(&text_section, "    sub rsp, 256"); // ✅ Yeterli stack alanı (32 değişkene kadar)
 
     // 3. Parametreleri kaydet
     int param_sayisi = node->islec_tanimlama_data.parametre_sayisi;
@@ -745,7 +745,7 @@ char* generate_asm(ASTNode* root) {
     asm_append(&text_section, "main:");
     asm_append(&text_section, "    push rbp");
     asm_append(&text_section, "    mov rbp, rsp");
-    asm_append(&text_section, "    sub rsp, 64");
+    asm_append(&text_section, "    sub rsp, 256"); // ✅ Yeterli stack alanı (32 değişkene kadar)
     asm_append(&text_section, "    call tyd_fix_cwd"); // ✅ çalışma dizinini düzelt
 
     // 4. İki geçişli ziyaret
