@@ -1,0 +1,12 @@
+İŞLEÇ topla(a, b) İSE
+    DÖNÜŞ a + b;
+SON;
+
+İŞLEÇ ana_hesaplama() İSE
+    SAYISAL x = topla(10, 5);
+    SAYISAL y = topla(x, 2);
+    DÖNÜŞ y;
+SON;
+
+YAZDIR ana_hesaplama();
+YAZDIR topla(100, 1);

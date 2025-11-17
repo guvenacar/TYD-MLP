@@ -1,0 +1,5 @@
+METIN dosya_adi = "test.txt";
+METIN mod = "r";
+SAYISAL dosya = DOSYA_AC(dosya_adi, mod);
+METIN icerik = DOSYA_OKU(dosya);
+YAZDIR icerik;

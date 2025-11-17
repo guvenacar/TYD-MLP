@@ -1,0 +1,9 @@
+YAZDIR "Satir 1";
+YAZDIR "Satir 2";
+METIN kaynak_dosya = "test.txt";
+METIN mod = "r";
+SAYISAL dosya = DOSYA_AC(kaynak_dosya, mod);
+METIN kaynak = DOSYA_OKU(dosya);
+SAYISAL kapat1 = DOSYA_KAPAT(dosya);
+YAZDIR "Satir 8";
+YAZDIR kaynak;
