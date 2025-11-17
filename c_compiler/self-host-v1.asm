@@ -1,11 +1,15 @@
 extern printf
-extern string_birlestir
-extern string_karsilastir
-extern string_uzunluk
+extern strlen
+extern strcmp
+extern strstr
+extern tyd_substr
+extern tyd_strcat
 extern dosya_ac
 extern dosya_oku
 extern dosya_yaz
 extern dosya_kapat
+extern runtime_dizin_al
+extern tyd_fix_cwd
 section .data
     format_sayi db "%ld", 10, 0
     format_metin db "%s", 10, 0
@@ -29,6 +33,7 @@ main:
     push rbp
     mov rbp, rsp
     sub rsp, 64
+    call tyd_fix_cwd
     ; --- Ana Program Akışı ---
     mov rax, str_0
     ; --- YAZDIR Başlangıç ---
@@ -52,21 +57,18 @@ main:
     mov rax, [rbp-8]
     push rax
     mov rax, [rbp-16]
-    push rax
-    pop rsi
     pop rdi
+    mov rsi, rax
     call dosya_ac
     mov [rbp-24], rax
     ; --- DegiskenTanimlama: kaynak ---
     mov rax, [rbp-24]
-    push rax
-    pop rdi
+    mov rdi, rax
     call dosya_oku
     mov [rbp-32], rax
     ; --- DegiskenTanimlama: kapat1 ---
     mov rax, [rbp-24]
-    push rax
-    pop rdi
+    mov rdi, rax
     call dosya_kapat
     mov [rbp-40], rax
     mov rax, str_4
@@ -109,51 +111,45 @@ main:
     mov rax, [rbp-80]
     push rax
     mov rax, [rbp-88]
-    push rax
-    pop rsi
     pop rdi
+    mov rsi, rax
     call dosya_ac
     mov [rbp-96], rax
     ; --- DegiskenTanimlama: n1 ---
     mov rax, [rbp-96]
     push rax
     mov rax, [rbp-48]
-    push rax
-    pop rsi
     pop rdi
+    mov rsi, rax
     call dosya_yaz
     mov [rbp-104], rax
     ; --- DegiskenTanimlama: n2 ---
     mov rax, [rbp-96]
     push rax
     mov rax, [rbp-56]
-    push rax
-    pop rsi
     pop rdi
+    mov rsi, rax
     call dosya_yaz
     mov [rbp-112], rax
     ; --- DegiskenTanimlama: n3 ---
     mov rax, [rbp-96]
     push rax
     mov rax, [rbp-64]
-    push rax
-    pop rsi
     pop rdi
+    mov rsi, rax
     call dosya_yaz
     mov [rbp-120], rax
     ; --- DegiskenTanimlama: n4 ---
     mov rax, [rbp-96]
     push rax
     mov rax, [rbp-72]
-    push rax
-    pop rsi
     pop rdi
+    mov rsi, rax
     call dosya_yaz
     mov [rbp-128], rax
     ; --- DegiskenTanimlama: kapat2 ---
     mov rax, [rbp-96]
-    push rax
-    pop rdi
+    mov rdi, rax
     call dosya_kapat
     mov [rbp-136], rax
     mov rax, str_12
@@ -175,3 +171,7 @@ main:
     ret
 
 ; === Fonksiyon Tanımları ===
+
+section .note.GNU-stack noalloc noexec nowrite progbits
+
+db 0
