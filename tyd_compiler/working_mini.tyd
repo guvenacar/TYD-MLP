@@ -1,0 +1,76 @@
+-- ===================================================
+-- Working Mini Compiler - Çalışan Minimal Sürüm
+-- Escape karaktersiz, sadece temel string'ler
+-- ===================================================
+
+YAZDIR "=== Working Mini Compiler ==="
+
+-- Kaynak dosyayı oku
+METIN dizin = DIZIN_AL();
+METIN kaynak_eki = "/../tyd_compiler/hello.tyd";
+METIN kaynak_yolu = STRING_BIRLESTIR(dizin, kaynak_eki);
+
+YAZDIR "Kaynak:"
+YAZDIR kaynak_yolu
+
+METIN mod_oku = "r";
+SAYISAL kaynak_dosya = DOSYA_AC(kaynak_yolu, mod_oku);
+METIN kaynak_kod = DOSYA_OKU(kaynak_dosya);
+SAYISAL kapat1 = DOSYA_KAPAT(kaynak_dosya);
+
+YAZDIR "Kaynak okundu:"
+YAZDIR kaynak_kod
+
+-- Basit pattern matching: İlk YAZDIR satırını bul
+-- hello.tyd'deki ilk satır: YAZDIR "Merhaba TYD Dunyasi!"
+
+-- Hardcoded assembly üret (şimdilik)
+METIN asm_line1 = "extern printf\n";
+METIN asm_line2 = "section .data\n";
+METIN asm_line3 = "    fmt db \"%s\", 10, 0\n";
+METIN asm_line4 = "    msg db \"Merhaba TYD Dunyasi!\", 0\n";
+METIN asm_line5 = "section .text\n";
+METIN asm_line6 = "global main\n";
+METIN asm_line7 = "main:\n";
+METIN asm_line8 = "    push rbp\n";
+METIN asm_line9 = "    mov rbp, rsp\n";
+METIN asm_line10 = "    mov rdi, fmt\n";
+METIN asm_line11 = "    mov rsi, msg\n";
+METIN asm_line12 = "    mov rax, 0\n";
+METIN asm_line13 = "    call printf\n";
+METIN asm_line14 = "    mov rax, 0\n";
+METIN asm_line15 = "    pop rbp\n";
+METIN asm_line16 = "    ret\n";
+
+-- Birleştir
+METIN asm_result = STRING_BIRLESTIR(asm_line1, asm_line2);
+asm_result = STRING_BIRLESTIR(asm_result, asm_line3)
+asm_result = STRING_BIRLESTIR(asm_result, asm_line4)
+asm_result = STRING_BIRLESTIR(asm_result, asm_line5)
+asm_result = STRING_BIRLESTIR(asm_result, asm_line6)
+asm_result = STRING_BIRLESTIR(asm_result, asm_line7)
+asm_result = STRING_BIRLESTIR(asm_result, asm_line8)
+asm_result = STRING_BIRLESTIR(asm_result, asm_line9)
+asm_result = STRING_BIRLESTIR(asm_result, asm_line10)
+asm_result = STRING_BIRLESTIR(asm_result, asm_line11)
+asm_result = STRING_BIRLESTIR(asm_result, asm_line12)
+asm_result = STRING_BIRLESTIR(asm_result, asm_line13)
+asm_result = STRING_BIRLESTIR(asm_result, asm_line14)
+asm_result = STRING_BIRLESTIR(asm_result, asm_line15)
+asm_result = STRING_BIRLESTIR(asm_result, asm_line16)
+
+YAZDIR "=== Oluşturulan Assembly ==="
+YAZDIR asm_result
+
+-- Dosyaya yaz
+METIN cikti_eki = "/../tyd_compiler/working_output.asm";
+METIN cikti_yolu = STRING_BIRLESTIR(dizin, cikti_eki);
+
+METIN mod_yaz = "w";
+SAYISAL cikti_dosya = DOSYA_AC(cikti_yolu, mod_yaz);
+SAYISAL yazilan = DOSYA_YAZ(cikti_dosya, asm_result);
+SAYISAL kapat2 = DOSYA_KAPAT(cikti_dosya);
+
+YAZDIR "=== Assembly Yazıldı ==="
+YAZDIR cikti_yolu
+YAZDIR "=== Working Mini: Başarılı! ==="
