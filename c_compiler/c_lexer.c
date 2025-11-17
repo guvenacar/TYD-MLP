@@ -6,6 +6,7 @@
 #include <string.h>
 #include <wctype.h> // iswalpha, iswalnum için
 #include <ctype.h>  // isspace için
+#include <locale.h> // setlocale için
 
 // --- Lexer Durum Yönetimi ---
 
@@ -81,6 +82,9 @@ KeywordMap keywords[] = {
  * Lexer'ı başlatır ve kaynak kodu hazırlar.
  */
 void initLexer(const char* source) {
+    // UTF-8 desteği için locale ayarla
+    setlocale(LC_ALL, "en_US.UTF-8");
+
     source_code = source;
     current_position = 0;
     eof_reached = 0; // <-- RESET
@@ -126,12 +130,20 @@ Token* getNextToken() {
     }
 
     // --- YENİ: UTF-8 UYUMLU KARAKTER OKUMA ---
-    wchar_t current_wc; // Geniş karakter (wide character)
+    wchar_t current_wc = L'\0'; // Geniş karakter (wide character)
     int char_len = mbtowc(&current_wc, &source_code[current_position], 4); // En fazla 4 byte oku
 
-    if (char_len <= 0) { // Hata veya null karakter
-        eof_reached = 1;
-        return createToken(TOKEN_EOF, NULL);
+    // mbtowc başarısız olsa bile UTF-8 multi-byte karakterler için devam et
+    if (char_len <= 0) {
+        // Eğer byte UTF-8 multi-byte başlangıcı ise (>= 0x80), devam et
+        if ((unsigned char)source_code[current_position] >= 0x80) {
+            current_wc = L' '; // Dummy value - identifier check'e geçsin
+            char_len = 1;
+        } else {
+            // Gerçekten EOF
+            eof_reached = 1;
+            return createToken(TOKEN_EOF, NULL);
+        }
     }
     // -----------------------------------------
 
@@ -160,17 +172,36 @@ Token* getNextToken() {
     }
 
 
-    if (iswalpha(current_wc)) {
+    // UTF-8 harf kontrol (ASCII harf veya UTF-8 multi-byte: 0x80-0xFF)
+    if (iswalpha(current_wc) || (unsigned char)source_code[current_position] >= 0x80) {
         int start = current_position;
-        // İsimler harf, rakam veya alt çizgi içerebilir
+        // İsimler harf, rakam, UTF-8 karakterler veya alt çizgi içerebilir
         while (source_code[current_position] != '\0') {
-            wchar_t temp_wc;
-            int temp_len = mbtowc(&temp_wc, &source_code[current_position], 4);
-            if (temp_len > 0 && (iswalnum(temp_wc) || temp_wc == L'_')) {
-                current_position += temp_len;
-            } else {
-                break;
+            unsigned char byte = (unsigned char)source_code[current_position];
+
+            // ASCII harf/rakam/underscore
+            if (isalnum(byte) || byte == '_') {
+                current_position++;
+                continue;
             }
+
+            // UTF-8 multi-byte karakter başlangıcı (0xC0-0xFF)
+            if (byte >= 0xC0) {
+                // UTF-8 continuation bytes'ları da ekle
+                current_position++;
+                while (current_position < strlen(source_code)) {
+                    unsigned char cont = (unsigned char)source_code[current_position];
+                    if (cont >= 0x80 && cont < 0xC0) {  // Continuation byte (10xxxxxx)
+                        current_position++;
+                    } else {
+                        break;
+                    }
+                }
+                continue;
+            }
+
+            // Hiçbiri değilse dur
+            break;
         }
 
         // Token değerini (string'i) yakala
@@ -198,29 +229,47 @@ Token* getNextToken() {
     if (current_char == '"' || current_char == '\'') {
         char quote_char = current_char;
         current_position++; // Açılış tırnağını atla
-        int start = current_position;
 
-        // Kapanış tırnağına kadar oku
+        // Escape sequence'leri işleyerek string'i oluştur
+        char* value = (char*)malloc(1024); // Maksimum string uzunluğu
+        int value_index = 0;
+
+        // Kapanış tırnağına kadar oku ve escape sequence'leri dönüştür
         while (source_code[current_position] != '\0' && source_code[current_position] != quote_char) {
-            // Escape sequence desteği (\n, \t, vb.)
+            // Escape sequence desteği (\n, \t, \", \\, vb.)
             if (source_code[current_position] == '\\' && source_code[current_position + 1] != '\0') {
-                current_position += 2; // Escape karakter ve sonrakini atla
+                current_position++; // Backslash'i atla
+                char escape_char = source_code[current_position];
+
+                // Escape karakterini gerçek karaktere dönüştür
+                switch (escape_char) {
+                    case 'n':  value[value_index++] = '\n'; break;  // Newline
+                    case 't':  value[value_index++] = '\t'; break;  // Tab
+                    case 'r':  value[value_index++] = '\r'; break;  // Carriage return
+                    case '\\': value[value_index++] = '\\'; break;  // Backslash
+                    case '"':  value[value_index++] = '"';  break;  // Quote
+                    case '\'': value[value_index++] = '\''; break;  // Single quote
+                    case '0':  value[value_index++] = '\0'; break;  // Null character
+                    default:
+                        // Bilinmeyen escape - olduğu gibi ekle
+                        value[value_index++] = '\\';
+                        value[value_index++] = escape_char;
+                        break;
+                }
+                current_position++;
             } else {
+                value[value_index++] = source_code[current_position];
                 current_position++;
             }
         }
 
         if (source_code[current_position] == '\0') {
             fprintf(stderr, "HATA [Lexer]: Kapanmamış string literal\n");
+            free(value);
             return createToken(TOKEN_EOF, NULL);
         }
 
-        // String içeriğini al
-        int len = current_position - start;
-        char* value = (char*)malloc(len + 1);
-        strncpy(value, source_code + start, len);
-        value[len] = '\0';
-
+        value[value_index] = '\0'; // String'i sonlandır
         current_position++; // Kapanış tırnağını atla
 
         Token* token = createToken(TOKEN_METIN, value);

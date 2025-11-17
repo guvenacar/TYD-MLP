@@ -1,0 +1,6 @@
+YAZDIR "Satır 1"
+
+SAYISAL x = 10;
+
+YAZDIR "Satır 2"
+YAZDIR x

@@ -1,0 +1,20 @@
+-- Escape Character Test
+
+YAZDIR "=== Escape Test ==="
+
+-- Tırnak işareti testi
+YAZDIR "Merhaba \"TYD\" Dünyası!"
+
+-- Newline testi
+YAZDIR "Satır 1\nSatır 2\nSatır 3"
+
+-- Tab testi
+YAZDIR "Kolon1\tKolon2\tKolon3"
+
+-- Backslash testi
+YAZDIR "C:\\dosyalar\\test.tyd"
+
+-- Kombinasyon testi
+YAZDIR "\"Merhaba\"\n\tTYD\n\t\t\"Dünya!\""
+
+YAZDIR "=== Test Tamamlandı! ==="

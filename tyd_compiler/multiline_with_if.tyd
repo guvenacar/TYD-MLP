@@ -1,0 +1,11 @@
+YAZDIR "Test başlıyor"
+
+SAYISAL x = 10;
+
+EĞER x == 10 İSE
+    YAZDIR "x 10'a eşit!"
+DEĞİLSE
+    YAZDIR "x 10'a eşit değil"
+SON
+
+YAZDIR "Test bitti"

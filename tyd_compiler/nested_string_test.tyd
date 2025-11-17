@@ -1,0 +1,17 @@
+-- Nested String Literal Test
+
+YAZDIR "=== Nested String Test ==="
+
+-- String içinde tırnak
+METIN mesaj1 = "\"Merhaba\" dedi";
+YAZDIR mesaj1
+
+-- String içinde backslash ve tırnak
+METIN mesaj2 = "Dosya: \"C:\\dosyalar\\test.txt\"";
+YAZDIR mesaj2
+
+-- Karmaşık kombinasyon
+METIN mesaj3 = "Şöyle dedi:\n\t\"Merhaba\\nDünya!\"";
+YAZDIR mesaj3
+
+YAZDIR "=== Test Başarılı! ==="

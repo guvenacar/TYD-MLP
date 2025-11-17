@@ -1,0 +1,45 @@
+-- Multi-line Source File Test
+
+YAZDIR "=== Multi-line Test ==="
+
+-- Değişken tanımlamaları
+SAYISAL x = 10;
+SAYISAL y = 20;
+METIN mesaj = "Merhaba\nDünya!";
+
+-- İşlem
+SAYISAL toplam = x + y;
+
+YAZDIR "x değeri:"
+YAZDIR x
+
+YAZDIR "y değeri:"
+YAZDIR y
+
+YAZDIR "Toplam:"
+YAZDIR toplam
+
+YAZDIR mesaj
+
+-- Koşul yapısı
+EĞER x == 10 İSE
+    YAZDIR "x 10'a eşit!"
+    YAZDIR "Bu çok satırlı blok içinde"
+DEĞİLSE
+    YAZDIR "x 10'a eşit değil"
+SON
+
+-- Döngü yapısı
+SAYISAL sayac = 0;
+DÖNGÜ
+    YAZDIR "Döngü içinde:"
+    YAZDIR sayac
+
+    sayac = sayac + 1
+
+    EĞER sayac == 3 İSE
+        DÖNGÜ_BITIR
+    SON
+SON
+
+YAZDIR "=== Test Tamamlandı! ==="
