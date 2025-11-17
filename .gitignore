@@ -1,0 +1,21 @@
+# Build artifacts
+*.o
+*.asm
+compiler_test
+test_*
+!*.tyd
+
+# Binaries
+c_compiler/compiler_test
+runtime.o
+
+# IDE/Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
