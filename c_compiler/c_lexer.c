@@ -376,6 +376,14 @@ Token* getNextToken() {
         current_position++;
         return createToken(TOKEN_RIGHT_PAREN, ")");
     }
+    if (current_char == '[') {
+        current_position++;
+        return createToken(TOKEN_LEFT_BRACKET, "[");
+    }
+    if (current_char == ']') {
+        current_position++;
+        return createToken(TOKEN_RIGHT_BRACKET, "]");
+    }
     if (current_char == '+') {
         current_position++;
         return createToken(TOKEN_PLUS, "+");

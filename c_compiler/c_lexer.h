@@ -33,6 +33,8 @@ typedef enum {
     // --- Operatörler ve Ayırıcılar ---
     TOKEN_LEFT_PAREN,   // (
     TOKEN_RIGHT_PAREN,  // )
+    TOKEN_LEFT_BRACKET,  // [
+    TOKEN_RIGHT_BRACKET, // ]
     TOKEN_COMMA,        // ,
     TOKEN_ASSIGN,       // =
     TOKEN_SEMICOLON,    // ;  <-- YENİ
