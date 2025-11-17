@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <unistd.h>  // readlink için
 #include <libgen.h>  // dirname için
+#include <errno.h>   // errno için
 
 // Forward declarations
 char* runtime_dizin_al();
@@ -186,10 +187,14 @@ int64_t string_uzunluk(const char* str) {
  * program farklı dizinlerden çalıştırılsa bile dosyaları bulabilir.
  */
 int64_t dosya_ac(const char* yol, const char* mod) {
+    fprintf(stderr, "DEBUG [DOSYA_AC]: Çağrıldı - yol=%p, mod=%p\n", (void*)yol, (void*)mod);
+
     if (yol == NULL || mod == NULL) {
         fprintf(stderr, "HATA [DOSYA_AC]: NULL argüman alındı\n");
         return 0; // NULL pointer
     }
+
+    fprintf(stderr, "DEBUG [DOSYA_AC]: yol='%s', mod='%s'\n", yol, mod);
 
     char* kullanilacak_yol = NULL;
     int path_allocated = 0; // Flag to track if we allocated memory
@@ -198,6 +203,7 @@ int64_t dosya_ac(const char* yol, const char* mod) {
     if (yol[0] == '/') {
         // Absolute path - olduğu gibi kullan
         kullanilacak_yol = (char*)yol;
+        fprintf(stderr, "DEBUG [DOSYA_AC]: Absolute path kullanılıyor\n");
     } else {
         // Relative path - executable'ın dizini ile birleştir
         char* exe_dir = runtime_dizin_al();
@@ -205,6 +211,7 @@ int64_t dosya_ac(const char* yol, const char* mod) {
             fprintf(stderr, "HATA [DOSYA_AC]: Executable dizini alınamadı\n");
             return 0;
         }
+        fprintf(stderr, "DEBUG [DOSYA_AC]: exe_dir='%s'\n", exe_dir);
 
         // Birleştir: exe_dir + "/" + yol
         size_t uzunluk = strlen(exe_dir) + 1 + strlen(yol) + 1;
@@ -216,6 +223,7 @@ int64_t dosya_ac(const char* yol, const char* mod) {
         }
 
         snprintf(kullanilacak_yol, uzunluk, "%s/%s", exe_dir, yol);
+        fprintf(stderr, "DEBUG [DOSYA_AC]: Full path='%s'\n", kullanilacak_yol);
         free(exe_dir);
         path_allocated = 1;
     }
@@ -229,6 +237,8 @@ int64_t dosya_ac(const char* yol, const char* mod) {
         }
         return 0;
     }
+
+    fprintf(stderr, "DEBUG [DOSYA_AC]: Başarılı! FILE*=%p\n", (void*)dosya);
 
     // Eğer yeni path oluşturduysak, onu serbest bırak
     if (path_allocated) {
@@ -245,6 +255,8 @@ int64_t dosya_ac(const char* yol, const char* mod) {
  * @return: Dosya içeriği (dynamically allocated string)
  */
 char* dosya_oku(int64_t dosya_ptr) {
+    fprintf(stderr, "DEBUG [DOSYA_OKU]: Çağrıldı - dosya_ptr=%p\n", (void*)dosya_ptr);
+
     FILE* dosya = (FILE*)dosya_ptr;
 
     if (dosya == NULL) {
@@ -252,10 +264,14 @@ char* dosya_oku(int64_t dosya_ptr) {
         return NULL;
     }
 
+    fprintf(stderr, "DEBUG [DOSYA_OKU]: FILE* geçerli, dosya boyutunu okuyor\n");
+
     // Dosya boyutunu öğren
     fseek(dosya, 0, SEEK_END);
     long dosya_boyutu = ftell(dosya);
     fseek(dosya, 0, SEEK_SET);
+
+    fprintf(stderr, "DEBUG [DOSYA_OKU]: Dosya boyutu=%ld\n", dosya_boyutu);
 
     if (dosya_boyutu < 0) {
         fprintf(stderr, "HATA [DOSYA_OKU]: Dosya boyutu okunamadı\n");
@@ -269,9 +285,13 @@ char* dosya_oku(int64_t dosya_ptr) {
         return NULL;
     }
 
+    fprintf(stderr, "DEBUG [DOSYA_OKU]: Bellek ayrıldı, dosya okunuyor\n");
+
     // Dosyayı oku
     size_t okunan = fread(icerik, 1, dosya_boyutu, dosya);
     icerik[okunan] = '\0'; // Null terminator
+
+    fprintf(stderr, "DEBUG [DOSYA_OKU]: %zu byte okundu, içerik='%s'\n", okunan, icerik);
 
     return icerik;
 }
@@ -305,18 +325,24 @@ int64_t dosya_yaz(int64_t dosya_ptr, const char* veri) {
  * @return: 0 başarılı, -1 hata
  */
 int64_t dosya_kapat(int64_t dosya_ptr) {
+    fprintf(stderr, "DEBUG [DOSYA_KAPAT]: Çağrıldı - dosya_ptr=%p (%ld)\n", (void*)dosya_ptr, dosya_ptr);
+
     FILE* dosya = (FILE*)dosya_ptr;
 
     if (dosya == NULL) {
-        fprintf(stderr, "HATA [DOSYA_KAPAT]: Geçersiz dosya pointer\n");
+        fprintf(stderr, "HATA [DOSYA_KAPAT]: Geçersiz dosya pointer (NULL)\n");
         return -1;
     }
 
+    fprintf(stderr, "DEBUG [DOSYA_KAPAT]: FILE* geçerli, fclose çağrılıyor\n");
+
     int sonuc = fclose(dosya);
     if (sonuc != 0) {
-        fprintf(stderr, "HATA [DOSYA_KAPAT]: Dosya kapatılamadı\n");
+        fprintf(stderr, "HATA [DOSYA_KAPAT]: Dosya kapatılamadı (errno=%d)\n", errno);
         return -1;
     }
+
+    fprintf(stderr, "DEBUG [DOSYA_KAPAT]: Başarılı\n");
 
     return 0;
 }
