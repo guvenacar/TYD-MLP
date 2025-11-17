@@ -1,0 +1,157 @@
+-- ===================================================
+-- TYD Minimal Compiler v2
+-- Kaynak dosyayı okur, satır satır parse eder
+-- ===================================================
+
+-- ============================================
+-- YARDIMCI FONKSİYONLAR (v1'den kopyalandı)
+-- ============================================
+
+İŞLEÇ BOSLUK_MU(karakter)
+    SAYISAL kod = KARAKTER_KODU(karakter);
+    EĞER kod == 32 İSE
+        DÖNÜŞ 1
+    SON
+    EĞER kod == 9 İSE
+        DÖNÜŞ 1
+    SON
+    EĞER kod == 10 İSE
+        DÖNÜŞ 1
+    SON
+    EĞER kod == 13 İSE
+        DÖNÜŞ 1
+    SON
+    DÖNÜŞ 0
+SON
+
+İŞLEÇ BASLIYOR_MU(metin, prefix)
+    SAYISAL metin_uzunluk = STRING_UZUNLUK(metin);
+    SAYISAL prefix_uzunluk = STRING_UZUNLUK(prefix);
+    EĞER prefix_uzunluk > metin_uzunluk İSE
+        DÖNÜŞ 0
+    SON
+    METIN metin_baslangic = STRING_ALT(metin, 0, prefix_uzunluk);
+    SAYISAL sonuc = STRING_KARSILASTIR(metin_baslangic, prefix);
+    EĞER sonuc == 0 İSE
+        DÖNÜŞ 1
+    SON
+    DÖNÜŞ 0
+SON
+
+İŞLEÇ STRING_TRIM(metin)
+    SAYISAL uzunluk = STRING_UZUNLUK(metin);
+    EĞER uzunluk == 0 İSE
+        DÖNÜŞ metin
+    SON
+    SAYISAL baslangic = 0;
+    DÖNGÜ
+        EĞER baslangic == uzunluk İSE
+            DÖNGÜ_BITIR
+        SON
+        METIN kar = STRING_KARAKTER_AL(metin, baslangic);
+        SAYISAL bosluk = BOSLUK_MU(kar);
+        EĞER bosluk == 0 İSE
+            DÖNGÜ_BITIR
+        SON
+        baslangic = baslangic + 1
+    SON
+    SAYISAL bitis = uzunluk;
+    DÖNGÜ
+        EĞER bitis == baslangic İSE
+            DÖNGÜ_BITIR
+        SON
+        METIN kar = STRING_KARAKTER_AL(metin, bitis - 1);
+        SAYISAL bosluk = BOSLUK_MU(kar);
+        EĞER bosluk == 0 İSE
+            DÖNGÜ_BITIR
+        SON
+        bitis = bitis - 1
+    SON
+    SAYISAL yeni_uzunluk = bitis - baslangic;
+    METIN sonuc = STRING_ALT(metin, baslangic, yeni_uzunluk);
+    DÖNÜŞ sonuc
+SON
+
+-- ============================================
+-- SATIR İŞLEME FONKSİYONLARI
+-- ============================================
+
+-- Kaynak koddan bir sonraki satırı al
+-- Giriş: kaynak, pozisyon
+-- Çıkış: "SATIR|YENİ_POZISYON" formatında string
+İŞLEÇ SATIR_AL(kaynak, pozisyon)
+    SAYISAL kaynak_uzunluk = STRING_UZUNLUK(kaynak);
+
+    -- Eğer pozisyon sonunu geçtiyse, boş döndür
+    EĞER pozisyon >= kaynak_uzunluk İSE
+        DÖNÜŞ ""
+    SON
+
+    -- Newline karakterini bul
+    SAYISAL i = pozisyon;
+    SAYISAL satir_sonu = 0 - 1;
+
+    DÖNGÜ
+        EĞER i == kaynak_uzunluk İSE
+            satir_sonu = i
+            DÖNGÜ_BITIR
+        SON
+
+        METIN kar = STRING_KARAKTER_AL(kaynak, i);
+        SAYISAL kod = KARAKTER_KODU(kar);
+
+        -- Newline (10) bulundu
+        EĞER kod == 10 İSE
+            satir_sonu = i
+            DÖNGÜ_BITIR
+        SON
+
+        i = i + 1
+    SON
+
+    -- Satırı çıkar
+    SAYISAL satir_uzunluk = satir_sonu - pozisyon;
+    METIN satir = STRING_ALT(kaynak, pozisyon, satir_uzunluk);
+
+    -- Yeni pozisyon (satır sonu + 1, newline'ı atla)
+    SAYISAL yeni_pozisyon = satir_sonu + 1;
+
+    -- Sonucu birleştir: "SATIR|POZISYON"
+    METIN ayrac = "|";
+    METIN tmp = STRING_BIRLESTIR(satir, ayrac);
+
+    -- Pozisyonu string'e çevir (basit sayı->string dönüşümü)
+    -- NOT: Şimdilik pozisyonu olduğu gibi döndüreceğiz
+    -- Gerçek implementasyonda: SAYI_STR fonksiyonu gerekli
+
+    DÖNÜŞ satir
+SON
+
+-- ============================================
+-- TEST: Satır İşleme
+-- ============================================
+
+YAZDIR "=== TYD Minimal Compiler v2: Satır İşleme Testi ==="
+
+-- Test kaynak kodu
+METIN test_kaynak = "YAZDIR Merhaba\nMETIN x = test\nYAZDIR x";
+
+YAZDIR "Test kaynak kodu:"
+YAZDIR test_kaynak
+
+-- İlk satırı al
+METIN satir1 = SATIR_AL(test_kaynak, 0);
+YAZDIR "Satır 1:"
+YAZDIR satir1
+
+-- İkinci satırı al (pozisyon: 16, çünkü "YAZDIR Merhaba\n" = 16 karakter)
+METIN satir2 = SATIR_AL(test_kaynak, 16);
+YAZDIR "Satır 2:"
+YAZDIR satir2
+
+-- Üçüncü satırı al
+METIN satir3 = SATIR_AL(test_kaynak, 31);
+YAZDIR "Satır 3:"
+YAZDIR satir3
+
+YAZDIR "=== Test Tamamlandı ==="

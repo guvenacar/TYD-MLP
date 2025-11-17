@@ -1,0 +1,59 @@
+-- ===================================================
+-- TYD Bootstrap Compiler v1 (Ultra Basit)
+-- Sadece tek bir YAZDIR komutunu derler
+-- ===================================================
+
+YAZDIR "=== TYD Bootstrap Compiler v1 ==="
+
+-- Assembly oluştur (hardcoded: YAZDIR "Merhaba")
+METIN asm1 = "extern printf\n";
+METIN asm2 = "section .data\n";
+METIN asm3 = "    fmt db \"%s\", 10, 0\n";
+METIN asm4 = "    msg db \"Merhaba TYD!\", 0\n";
+METIN asm5 = "section .text\n";
+METIN asm6 = "global main\n";
+METIN asm7 = "main:\n";
+METIN asm8 = "    push rbp\n";
+METIN asm9 = "    mov rbp, rsp\n";
+METIN asm10 = "    mov rdi, fmt\n";
+METIN asm11 = "    mov rsi, msg\n";
+METIN asm12 = "    mov rax, 0\n";
+METIN asm13 = "    call printf\n";
+METIN asm14 = "    mov rax, 0\n";
+METIN asm15 = "    pop rbp\n";
+METIN asm16 = "    ret\n";
+
+-- Assembly'i birleştir
+METIN final_asm = STRING_BIRLESTIR(asm1, asm2);
+final_asm = STRING_BIRLESTIR(final_asm, asm3)
+final_asm = STRING_BIRLESTIR(final_asm, asm4)
+final_asm = STRING_BIRLESTIR(final_asm, asm5)
+final_asm = STRING_BIRLESTIR(final_asm, asm6)
+final_asm = STRING_BIRLESTIR(final_asm, asm7)
+final_asm = STRING_BIRLESTIR(final_asm, asm8)
+final_asm = STRING_BIRLESTIR(final_asm, asm9)
+final_asm = STRING_BIRLESTIR(final_asm, asm10)
+final_asm = STRING_BIRLESTIR(final_asm, asm11)
+final_asm = STRING_BIRLESTIR(final_asm, asm12)
+final_asm = STRING_BIRLESTIR(final_asm, asm13)
+final_asm = STRING_BIRLESTIR(final_asm, asm14)
+final_asm = STRING_BIRLESTIR(final_asm, asm15)
+final_asm = STRING_BIRLESTIR(final_asm, asm16)
+
+YAZDIR "Assembly oluşturuldu:"
+YAZDIR final_asm
+
+-- Dosyaya yaz
+METIN dizin = DIZIN_AL();
+METIN dosya_eki = "/../tyd_compiler/hello.asm";
+METIN dosya_yolu = STRING_BIRLESTIR(dizin, dosya_eki);
+
+METIN mod = "w";
+SAYISAL dosya = DOSYA_AC(dosya_yolu, mod);
+SAYISAL yazilan = DOSYA_YAZ(dosya, final_asm);
+SAYISAL kapat = DOSYA_KAPAT(dosya);
+
+YAZDIR "Assembly yazıldı:"
+YAZDIR dosya_yolu
+
+YAZDIR "=== Bootstrap v1 Tamamlandı! ==="

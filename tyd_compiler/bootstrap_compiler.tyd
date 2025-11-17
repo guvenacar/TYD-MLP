@@ -1,0 +1,198 @@
+-- ===================================================
+-- TYD Bootstrap Compiler
+-- TYD kaynak kodunu okur ve x86-64 Assembly üretir
+-- Hedef: Kendini derleyebilecek kadar minimal!
+-- ===================================================
+
+YAZDIR "=== TYD Bootstrap Compiler Başlatılıyor ==="
+
+-- Kaynak dosyayı oku
+METIN dizin = DIZIN_AL();
+METIN kaynak_eki = "/../tyd_compiler/test_input.tyd";
+METIN kaynak_yolu = STRING_BIRLESTIR(dizin, kaynak_eki);
+
+YAZDIR "Kaynak dosya:"
+YAZDIR kaynak_yolu
+
+METIN mod_oku = "r";
+SAYISAL kaynak_dosya = DOSYA_AC(kaynak_yolu, mod_oku);
+METIN kaynak_kod = DOSYA_OKU(kaynak_dosya);
+SAYISAL kapat1 = DOSYA_KAPAT(kaynak_dosya);
+
+YAZDIR "Kaynak kod okundu"
+
+-- Assembly başlangıç (header)
+METIN asm_extern = "extern printf\n";
+METIN asm_data_start = "section .data\n";
+METIN asm_format = "    fmt_str db \"%s\", 10, 0\n";
+
+METIN asm_header = STRING_BIRLESTIR(asm_extern, asm_data_start);
+asm_header = STRING_BIRLESTIR(asm_header, asm_format)
+
+-- Assembly data section (string literaller buraya eklenecek)
+METIN asm_data = "";
+
+-- Assembly text section başlangıcı
+METIN asm_text_start = "section .text\n";
+METIN asm_main = "global main\nmain:\n";
+METIN asm_prologue = "    push rbp\n    mov rbp, rsp\n";
+
+METIN asm_text = STRING_BIRLESTIR(asm_text_start, asm_main);
+asm_text = STRING_BIRLESTIR(asm_text, asm_prologue)
+
+-- Assembly kod bloğu (komutlar buraya eklenecek)
+METIN asm_code = "";
+
+-- String counter (benzersiz etiketler için)
+SAYISAL str_counter = 0;
+
+YAZDIR "Assembly başlangıcı hazır"
+
+-- ============================================
+-- BASIT SATIR PARSE
+-- ============================================
+-- Şimdilik sadece ilk satırı işleyelim (proof of concept)
+
+YAZDIR "İlk satır parse ediliyor..."
+
+-- İlk satırı bul (newline'a kadar)
+SAYISAL kaynak_uzunluk = STRING_UZUNLUK(kaynak_kod);
+SAYISAL i = 0;
+SAYISAL satir_sonu = 0;
+
+DÖNGÜ
+    EĞER i == kaynak_uzunluk İSE
+        satir_sonu = i
+        DÖNGÜ_BITIR
+    SON
+
+    METIN kar = STRING_KARAKTER_AL(kaynak_kod, i);
+    SAYISAL kod = KARAKTER_KODU(kar);
+
+    EĞER kod == 10 İSE
+        satir_sonu = i
+        DÖNGÜ_BITIR
+    SON
+
+    i = i + 1
+SON
+
+METIN ilk_satir = STRING_ALT(kaynak_kod, 0, satir_sonu);
+
+YAZDIR "İlk satır:"
+YAZDIR ilk_satir
+
+-- ============================================
+-- PATTERN MATCHING: YAZDIR "..."
+-- ============================================
+
+-- YAZDIR ile başlıyor mu?
+METIN pattern_yazdir = "YAZDIR";
+SAYISAL pattern_uzunluk = STRING_UZUNLUK(pattern_yazdir);
+METIN satir_baslangic = STRING_ALT(ilk_satir, 0, pattern_uzunluk);
+SAYISAL yazdir_mi = STRING_KARSILASTIR(satir_baslangic, pattern_yazdir);
+
+EĞER yazdir_mi == 0 İSE
+    YAZDIR "YAZDIR komutu bulundu!"
+
+    -- String literali çıkar (YAZDIR "Merhaba" -> "Merhaba")
+    -- Basitleştirme: İlk " işaretinden son " işaretine kadar al
+
+    SAYISAL satir_uzunluk = STRING_UZUNLUK(ilk_satir);
+    SAYISAL j = pattern_uzunluk;
+
+    -- İlk " işaretini bul
+    SAYISAL str_baslangic = 0;
+
+    DÖNGÜ
+        EĞER j == satir_uzunluk İSE
+            DÖNGÜ_BITIR
+        SON
+
+        METIN k = STRING_KARAKTER_AL(ilk_satir, j);
+        SAYISAL k_kod = KARAKTER_KODU(k);
+
+        -- " karakteri (34)
+        EĞER k_kod == 34 İSE
+            str_baslangic = j + 1
+            DÖNGÜ_BITIR
+        SON
+
+        j = j + 1
+    SON
+
+    -- Son " işaretini bul
+    SAYISAL str_bitis = satir_uzunluk;
+    SAYISAL m = str_baslangic;
+
+    DÖNGÜ
+        EĞER m == satir_uzunluk İSE
+            DÖNGÜ_BITIR
+        SON
+
+        METIN n = STRING_KARAKTER_AL(ilk_satir, m);
+        SAYISAL n_kod = KARAKTER_KODU(n);
+
+        EĞER n_kod == 34 İSE
+            str_bitis = m
+            DÖNGÜ_BITIR
+        SON
+
+        m = m + 1
+    SON
+
+    -- String literali çıkar
+    SAYISAL str_uzunluk = str_bitis - str_baslangic;
+    METIN string_literal = STRING_ALT(ilk_satir, str_baslangic, str_uzunluk);
+
+    YAZDIR "String literal:"
+    YAZDIR string_literal
+
+    -- Assembly data section'a ekle
+    METIN str_label = "str_0: db \"";
+    METIN str_end = "\", 0\n";
+    METIN data_line = STRING_BIRLESTIR(str_label, string_literal);
+    data_line = STRING_BIRLESTIR(data_line, str_end)
+
+    asm_data = STRING_BIRLESTIR(asm_data, data_line)
+
+    -- Assembly code section'a ekle
+    METIN code1 = "    mov rdi, fmt_str\n";
+    METIN code2 = "    mov rsi, str_0\n";
+    METIN code3 = "    mov rax, 0\n";
+    METIN code4 = "    call printf\n";
+
+    asm_code = STRING_BIRLESTIR(asm_code, code1)
+    asm_code = STRING_BIRLESTIR(asm_code, code2)
+    asm_code = STRING_BIRLESTIR(asm_code, code3)
+    asm_code = STRING_BIRLESTIR(asm_code, code4)
+
+    YAZDIR "Assembly kod üretildi!"
+SON
+
+-- ============================================
+-- ASSEMBLY SONLANDIRMA
+-- ============================================
+
+METIN asm_epilogue = "    mov rax, 0\n    pop rbp\n    ret\n";
+
+-- Tüm assembly'i birleştir
+METIN final_asm = STRING_BIRLESTIR(asm_header, asm_data);
+final_asm = STRING_BIRLESTIR(final_asm, asm_text)
+final_asm = STRING_BIRLESTIR(final_asm, asm_code)
+final_asm = STRING_BIRLESTIR(final_asm, asm_epilogue)
+
+YAZDIR "=== Oluşturulan Assembly ==="
+YAZDIR final_asm
+
+-- Çıktı dosyasına yaz
+METIN cikti_eki = "/../tyd_compiler/bootstrap_output.asm";
+METIN cikti_yolu = STRING_BIRLESTIR(dizin, cikti_eki);
+
+METIN mod_yaz = "w";
+SAYISAL cikti_dosya = DOSYA_AC(cikti_yolu, mod_yaz);
+SAYISAL yazilan = DOSYA_YAZ(cikti_dosya, final_asm);
+SAYISAL kapat2 = DOSYA_KAPAT(cikti_dosya);
+
+YAZDIR "=== Bootstrap Assembly Yazıldı ==="
+YAZDIR cikti_yolu
