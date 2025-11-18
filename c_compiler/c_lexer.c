@@ -79,6 +79,7 @@ KeywordMap keywords[] = {
     {"DÖNGÜ",   TOKEN_YAPI_DONGU},
     {"DÖNGÜ_BITIR", TOKEN_YAPI_DONGU_BITIR},
     {"SON",     TOKEN_YAPI_SON},
+    {"YAPI",    TOKEN_YAPI_STRUCT}, // Struct tanımlama
 
     // NOT: DOSYA_AC, DOSYA_OKU, DOSYA_YAZ, DOSYA_KAPAT built-in fonksiyonlar olarak
     // IDENTIFIER token'ı olarak kalacak (anahtar kelime değil)
@@ -460,7 +461,8 @@ Token* check_keyword(const char* word) {
     if (strcmp(word, "DÖNGÜ") == 0) return createToken(TOKEN_YAPI_DONGU, word);      // ✅ Düzeltildi
     if (strcmp(word, "DÖNGÜ_BITIR") == 0) return createToken(TOKEN_YAPI_DONGU_BITIR, word); // ✅ Düzeltildi
     if (strcmp(word, "SON") == 0) return createToken(TOKEN_YAPI_SON, word);          // ✅ Düzeltildi
-    
+    if (strcmp(word, "YAPI") == 0) return createToken(TOKEN_YAPI_STRUCT, word);      // ✅ Struct tanımlama
+
     // String fonksiyonları - SİL (aşağıdaki satırları)
     // ❌ BUNLARI SİL - String fonksiyonları TOKEN_YAPI_ISLEC_CAGIR değil, normal TOKEN_TANIMLAYICI!
     

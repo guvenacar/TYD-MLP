@@ -28,6 +28,7 @@ typedef enum {
     TOKEN_YAPI_DONGU,     // DÖNGÜ
     TOKEN_YAPI_DONGU_BITIR, // DÖNGÜ_BITIR
     TOKEN_YAPI_SON,       // SON
+    TOKEN_YAPI_STRUCT,    // YAPI (Struct tanımlama)
 
     // --- Operatörler ve Ayırıcılar ---
     // --- Operatörler ve Ayırıcılar ---
