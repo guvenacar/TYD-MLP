@@ -1,0 +1,189 @@
+-- TYD Self-Hosting Generator (Basitleştirilmiş)
+-- AST → Assembly code generator
+
+-- Global generator state
+SAYISAL ast_position = 0;
+SAYISAL ast_statement_count = 0;
+
+-- Assembly output buffer
+METIN assembly_lines[200];
+SAYISAL assembly_count = 0;
+
+-- String literals
+METIN string_literals[50];
+SAYISAL string_count = 0;
+
+-- Symbol table (değişkenler)
+METIN symbol_names[50];
+SAYISAL symbol_offsets[50];
+SAYISAL symbol_count = 0;
+SAYISAL stack_offset = 0;
+
+-- Generator fonksiyonları
+İŞLEÇ generator_init() İSE
+    assembly_count = 0
+    string_count = 0
+    symbol_count = 0
+    stack_offset = 0
+SON
+
+İŞLEÇ emit(line) İSE
+    assembly_lines[assembly_count] = line
+    assembly_count = assembly_count + 1
+SON
+
+İŞLEÇ emit_header() İSE
+    emit("extern printf")
+    emit("section .data")
+    emit("    format_sayi db \"%ld\", 10, 0")
+    emit("    format_metin db \"%s\", 10, 0")
+SON
+
+İŞLEÇ emit_string_literal(str) İSE
+    -- String literal ekle
+    METIN label = "str_";
+    string_literals[string_count] = str
+    string_count = string_count + 1
+    DÖNÜŞ label
+SON
+
+İŞLEÇ add_symbol(name) İSE
+    -- Yeni değişken ekle
+    symbol_names[symbol_count] = name
+    stack_offset = stack_offset + 8
+    symbol_offsets[symbol_count] = stack_offset
+    symbol_count = symbol_count + 1
+    DÖNÜŞ stack_offset
+SON
+
+İŞLEÇ find_symbol(name) İSE
+    -- Değişken bul
+    SAYISAL i = 0;
+    DÖNGÜ
+        EĞER i >= symbol_count İSE
+            DÖNGÜ_BITIR
+        SON
+
+        SAYISAL esit = STRING_ESIT_MI(symbol_names[i], name);
+        EĞER esit == 1 İSE
+            DÖNÜŞ symbol_offsets[i]
+        SON
+
+        i = i + 1
+    SON
+    DÖNÜŞ 0
+SON
+
+İŞLEÇ emit_main_start() İSE
+    emit("")
+    emit("section .text")
+    emit("global main")
+    emit("main:")
+    emit("    push rbp")
+    emit("    mov rbp, rsp")
+    emit("    sub rsp, 256")
+SON
+
+İŞLEÇ emit_main_end() İSE
+    emit("    xor rax, rax")
+    emit("    mov rsp, rbp")
+    emit("    pop rbp")
+    emit("    ret")
+SON
+
+-- Statement generation
+İŞLEÇ generate_yazdir(value) İSE
+    -- YAZDIR statement için assembly üret
+    -- Basit: sadece string literalleri destekle
+
+    -- String literal label oluştur
+    METIN str_label = emit_string_literal(value);
+
+    -- Assembly üret
+    emit("    ; YAZDIR")
+    emit("    mov rax, str_0")  -- TODO: dinamik label
+    emit("    mov rdi, format_metin")
+    emit("    mov rsi, rax")
+    emit("    mov rax, 0")
+    emit("    call printf")
+SON
+
+İŞLEÇ generate_degisken_tanimlama(name, value) İSE
+    -- Değişken tanımlama için assembly üret
+
+    -- Sembol tablosuna ekle
+    SAYISAL offset = add_symbol(name);
+
+    -- Assembly üret (basit: sadece sabit değerler)
+    emit("    ; Değişken tanımlama")
+    emit("    mov rax, 0")  -- TODO: gerçek değer
+    emit("    mov [rbp-8], rax")  -- TODO: dinamik offset
+SON
+
+-- Ana generator fonksiyonu
+İŞLEÇ generate_program(ast_types, ast_values, stmt_count) İSE
+    generator_init()
+
+    -- Header emit et
+    emit_header()
+
+    -- Main function başlat
+    emit_main_start()
+
+    -- Her statement için kod üret
+    SAYISAL i = 0;
+    DÖNGÜ
+        EĞER i >= stmt_count İSE
+            DÖNGÜ_BITIR
+        SON
+
+        SAYISAL stmt_type = ast_types[i];
+        METIN stmt_value = ast_values[i];
+
+        -- YAZDIR?
+        EĞER stmt_type == 1 İSE
+            generate_yazdir(stmt_value)
+        SON
+
+        -- DEĞİŞKEN_TANIMLAMA?
+        EĞER stmt_type == 2 İSE
+            generate_degisken_tanimlama(stmt_value, "0")
+        SON
+
+        i = i + 1
+    SON
+
+    -- Main function bitir
+    emit_main_end()
+
+    DÖNÜŞ assembly_count
+SON
+
+-- Test
+YAZDIR "=== Generator Test ==="
+
+-- Mock AST (YAZDIR "hello")
+SAYISAL test_ast_types[10];
+METIN test_ast_values[10];
+test_ast_types[0] = 1   -- YAZDIR
+test_ast_values[0] = "hello"
+
+SAYISAL line_count = generate_program(test_ast_types, test_ast_values, 1);
+
+YAZDIR "Üretilen assembly satır sayısı: "
+YAZDIR line_count
+
+YAZDIR ""
+YAZDIR "Assembly Code:"
+SAYISAL i = 0;
+DÖNGÜ
+    EĞER i >= line_count İSE
+        DÖNGÜ_BITIR
+    SON
+
+    YAZDIR assembly_lines[i]
+    i = i + 1
+SON
+
+YAZDIR ""
+YAZDIR "=== Generator Test Bitti ==="
