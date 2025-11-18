@@ -16,6 +16,11 @@ runtime.o
 *.swo
 *~
 
+# Python files
+__pycache__/
+*.py[cod]
+*.pyc
+
 # OS files
 .DS_Store
 Thumbs.db
