@@ -39,7 +39,8 @@ typedef enum {
     TOKEN_COMMA,        // ,
     TOKEN_ASSIGN,       // =
     TOKEN_SEMICOLON,    // ;  <-- YENİ
-    
+    TOKEN_DOT,          // .  <-- Struct field access
+
     // Tek Karakterli Operatörler
     TOKEN_PLUS,         // +
     TOKEN_MINUS,        // -

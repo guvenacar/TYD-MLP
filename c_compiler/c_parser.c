@@ -207,6 +207,63 @@ ASTNode* createAST_ArrayAtama(Token* ad, ASTNode* indeks, ASTNode* deger) {
     return node;
 }
 
+// Struct Tanımlama (YAPI Nokta İSE SAYISAL x; SAYISAL y; SON)
+ASTNode* createAST_StructTanimlama(Token* ad, Token** field_tipleri, Token** field_adlari, int field_sayisi) {
+    ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
+    if (node == NULL) return NULL;
+    node->type = AST_STRUCT_TANIMLAMA;
+    node->struct_tanimlama_data.ad = (Token*)malloc(sizeof(Token));
+    node->struct_tanimlama_data.ad->type = ad->type;
+    node->struct_tanimlama_data.ad->value = strdup(ad->value);
+    node->struct_tanimlama_data.field_tipleri = field_tipleri;
+    node->struct_tanimlama_data.field_adlari = field_adlari;
+    node->struct_tanimlama_data.field_sayisi = field_sayisi;
+    return node;
+}
+
+// Struct Field Access (p.x)
+ASTNode* createAST_StructFieldAccess(Token* struct_ad, Token* field_ad) {
+    ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
+    if (node == NULL) return NULL;
+    node->type = AST_STRUCT_FIELD_ACCESS;
+    node->struct_field_access_data.struct_ad = (Token*)malloc(sizeof(Token));
+    node->struct_field_access_data.struct_ad->type = struct_ad->type;
+    node->struct_field_access_data.struct_ad->value = strdup(struct_ad->value);
+    node->struct_field_access_data.field_ad = (Token*)malloc(sizeof(Token));
+    node->struct_field_access_data.field_ad->type = field_ad->type;
+    node->struct_field_access_data.field_ad->value = strdup(field_ad->value);
+    return node;
+}
+
+// Struct Field Atama (p.x = 10;)
+ASTNode* createAST_StructFieldAtama(Token* struct_ad, Token* field_ad, ASTNode* deger) {
+    ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
+    if (node == NULL) return NULL;
+    node->type = AST_STRUCT_FIELD_ATAMA;
+    node->struct_field_atama_data.struct_ad = (Token*)malloc(sizeof(Token));
+    node->struct_field_atama_data.struct_ad->type = struct_ad->type;
+    node->struct_field_atama_data.struct_ad->value = strdup(struct_ad->value);
+    node->struct_field_atama_data.field_ad = (Token*)malloc(sizeof(Token));
+    node->struct_field_atama_data.field_ad->type = field_ad->type;
+    node->struct_field_atama_data.field_ad->value = strdup(field_ad->value);
+    node->struct_field_atama_data.deger = deger;
+    return node;
+}
+
+// Struct Değişken (Nokta p;)
+ASTNode* createAST_StructDegisken(Token* struct_tip, Token* ad) {
+    ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
+    if (node == NULL) return NULL;
+    node->type = AST_STRUCT_DEGISKEN;
+    node->struct_degisken_data.struct_tip = (Token*)malloc(sizeof(Token));
+    node->struct_degisken_data.struct_tip->type = struct_tip->type;
+    node->struct_degisken_data.struct_tip->value = strdup(struct_tip->value);
+    node->struct_degisken_data.ad = (Token*)malloc(sizeof(Token));
+    node->struct_degisken_data.ad->type = ad->type;
+    node->struct_degisken_data.ad->value = strdup(ad->value);
+    return node;
+}
+
 ASTNode* createAST_KosulKomutu(ASTNode* kosul, ASTNode* ise_blok, ASTNode* degilse_blok) {
     ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
     if (node == NULL) return NULL;
@@ -326,6 +383,21 @@ ASTNode* birincil() {
             free(ad_token_kopya.value);
             return array_erisim;
         }
+        // Struct field access mi? (p.x)
+        else if (current_token->type == TOKEN_DOT) {
+            consume(TOKEN_DOT);
+            if (current_token->type != TOKEN_IDENTIFIER) {
+                parseError("Field adı", "IDENTIFIER");
+            }
+            Token field_ad;
+            field_ad.type = current_token->type;
+            field_ad.value = strdup(current_token->value);
+            consume(TOKEN_IDENTIFIER);
+            ASTNode* field_access = createAST_StructFieldAccess(&ad_token_kopya, &field_ad);
+            free(ad_token_kopya.value);
+            free(field_ad.value);
+            return field_access;
+        }
         // Normal değişken
         else {
             ASTNode* var_node = createAST_Degisken(&ad_token_kopya);
@@ -362,6 +434,70 @@ ASTNode* ikili_islem(int onceki_oncelik) {
 }
 
 ASTNode* komut() {
+    // 0. YAPI - Struct Tanımlama (YAPI Nokta İSE ... SON)
+    if (current_token->type == TOKEN_YAPI_STRUCT) {
+        consume(TOKEN_YAPI_STRUCT);
+
+        // Struct adı
+        if (current_token->type != TOKEN_IDENTIFIER) {
+            parseError("Struct adı", "IDENTIFIER");
+        }
+        Token struct_ad;
+        struct_ad.type = current_token->type;
+        struct_ad.value = strdup(current_token->value);
+        consume(TOKEN_IDENTIFIER);
+
+        // İSE
+        consume(TOKEN_YAPI_KOSUL_ISE);
+
+        // Field'ları parse et
+        Token** field_tipleri = (Token**)malloc(sizeof(Token*) * 20);  // Max 20 field
+        Token** field_adlari = (Token**)malloc(sizeof(Token*) * 20);
+        int field_sayisi = 0;
+
+        // SON'a kadar field'ları oku
+        while (current_token->type != TOKEN_YAPI_SON) {
+            // Field tipi (SAYISAL, METIN, vb.)
+            if (current_token->type != TOKEN_TANIMLA_SAYI &&
+                current_token->type != TOKEN_TANIMLA_METIN &&
+                current_token->type != TOKEN_TANIMLA_BOOL) {
+                parseError("Field tipi", "SAYISAL/METIN/BOOL");
+            }
+
+            Token* field_tip = (Token*)malloc(sizeof(Token));
+            field_tip->type = current_token->type;
+            field_tip->value = strdup(current_token->value);
+            field_tipleri[field_sayisi] = field_tip;
+            consume(current_token->type);
+
+            // Field adı
+            if (current_token->type != TOKEN_IDENTIFIER) {
+                parseError("Field adı", "IDENTIFIER");
+            }
+            Token* field_ad = (Token*)malloc(sizeof(Token));
+            field_ad->type = current_token->type;
+            field_ad->value = strdup(current_token->value);
+            field_adlari[field_sayisi] = field_ad;
+            consume(TOKEN_IDENTIFIER);
+
+            // Noktalı virgül
+            consume(TOKEN_SEMICOLON);
+
+            field_sayisi++;
+        }
+
+        // SON
+        consume(TOKEN_YAPI_SON);
+
+        ASTNode* struct_node = createAST_StructTanimlama(&struct_ad, field_tipleri, field_adlari, field_sayisi);
+        free(struct_ad.value);
+        return struct_node;
+    }
+
+    // TODO: Struct Değişken Tanımlama (Nokta p;)
+    // Şimdilik struct değişkenleri global olarak veya typedef ile tanımlanabilir
+    // İleride peek_token() eklenip IDENTIFIER IDENTIFIER SEMICOLON pattern'i yakalanabilir
+
     // 1. YAZDIR (Noktalı virgülsüz)
     if (current_token->type == TOKEN_YAPI_YAZDIR) {
         consume(TOKEN_YAPI_YAZDIR);
@@ -372,8 +508,8 @@ ASTNode* komut() {
         yazdir_node->tek_ifade_data.ifade = ifade_dugumu;
         return yazdir_node;
     }
-    
-    // 2. Değişken Tanımlama (Noktalı virgüllü)
+
+    // 3. Değişken Tanımlama (Noktalı virgüllü)
     if (current_token->type == TOKEN_TANIMLA_SAYI ||
         current_token->type == TOKEN_TANIMLA_METIN ||
         current_token->type == TOKEN_TANIMLA_BOOL)
@@ -448,9 +584,9 @@ ASTNode* komut() {
     if (current_token->type == TOKEN_IDENTIFIER) {
         ASTNode* sol_node = ifade(); // 'birincil()' çağrılır
 
-        // DURUM 7.1: ATAMA (örn: x = 5 veya arr[i] = 5)
-        // 'ifade()' bize bir AST_DEGISKEN (x) veya AST_ARRAY_ERISIM döndürdüyse
-        if ((sol_node->type == AST_DEGISKEN || sol_node->type == AST_ARRAY_ERISIM) &&
+        // DURUM 7.1: ATAMA (örn: x = 5, arr[i] = 5, p.x = 10)
+        // 'ifade()' bize bir AST_DEGISKEN (x), AST_ARRAY_ERISIM veya AST_STRUCT_FIELD_ACCESS döndürdüyse
+        if ((sol_node->type == AST_DEGISKEN || sol_node->type == AST_ARRAY_ERISIM || sol_node->type == AST_STRUCT_FIELD_ACCESS) &&
             current_token->type == TOKEN_ASSIGN) {
             consume(TOKEN_ASSIGN); // '=' tüket
             ASTNode* sag_ifade = ifade(); // Sağ tarafı (5) ayrıştır
@@ -484,6 +620,22 @@ ASTNode* komut() {
                 free(sol_node); // Sadece wrapper'ı free et
 
                 return array_atama;
+            }
+            // Struct field ataması (p.x = 10)
+            else if (sol_node->type == AST_STRUCT_FIELD_ACCESS) {
+                specs_check_no_semicolon("Struct field atama komutu");
+
+                // sol_node AST_STRUCT_FIELD_ACCESS, ondan struct_ad ve field_ad al
+                Token* struct_ad = sol_node->struct_field_access_data.struct_ad;
+                Token* field_ad = sol_node->struct_field_access_data.field_ad;
+
+                // Yeni AST_STRUCT_FIELD_ATAMA node oluştur
+                ASTNode* field_atama = createAST_StructFieldAtama(struct_ad, field_ad, sag_ifade);
+
+                // sol_node'u temizle
+                free(sol_node);
+
+                return field_atama;
             }
         }
         

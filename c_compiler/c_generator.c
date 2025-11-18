@@ -232,6 +232,10 @@ void visit_DonusKomutu(ASTNode* node); // İleri bildirim
 void visit_ArrayTanimlama(ASTNode* node); // İleri bildirim
 void visit_ArrayErisim(ASTNode* node); // İleri bildirim
 void visit_ArrayAtama(ASTNode* node); // İleri bildirim
+void visit_StructTanimlama(ASTNode* node); // İleri bildirim
+void visit_StructFieldAccess(ASTNode* node); // İleri bildirim
+void visit_StructFieldAtama(ASTNode* node); // İleri bildirim
+void visit_StructDegisken(ASTNode* node); // İleri bildirim
 
 void visit_Blok(ASTNode* node) {
     // Blok içindeki her komutu ziyaret et
@@ -850,6 +854,77 @@ void visit_ArrayAtama(ASTNode* node) {
     asm_append(&text_section, "    mov [rcx], rax  ; Array elemanına yaz");
 }
 
+// Struct Tanımlama - Metadata sakla (şimdilik sadece comment)
+void visit_StructTanimlama(ASTNode* node) {
+    char* struct_adi = node->struct_tanimlama_data.ad->value;
+    int field_sayisi = node->struct_tanimlama_data.field_sayisi;
+    char buffer[256];
+
+    sprintf(buffer, "    ; --- Struct Tanımlama: %s (%d fields) ---", struct_adi, field_sayisi);
+    asm_append(&text_section, buffer);
+
+    // Struct layout bilgisi (şimdilik sadece comment olarak)
+    for (int i = 0; i < field_sayisi; i++) {
+        char* field_ad = node->struct_tanimlama_data.field_adlari[i]->value;
+        sprintf(buffer, "    ; Field %d: %s (offset %d)", i, field_ad, i * 8);
+        asm_append(&text_section, buffer);
+    }
+
+    // TODO: Global struct metadata tablosu oluştur
+    // Şimdilik sadece parse ediyoruz, runtime'da kullanmıyoruz
+}
+
+// Struct Field Access - p.x (değeri RAX'e yükle)
+void visit_StructFieldAccess(ASTNode* node) {
+    char* struct_ad = node->struct_field_access_data.struct_ad->value;
+    char* field_ad = node->struct_field_access_data.field_ad->value;
+    char buffer[256];
+
+    sprintf(buffer, "    ; --- Struct Field Access: %s.%s ---", struct_ad, field_ad);
+    asm_append(&text_section, buffer);
+
+    // TODO: Gerçek struct layout'dan offset bul
+    // Şimdilik basit: field index'e göre offset hesapla
+    // Bu örnek için: her field 8 byte, offset = index * 8
+    // Gerçek implementasyonda struct metadata tablosundan bakmalı
+
+    sprintf(buffer, "    ; WARNING: Struct field access henüz tam desteklenmiyor");
+    asm_append(&text_section, buffer);
+    asm_append(&text_section, "    mov rax, 0  ; Placeholder");
+}
+
+// Struct Field Atama - p.x = 10
+void visit_StructFieldAtama(ASTNode* node) {
+    char* struct_ad = node->struct_field_atama_data.struct_ad->value;
+    char* field_ad = node->struct_field_atama_data.field_ad->value;
+    char buffer[256];
+
+    sprintf(buffer, "    ; --- Struct Field Atama: %s.%s ---", struct_ad, field_ad);
+    asm_append(&text_section, buffer);
+
+    // Değeri hesapla
+    visit(node->struct_field_atama_data.deger);
+
+    // TODO: Gerçek struct base + offset hesapla
+    sprintf(buffer, "    ; WARNING: Struct field atama henüz tam desteklenmiyor");
+    asm_append(&text_section, buffer);
+}
+
+// Struct Değişken - Nokta p;
+void visit_StructDegisken(ASTNode* node) {
+    char* struct_tip = node->struct_degisken_data.struct_tip->value;
+    char* degisken_ad = node->struct_degisken_data.ad->value;
+    char buffer[256];
+
+    sprintf(buffer, "    ; --- Struct Değişken: %s %s ---", struct_tip, degisken_ad);
+    asm_append(&text_section, buffer);
+
+    // TODO: Stack'te veya global'de yer ayır
+    // Struct boyutu = field_sayisi * 8
+    sprintf(buffer, "    ; WARNING: Struct değişken tanımlama henüz tam desteklenmiyor");
+    asm_append(&text_section, buffer);
+}
+
 void visit_DonusKomutu(ASTNode* node) {
     asm_append(&text_section, "    ; --- Donus Komutu ---");
 
@@ -1013,6 +1088,26 @@ void visit(ASTNode* node) {
         // Array Atama
         case AST_ARRAY_ATAMA:
             visit_ArrayAtama(node);
+            break;
+
+        // Struct Tanımlama
+        case AST_STRUCT_TANIMLAMA:
+            visit_StructTanimlama(node);
+            break;
+
+        // Struct Field Access
+        case AST_STRUCT_FIELD_ACCESS:
+            visit_StructFieldAccess(node);
+            break;
+
+        // Struct Field Atama
+        case AST_STRUCT_FIELD_ATAMA:
+            visit_StructFieldAtama(node);
+            break;
+
+        // Struct Değişken
+        case AST_STRUCT_DEGISKEN:
+            visit_StructDegisken(node);
             break;
 
         default:

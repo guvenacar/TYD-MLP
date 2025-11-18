@@ -1,0 +1,15 @@
+-- Test: Struct Support
+-- Bu program struct tanımlama ve field access/atama özelliklerini test eder
+
+-- Struct tanımlama
+YAPI Nokta İSE
+    SAYISAL x;
+    SAYISAL y;
+SON
+
+YAZDIR "Struct 'Nokta' tanımlandı"
+
+-- Şimdilik struct değişken tanımlama atlanıyor (TODO)
+-- İleride: Nokta p; şeklinde tanımlanabilecek
+
+YAZDIR "Test tamamlandı"

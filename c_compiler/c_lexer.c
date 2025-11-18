@@ -431,7 +431,11 @@ Token* getNextToken() {
     }
     if (current_char == ',') {
         current_position++;
-        return createToken(TOKEN_COMMA, ","); 
+        return createToken(TOKEN_COMMA, ",");
+    }
+    if (current_char == '.') {
+        current_position++;
+        return createToken(TOKEN_DOT, ".");
     }
 
     // 4. Tanınmayan Karakter (HATA YÖNETİMİ DÜZELTİLDİ)

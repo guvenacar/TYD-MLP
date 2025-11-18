@@ -24,6 +24,10 @@ typedef enum {
     AST_ARRAY_TANIMLAMA,    // Array bildirimi: SAYISAL arr[10];
     AST_ARRAY_ERISIM,       // Array erişim: arr[5]
     AST_ARRAY_ATAMA,        // Array atama: arr[5] = 10;
+    AST_STRUCT_TANIMLAMA,   // Struct tanımlama: YAPI Nokta İSE ... SON
+    AST_STRUCT_FIELD_ACCESS,// Struct field erişim: p.x
+    AST_STRUCT_FIELD_ATAMA, // Struct field atama: p.x = 10;
+    AST_STRUCT_DEGISKEN,    // Struct değişken: Nokta p;
     // ... (Diğer tüm AST düğüm tipleri buraya eklenecek)
 } ASTNodeType;
 
@@ -127,6 +131,33 @@ struct ASTNode {
             ASTNode* indeks;   // İndeks ifadesi
             ASTNode* deger;    // Atanacak değer
         } array_atama_data;
+
+        // Struct Tanımlama (YAPI Nokta İSE SAYISAL x; SAYISAL y; SON)
+        struct {
+            Token* ad;              // Struct ismi (Nokta)
+            Token** field_tipleri;  // Field tipleri (SAYISAL, METIN, vb.)
+            Token** field_adlari;   // Field isimleri (x, y, vb.)
+            int field_sayisi;       // Field sayısı
+        } struct_tanimlama_data;
+
+        // Struct Field Access (p.x)
+        struct {
+            Token* struct_ad;  // Struct değişken ismi (p)
+            Token* field_ad;   // Field ismi (x)
+        } struct_field_access_data;
+
+        // Struct Field Atama (p.x = 10;)
+        struct {
+            Token* struct_ad;  // Struct değişken ismi (p)
+            Token* field_ad;   // Field ismi (x)
+            ASTNode* deger;    // Atanacak değer
+        } struct_field_atama_data;
+
+        // Struct Değişken (Nokta p;)
+        struct {
+            Token* struct_tip; // Struct tipi (Nokta)
+            Token* ad;         // Değişken ismi (p)
+        } struct_degisken_data;
     };
 };
 
