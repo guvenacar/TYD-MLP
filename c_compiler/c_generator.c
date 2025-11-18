@@ -882,11 +882,19 @@ void visit_IkiliIslem(ASTNode* node) {
             asm_append(&text_section, "    setg al");      // Eğer büyükse (Greater) AL = 1
             asm_append(&text_section, "    movzx rax, al");
             break;
+        case TOKEN_GTE: // >=
+            asm_append(&text_section, "    cmp rax, rbx");
+            asm_append(&text_section, "    setge al");     // Eğer büyük veya eşitse (Greater or Equal) AL = 1
+            asm_append(&text_section, "    movzx rax, al");
+            break;
+        case TOKEN_LTE: // <=
+            asm_append(&text_section, "    cmp rax, rbx");
+            asm_append(&text_section, "    setle al");     // Eğer küçük veya eşitse (Less or Equal) AL = 1
+            asm_append(&text_section, "    movzx rax, al");
+            break;
 
-        // ... (GTE, LTE ileride eklenebilir)
-        
         default:
-            fprintf(stderr, "HATA [Generator]: Desteklenmeyen ikili operatör tipi: %d\n", 
+            fprintf(stderr, "HATA [Generator]: Desteklenmeyen ikili operatör tipi: %d\n",
                 node->ikili_islem_data.operator_type);
             exit(1);
     }
