@@ -195,6 +195,18 @@ ASTNode* createAST_ArrayErisim(Token* ad, ASTNode* indeks) {
     return node;
 }
 
+ASTNode* createAST_ArrayAtama(Token* ad, ASTNode* indeks, ASTNode* deger) {
+    ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
+    if (node == NULL) return NULL;
+    node->type = AST_ARRAY_ATAMA;
+    node->array_atama_data.ad = (Token*)malloc(sizeof(Token));
+    node->array_atama_data.ad->type = ad->type;
+    node->array_atama_data.ad->value = strdup(ad->value);
+    node->array_atama_data.indeks = indeks;
+    node->array_atama_data.deger = deger;
+    return node;
+}
+
 ASTNode* createAST_KosulKomutu(ASTNode* kosul, ASTNode* ise_blok, ASTNode* degilse_blok) {
     ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
     if (node == NULL) return NULL;
@@ -458,41 +470,20 @@ ASTNode* komut() {
                 return atama_node;
             }
             // Array erişimi ataması (arr[i] = value)
-            // Bu durumda sol_node zaten AST_ARRAY_ERISIM
-            // Bunu özel bir atama komutu olarak wrap etmeliyiz
             else if (sol_node->type == AST_ARRAY_ERISIM) {
-                // Şimdilik array erişimini atama ifadesi olarak saklamak için
-                // atama node'u oluşturalım (ad'ı boş bırakıp hedefi sol_node yapabiliriz)
-                // Ama mevcut struct buna uygun değil.
-                // Geçici çözüm: AST_ARRAY_ERISIM'i tek_ifade_data ile wrap edip
-                // tip olarak AST_ATAMA_KOMUTU kullanabiliriz.
-                // Ama bu da temiz değil.
+                specs_check_no_semicolon("Array atama komutu");
 
-                // En iyi çözüm: Generator'da bu durumu handle etmek
-                // Şimdilik AST_ARRAY_ERISIM node'unu değer ataması için kullanabiliriz
-                // Generator'da AST_ARRAY_ERISIM tipini kontrol edip atama olarak handle ederiz
+                // sol_node AST_ARRAY_ERISIM, ondan ad ve indeks al
+                Token* array_ad = sol_node->array_erisim_data.ad;
+                ASTNode* array_indeks = sol_node->array_erisim_data.indeks;
 
-                // Yeni bir wrapper node oluşturalım
-                ASTNode* array_atama = (ASTNode*)malloc(sizeof(ASTNode));
-                array_atama->type = AST_ATAMA_KOMUTU;
-                // HACK: ad yerine array_erisim node'unu kullanacağız
-                // atama_data.ad normalde Token* ama burada array node tutacağız
-                // Bu çirkin ama çalışır. Generator'da type check yapacağız.
-                array_atama->atama_data.ad = NULL;  // İşaret: bu bir array atama
-                array_atama->atama_data.ifade = sag_ifade;
+                // Yeni AST_ARRAY_ATAMA node oluştur
+                ASTNode* array_atama = createAST_ArrayAtama(array_ad, array_indeks, sag_ifade);
 
-                // sol_node'u (array erişimi) yeni bir field'a kaydetmeliyiz
-                // Ama mevcut struct'ta böyle bir field yok
-                // Geçici hack: tek_ifade_data kullan
+                // sol_node'u temizle (ama içindekiler array_atama'da kullanılıyor, dikkat!)
+                free(sol_node); // Sadece wrapper'ı free et
 
-                // Aslında daha iyi: yeni bir tip tanımlayalım
-                // Ama şimdi compile edip test etmek için hack yapalım
-
-                fprintf(stderr, "UYARI: Array ataması henüz tam desteklenmiyor.\n");
-                free(sol_node);
-                free(sag_ifade);
-                parseError("Array ataması", "Henüz desteklenmiyor");
-                return NULL;
+                return array_atama;
             }
         }
         

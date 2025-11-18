@@ -231,6 +231,7 @@ void visit_IslecCagirma(ASTNode* node); // İleri bildirim
 void visit_DonusKomutu(ASTNode* node); // İleri bildirim
 void visit_ArrayTanimlama(ASTNode* node); // İleri bildirim
 void visit_ArrayErisim(ASTNode* node); // İleri bildirim
+void visit_ArrayAtama(ASTNode* node); // İleri bildirim
 
 void visit_Blok(ASTNode* node) {
     // Blok içindeki her komutu ziyaret et
@@ -818,6 +819,37 @@ void visit_ArrayErisim(ASTNode* node) {
     asm_append(&text_section, "    mov rax, [rbx]  ; Array elemanını oku");
 }
 
+void visit_ArrayAtama(ASTNode* node) {
+    char* array_adi = node->array_atama_data.ad->value;
+    char buffer[256];
+
+    sprintf(buffer, "    ; --- ArrayAtama: %s ---", array_adi);
+    asm_append(&text_section, buffer);
+
+    // Değeri hesapla (sağ taraf)
+    visit(node->array_atama_data.deger);
+    asm_append(&text_section, "    push rax  ; Değeri sakla");
+
+    // İndeks ifadesini hesapla
+    visit(node->array_atama_data.indeks);
+
+    // İndeksi offset'e çevir (indeks * 8)
+    asm_append(&text_section, "    imul rax, 8  ; indeks * 8");
+    asm_append(&text_section, "    mov rbx, rax  ; offset'i rbx'e");
+
+    // Array base adresini bul
+    char* array_base = kapsam_degisken_adresi_bul(array_adi);
+
+    // Base + offset hesapla
+    sprintf(buffer, "    lea rcx, %s  ; Array base adresi", array_base);
+    asm_append(&text_section, buffer);
+    asm_append(&text_section, "    add rcx, rbx  ; base + offset");
+
+    // Değeri yaz
+    asm_append(&text_section, "    pop rax  ; Değeri geri al");
+    asm_append(&text_section, "    mov [rcx], rax  ; Array elemanına yaz");
+}
+
 void visit_DonusKomutu(ASTNode* node) {
     asm_append(&text_section, "    ; --- Donus Komutu ---");
 
@@ -976,6 +1008,11 @@ void visit(ASTNode* node) {
         // Array Erişim
         case AST_ARRAY_ERISIM:
             visit_ArrayErisim(node);
+            break;
+
+        // Array Atama
+        case AST_ARRAY_ATAMA:
+            visit_ArrayAtama(node);
             break;
 
         default:

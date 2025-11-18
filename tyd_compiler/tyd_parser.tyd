@@ -1,0 +1,188 @@
+-- TYD Self-Hosting Parser
+-- Basit recursive descent parser
+
+-- Global parser state
+SAYISAL parser_position = 0;
+SAYISAL token_count = 0;
+
+-- Token buffer (simplified - sadece tip ve değer)
+-- Her token için 2 array: types ve values
+SAYISAL token_types[100];
+METIN token_values[100];
+
+-- AST için basitleştirilmiş yaklaşım
+-- Her statement için tip ve değer saklayacağız
+SAYISAL ast_types[100];
+METIN ast_values[100];
+SAYISAL ast_count = 0;
+
+-- Parser fonksiyonları
+İŞLEÇ parser_init() İSE
+    parser_position = 0
+    ast_count = 0
+SON
+
+İŞLEÇ current_token_type() İSE
+    EĞER parser_position >= token_count İSE
+        DÖNÜŞ 0  -- EOF
+    SON
+    DÖNÜŞ token_types[parser_position]
+SON
+
+İŞLEÇ current_token_value() İSE
+    EĞER parser_position >= token_count İSE
+        DÖNÜŞ ""
+    SON
+    DÖNÜŞ token_values[parser_position]
+SON
+
+İŞLEÇ advance_parser() İSE
+    parser_position = parser_position + 1
+SON
+
+İŞLEÇ expect_token(expected_type) İSE
+    SAYISAL current = current_token_type();
+
+    EĞER current != expected_type İSE
+        YAZDIR "HATA: Beklenen token tipi: "
+        YAZDIR expected_type
+        YAZDIR ", Bulunan: "
+        YAZDIR current
+        DÖNÜŞ 0
+    SON
+
+    advance_parser()
+    DÖNÜŞ 1
+SON
+
+-- Basit statement parsing
+-- YAZDIR ifadesi parse et
+İŞLEÇ parse_yazdir() İSE
+    -- YAZDIR token'ı tüket
+    advance_parser()
+
+    -- İfadeyi al (basit: tek token)
+    METIN value = current_token_value();
+    advance_parser()
+
+    -- AST'ye ekle
+    ast_types[ast_count] = 1  -- 1 = YAZDIR statement
+    ast_values[ast_count] = value
+    ast_count = ast_count + 1
+
+    DÖNÜŞ 1
+SON
+
+-- Değişken tanımlama parse et
+İŞLEÇ parse_degisken_tanimlama() İSE
+    -- Tip token'ı tüket (SAYISAL/METIN)
+    METIN tip = current_token_value();
+    advance_parser()
+
+    -- İsim al
+    METIN ad = current_token_value();
+    advance_parser()
+
+    -- = bekle
+    SAYISAL eq = expect_token(19);  -- 19 = TOKEN_ASSIGN
+    EĞER eq == 0 İSE
+        DÖNÜŞ 0
+    SON
+
+    -- Değer al
+    METIN value = current_token_value();
+    advance_parser()
+
+    -- ; bekle
+    SAYISAL semi = expect_token(20);  -- 20 = TOKEN_SEMICOLON
+    EĞER semi == 0 İSE
+        DÖNÜŞ 0
+    SON
+
+    -- AST'ye ekle
+    ast_types[ast_count] = 2  -- 2 = DEĞİŞKEN_TANIMLAMA
+    ast_values[ast_count] = ad
+    ast_count = ast_count + 1
+
+    DÖNÜŞ 1
+SON
+
+-- Ana parse fonksiyonu
+İŞLEÇ parse_program() İSE
+    DÖNGÜ
+        SAYISAL tok_type = current_token_type();
+
+        -- EOF?
+        EĞER tok_type == 0 İSE
+            DÖNGÜ_BITIR
+        SON
+
+        -- YAZDIR?
+        EĞER tok_type == 7 İSE  -- 7 = TOKEN_YAPI_YAZDIR
+            SAYISAL result = parse_yazdir();
+            EĞER result == 0 İSE
+                YAZDIR "Parse hatası: YAZDIR"
+                DÖNGÜ_BITIR
+            SON
+        SON
+
+        -- SAYISAL/METIN değişken tanımlama?
+        EĞER tok_type == 4 İSE  -- 4 = TOKEN_TANIMLA_SAYI
+            SAYISAL result = parse_degisken_tanimlama();
+            EĞER result == 0 İSE
+                YAZDIR "Parse hatası: Değişken"
+                DÖNGÜ_BITIR
+            SON
+        SON
+
+        EĞER tok_type == 5 İSE  -- 5 = TOKEN_TANIMLA_METIN
+            SAYISAL result = parse_degisken_tanimlama();
+            EĞER result == 0 İSE
+                YAZDIR "Parse hatası: Değişken"
+                DÖNGÜ_BITIR
+            SON
+        SON
+
+        -- Bilinmeyen token
+        YAZDIR "Bilinmeyen statement tipi: "
+        YAZDIR tok_type
+        advance_parser()
+    SON
+
+    DÖNÜŞ ast_count
+SON
+
+-- Test
+YAZDIR "=== Parser Test ==="
+
+-- Mock token listesi (YAZDIR "hello")
+token_count = 2
+token_types[0] = 7   -- TOKEN_YAPI_YAZDIR
+token_values[0] = "YAZDIR"
+token_types[1] = 2   -- TOKEN_METIN
+token_values[1] = "hello"
+
+parser_init()
+SAYISAL stmt_count = parse_program();
+
+YAZDIR "Parse edilen statement sayısı: "
+YAZDIR stmt_count
+
+YAZDIR "AST:"
+SAYISAL i = 0;
+DÖNGÜ
+    EĞER i >= stmt_count İSE
+        DÖNGÜ_BITIR
+    SON
+
+    YAZDIR "Statement "
+    YAZDIR i
+    YAZDIR ": type="
+    YAZDIR ast_types[i]
+    YAZDIR ", value="
+    YAZDIR ast_values[i]
+
+    i = i + 1
+SON
+
+YAZDIR "=== Parser Test Bitti ==="

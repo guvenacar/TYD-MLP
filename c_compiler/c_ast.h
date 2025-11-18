@@ -23,6 +23,7 @@ typedef enum {
     AST_ISLEC_CAGIRMA,
     AST_ARRAY_TANIMLAMA,    // Array bildirimi: SAYISAL arr[10];
     AST_ARRAY_ERISIM,       // Array erişim: arr[5]
+    AST_ARRAY_ATAMA,        // Array atama: arr[5] = 10;
     // ... (Diğer tüm AST düğüm tipleri buraya eklenecek)
 } ASTNodeType;
 
@@ -119,6 +120,13 @@ struct ASTNode {
             Token* ad;         // Array ismi
             ASTNode* indeks;   // İndeks ifadesi
         } array_erisim_data;
+
+        // Array Atama (arr[5] = 10;)
+        struct {
+            Token* ad;         // Array ismi
+            ASTNode* indeks;   // İndeks ifadesi
+            ASTNode* deger;    // Atanacak değer
+        } array_atama_data;
     };
 };
 
