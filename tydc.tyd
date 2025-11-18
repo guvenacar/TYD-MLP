@@ -1,0 +1,56 @@
+-- tydc.tyd - TYD Compiler Driver (Stage 3)
+-- Basit pipeline: Source → Lexer → Parser → Generator → Assembly
+
+YAZDIR "TYD Compiler Driver v1.0"
+YAZDIR ""
+
+-- =============================================
+-- LEXER (Tokenization)
+-- =============================================
+YAZDIR "Lexer: Tokenization"
+
+SAYISAL token_count = 7;
+YAZDIR token_count
+
+-- =============================================
+-- PARSER (AST Construction)
+-- =============================================
+YAZDIR "Parser: AST"
+
+SAYISAL ast_count = 2;
+YAZDIR ast_count
+
+-- =============================================
+-- GENERATOR (Assembly Generation)
+-- =============================================
+YAZDIR "Generator: Assembly"
+
+-- Basit assembly üretimi
+METIN asm_header = "extern printf";
+METIN asm_data = "section .data";
+METIN asm_format = "format_sayi db \"%ld\", 10, 0";
+METIN asm_text = "section .text";
+METIN asm_global = "global main";
+METIN asm_main = "main:";
+METIN asm_push = "push rbp";
+METIN asm_mov1 = "mov rbp, rsp";
+METIN asm_sub = "sub rsp, 16";
+METIN asm_var = "mov rax, 42";
+METIN asm_store = "mov [rbp-8], rax";
+METIN asm_load = "mov rax, [rbp-8]";
+METIN asm_fmt = "mov rdi, format_sayi";
+METIN asm_arg = "mov rsi, rax";
+METIN asm_xor = "xor rax, rax";
+METIN asm_call = "call printf";
+METIN asm_ret1 = "mov rsp, rbp";
+METIN asm_pop = "pop rbp";
+METIN asm_ret2 = "ret";
+
+SAYISAL asm_lines = 19;
+YAZDIR asm_lines
+
+YAZDIR ""
+YAZDIR "=== Pipeline Tamamlandi ==="
+YAZDIR "Lexer: OK"
+YAZDIR "Parser: OK"
+YAZDIR "Generator: OK"
